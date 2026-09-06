@@ -60,9 +60,12 @@ boundaries, or tooling decisions it describes.
   support.** Every package in this repo tracks the newest published version of its dependencies by
   default; pin only when a real incompatibility forces it, and drop the pin once that's fixed
   upstream. Two exceptions exist today:
-  - `typescript`, pinned to `5.9.3` (not the current `7.0.x`) in every package that declares it:
-    TypeScript 7's new API isn't yet supported by `tsup`'s DTS bundler (`rollup-plugin-dts` throws) or
-    by `typescript-eslint`.
+  - `typescript`, pinned to exactly `5.9.3` (not the current `7.0.x`) everywhere: TypeScript 7's new
+    API isn't yet supported by `tsup`'s DTS bundler (`rollup-plugin-dts` throws) or by
+    `typescript-eslint`. Enforced two ways: every package that declares `typescript` pins it to the
+    exact version (no `^`), **and** `pnpm-workspace.yaml`'s `overrides` forces `typescript: 5.9.3`
+    repo-wide, so peer-dependency-driven installs (from `tsup`, `commitlint`, `typescript-eslint`)
+    can't sneak in a second copy at a different version.
   - `apps/tryit`'s `eslint`, pinned to `^9.9.1` (not the monorepo's usual `^10.x`): `eslint-plugin-react`
     7.37.5 (pulled in transitively by `eslint-config-next`) throws
     (`contextOrFilename.getFilename is not a function`) under ESLint 10's flat-config context when
