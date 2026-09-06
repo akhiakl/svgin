@@ -20,7 +20,9 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "lint": "eslint .",
@@ -34,14 +36,14 @@
     "svgin-core": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "^19.1.0",
+    "@types/react": "^19.2.18",
     "eslint": "^10.10.0",
-    "react": "^19.1.0",
+    "react": "^19.2.8",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
-    "tsup": "^8.3.5",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.0.0"
+    "vitest": "^5.0.0"
   }
 }
