@@ -14,6 +14,12 @@ real implementations are ported in later PRs (see each package's README for stat
 | [`packages/element`](packages/element) | `svgin-element` | Yes | Framework-agnostic `<svg-in>` custom element |
 | [`apps/tryit`](apps/tryit) | — | Never (private) | Next.js demo app for `svgin-react`/`svgin-element` |
 
+Shared tooling config lives in its own workspace packages rather than a root file, per
+[Turborepo's convention](https://turborepo.dev) (a root config isn't tracked by Turborepo's task
+graph, so a change to it can't correctly invalidate just the packages that depend on it):
+[`packages/eslint-config`](packages/eslint-config), [`packages/typescript-config`](packages/typescript-config),
+[`packages/tsup-config`](packages/tsup-config).
+
 ## Development
 
 ```bash

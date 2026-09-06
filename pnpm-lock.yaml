@@ -115,30 +115,12 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.2.2
         version: 21.2.2
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@10.10.0(jiti@2.6.1))
-      eslint:
-        specifier: ^10.10.0
-        version: 10.10.0(jiti@2.6.1)
-      eslint-plugin-react:
-        specifier: ^7.37.5
-        version: 7.37.5(eslint@10.10.0(jiti@2.6.1))
-      globals:
-        specifier: ^17.12.0
-        version: 17.12.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
       turbo:
         specifier: ^2.10.12
         version: 2.10.12
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      typescript-eslint:
-        specifier: ^8.69.0
-        version: 8.69.0(eslint@10.10.0(jiti@2.6.1))(typescript@5.9.3)
 
   apps/tryit:
     dependencies:
@@ -167,12 +149,39 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.0
         version: 19.2.7(@types/react@19.2.18)
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.6.1)
+      svgin-eslint-config:
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      svgin-typescript-config:
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/core:
     devDependencies:
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.6.1)
+      svgin-eslint-config:
+        specifier: workspace:*
+        version: link:../eslint-config
+      svgin-tsup-config:
+        specifier: workspace:*
+        version: link:../tsup-config
+      svgin-typescript-config:
+        specifier: workspace:*
+        version: link:../typescript-config
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^3.0.0
         version: 3.2.7(@types/node@26.4.1)(jiti@2.6.1)(yaml@2.9.0)
@@ -183,12 +192,45 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.6.1)
+      svgin-eslint-config:
+        specifier: workspace:*
+        version: link:../eslint-config
+      svgin-tsup-config:
+        specifier: workspace:*
+        version: link:../tsup-config
+      svgin-typescript-config:
+        specifier: workspace:*
+        version: link:../typescript-config
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^3.0.0
         version: 3.2.7(@types/node@26.4.1)(jiti@2.6.1)(yaml@2.9.0)
+
+  packages/eslint-config:
+    dependencies:
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.10.0(jiti@2.6.1))
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.6.1)
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@10.10.0(jiti@2.6.1))
+      globals:
+        specifier: ^17.12.0
+        version: 17.12.0
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.10.0(jiti@2.6.1))(typescript@5.9.3)
 
   packages/react:
     dependencies:
@@ -199,15 +241,38 @@ importers:
       '@types/react':
         specifier: ^19.1.0
         version: 19.2.18
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.6.1)
       react:
         specifier: ^19.1.0
         version: 19.2.8
+      svgin-eslint-config:
+        specifier: workspace:*
+        version: link:../eslint-config
+      svgin-tsup-config:
+        specifier: workspace:*
+        version: link:../tsup-config
+      svgin-typescript-config:
+        specifier: workspace:*
+        version: link:../typescript-config
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^3.0.0
         version: 3.2.7(@types/node@26.4.1)(jiti@2.6.1)(yaml@2.9.0)
+
+  packages/tsup-config:
+    dependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(typescript@5.9.3)(yaml@2.9.0)
+
+  packages/typescript-config: {}
 
 packages:
 

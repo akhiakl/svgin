@@ -1,9 +1,13 @@
 import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
 
-export default tseslint.config(
+/**
+ * Base flat ESLint config shared by every package in the svgin monorepo.
+ * A package's own eslint.config.mjs imports this and appends anything
+ * package-specific (see ./react.js for the React/JSX variant).
+ */
+export const base = tseslint.config(
     {
         ignores: [
             '**/dist/**',
@@ -29,18 +33,5 @@ export default tseslint.config(
                 ...globals.node,
             },
         },
-    },
-    {
-        files: ['packages/react/**', 'apps/tryit/**'],
-        ...react.configs.flat.recommended,
-        settings: {
-            react: {
-                version: '19.1.0',
-            },
-        },
-    },
-    {
-        files: ['packages/react/**', 'apps/tryit/**'],
-        ...react.configs.flat['jsx-runtime'],
     },
 );

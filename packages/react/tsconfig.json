@@ -1,8 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "types": ["react"]
-  },
+  "extends": "svgin-typescript-config/react.json",
   "include": ["src"]
 }

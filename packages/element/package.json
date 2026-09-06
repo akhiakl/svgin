@@ -19,7 +19,12 @@
     "svgin-core": "workspace:*"
   },
   "devDependencies": {
+    "eslint": "^10.10.0",
+    "svgin-eslint-config": "workspace:*",
+    "svgin-tsup-config": "workspace:*",
+    "svgin-typescript-config": "workspace:*",
     "tsup": "^8.3.5",
+    "typescript": "^5.9.3",
     "vitest": "^3.0.0"
   }
 }

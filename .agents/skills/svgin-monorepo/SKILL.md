@@ -41,8 +41,24 @@ pipeline, package boundaries, or tooling decisions it describes.
 
 - Root `package.json` only delegates to `turbo run <task>`; task logic lives
   in each package's own `package.json` (see the `turborepo` skill).
-- All three packages build with the same `tsup` pipeline — no per-package
-  bundler divergence.
+- All three library packages build with the same `tsup` pipeline — no
+  per-package bundler divergence.
+- **Shared tooling config lives in its own workspace packages, not root
+  files** (`svgin-eslint-config`, `svgin-typescript-config`,
+  `svgin-tsup-config`, all under `packages/`) — the `turborepo` skill's own
+  guidance: a root `eslint.config.mjs`/`tsconfig.base.json` isn't tracked by
+  Turborepo's task graph (only real `workspace:*` dependencies are), so a
+  change to it can't correctly invalidate just the packages that depend on
+  it, and it also means every package's cache gets busted by any tweak to a
+  file that most of them don't actually use differently. Every package
+  imports/extends from these instead of a relative-path root file. Add a new
+  shared config the same way if one becomes needed (e.g. a `vitest` preset,
+  once packages need divergent test setups — plain defaults are enough for
+  now, so no `svgin-vitest-config` package exists yet).
+- `packages/element` builds `<svg-in>` on **vanilla native Custom Elements**
+  (`class SvgIn extends HTMLElement`) — not Lit, not Stencil. Zero runtime
+  dependency, smallest bundle, same tsup pipeline as the other two packages.
+  See the `web-component-design` skill when implementing it for real.
 - `packages/element` builds `<svg-in>` on **vanilla native Custom Elements**
   (`class SvgIn extends HTMLElement`) — not Lit, not Stencil. Zero runtime
   dependency, smallest bundle, same tsup pipeline as the other two packages.

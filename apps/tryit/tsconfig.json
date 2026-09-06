@@ -1,15 +1,7 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "svgin-typescript-config/nextjs.json",
   "compilerOptions": {
-    "jsx": "preserve",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "types": ["react", "node"],
-    "noEmit": true,
-    "declaration": false,
-    "declarationMap": false,
-    "emitDeclarationOnly": false,
-    "plugins": [{ "name": "next" }]
+    "types": ["react", "node"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

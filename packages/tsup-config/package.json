@@ -1,0 +1,14 @@
+{
+  "name": "svgin-tsup-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared tsup build preset for the svgin monorepo. Internal only, never published.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./base.js"
+  },
+  "dependencies": {
+    "tsup": "^8.3.5"
+  }
+}
