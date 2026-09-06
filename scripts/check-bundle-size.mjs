@@ -34,7 +34,12 @@ let budgets;
 try {
     budgets = JSON.parse(readFileSync(BUDGET_FILE, 'utf8'));
 } catch (e) {
-    console.error(`Could not read/parse ${BUDGET_FILE} in ${process.cwd()}: ${e.message}`);
+    // Defensive, not just stylistic: JSON.parse/readFileSync almost always
+    // throw a real Error, but assuming e.message exists unconditionally
+    // would itself throw (and hide the actual failure) if something ever
+    // throws a plain string or other non-Error value.
+    const reason = e instanceof Error ? e.message : String(e);
+    console.error(`Could not read/parse ${BUDGET_FILE} in ${process.cwd()}: ${reason}`);
     process.exit(1);
 }
 
