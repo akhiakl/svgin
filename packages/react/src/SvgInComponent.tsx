@@ -69,7 +69,7 @@ export const SvgInComponent: React.FC<
         ref?: React.Ref<SVGSVGElement>;
     }
 > = ({ svg, width, height, fill, fallback = null, className, ariaLabel, title, description, idSuffix, ref, ...rest }) => {
-    if (!svg) return fallback;
+    if (svg === null) return fallback;
     let inner = extractSvgInner(svg);
     if (inner !== null) {
         if (idSuffix) inner = uniquifyIds(inner, idSuffix);
