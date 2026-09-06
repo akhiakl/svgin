@@ -33,6 +33,18 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            packages/*/.turbo
+            apps/*/.turbo
+          # Same key namespace as ci.yml's build job: a release is triggered
+          # off a commit that already went through the push-to-main CI run
+          # (see the header comment above), so this is usually a real cache
+          # hit reusing that run's build/lint/test outputs, not a cold start.
+          key: turbo-build-${{ github.sha }}
+          restore-keys: turbo-build-
       - run: pnpm turbo run lint typecheck typecheck:test test build size
 
       - name: Determine released package from the tag

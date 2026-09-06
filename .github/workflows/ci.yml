@@ -19,6 +19,18 @@ name: CI
 # safe, not just faster. Push to main always runs the full, unfiltered set as
 # a safety net. fetch-depth: 0 on every checkout here is required for
 # --affected to find the merge base at all.
+#
+# Turbo cache: every task-running job restores/saves each workspace's local
+# `.turbo` directory via actions/cache, keyed per job (lint/typecheck/test/
+# build each cache different task outputs) and per commit SHA, falling back
+# to the closest previous cache for that job when the exact SHA isn't cached
+# (a PR's first run, or a new commit on top of one already built). Turbo's
+# own content hashing still decides real cache hits/misses inside that
+# restored directory - this only avoids starting from a cold, empty `.turbo`
+# on every single CI run. Deliberately the GitHub Actions cache API, not
+# Vercel Remote Caching (no TURBO_TOKEN/TURBO_TEAM secret to provision) -
+# see #24 if cross-fork or cross-repo sharing is ever needed, which this
+# repo-scoped cache doesn't provide.
 
 on:
   pull_request:
@@ -47,6 +59,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            packages/*/.turbo
+            apps/*/.turbo
+          key: turbo-lint-${{ github.sha }}
+          restore-keys: turbo-lint-
       - run: pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
   commitlint:
@@ -78,6 +98,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            packages/*/.turbo
+            apps/*/.turbo
+          key: turbo-typecheck-${{ github.sha }}
+          restore-keys: turbo-typecheck-
       - run: pnpm turbo run typecheck ${{ github.event_name == 'pull_request' && '--affected' || '' }}
       - run: pnpm turbo run typecheck:test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
@@ -98,6 +126,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            packages/*/.turbo
+            apps/*/.turbo
+          key: turbo-test-node${{ matrix.node-version }}-${{ github.sha }}
+          restore-keys: turbo-test-node${{ matrix.node-version }}-
       - run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
   build:
@@ -113,6 +149,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            packages/*/.turbo
+            apps/*/.turbo
+          key: turbo-build-${{ github.sha }}
+          restore-keys: turbo-build-
       - run: pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
       - name: Check bundle size budget
         run: pnpm turbo run size ${{ github.event_name == 'pull_request' && '--affected' || '' }}
