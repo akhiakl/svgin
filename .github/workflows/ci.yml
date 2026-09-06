@@ -9,6 +9,16 @@ name: CI
 # akhiakl/svgin-react-tryit's own ci.yml, scoped to apps/tryit via
 # `pnpm --filter svgin-tryit` since it's the only workspace member with
 # Playwright e2e tests.
+#
+# --affected on pull_request: only runs a task for packages that actually
+# changed since the PR's base branch (plus anything that depends on them, via
+# Turborepo's own package graph - correctly picks up e.g. a packages/core
+# change also affecting packages/react/packages/element, unlike a plain
+# path-based workflow trigger). Falls back to running everything if it can't
+# compute the merge base (see the turborepo skill's ci/RULE.md), so this is
+# safe, not just faster. Push to main always runs the full, unfiltered set as
+# a safety net. fetch-depth: 0 on every checkout here is required for
+# --affected to find the merge base at all.
 
 on:
   pull_request:
@@ -29,13 +39,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run lint
+      - run: pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
   commitlint:
     name: Commit messages
@@ -58,14 +70,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run typecheck
-      - run: pnpm turbo run typecheck:test
+      - run: pnpm turbo run typecheck ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      - run: pnpm turbo run typecheck:test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
   test:
     name: Test (Node ${{ matrix.node-version }})
@@ -76,28 +90,32 @@ jobs:
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run test
+      - run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build
+      - run: pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
       - name: Check bundle size budget
-        run: pnpm turbo run size
+        run: pnpm turbo run size ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
   audit:
     name: Dependency audit
@@ -112,8 +130,32 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --prod || echo "::warning::pnpm audit reported issues - review before releasing"
 
+  tryit-changed:
+    name: Check if apps/tryit changed
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: check
+        run: |
+          if git diff --quiet ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- apps/tryit; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   tryit-e2e:
     name: apps/tryit E2E (${{ matrix.browser }})
+    needs: [tryit-changed]
+    # Always runs on push to main (safety net, same as the other jobs above);
+    # on a PR, only when apps/tryit itself changed - it depends on the real
+    # published svgin-react, not the workspace one, so a packages/react/core
+    # change can never affect what this job actually exercises.
+    if: github.event_name != 'pull_request' || needs.tryit-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

@@ -5,36 +5,25 @@
   "description": "Framework-agnostic fetch/sanitize/cache internals shared by svgin-react and svgin-element. Not published independently.",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    }
+    "./*": "./src/*.ts"
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsup",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "dompurify": "^3.4.14",
+    "jsdom": "^30.0.1"
+  },
   "devDependencies": {
+    "@types/jsdom": "^27.0.0",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.10.0",
     "svgin-eslint-config": "workspace:*",
-    "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
-    "tsup": "^8.5.1",
+    "svgin-vitest-config": "workspace:*",
     "typescript": "5.9.3",
     "vitest": "^5.0.0"
   }

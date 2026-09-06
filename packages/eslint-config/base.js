@@ -25,6 +25,16 @@ export const base = tseslint.config(
                 ...globals.browser,
             },
         },
+        rules: {
+            // Catches importing a type-only binding as a value import (e.g.
+            // `import { SvgInProps } from './types'` when SvgInProps is only
+            // ever used in a type position) - a real bug Copilot's review of
+            // PR #17 caught in packages/react/src/preload.ts: it forces an
+            // unnecessary runtime import of the module, which can pull in
+            // side effects or defeat tree-shaking. Doesn't need type-checked
+            // linting (parserOptions.project), just the syntactic form.
+            '@typescript-eslint/consistent-type-imports': 'error',
+        },
     },
     {
         files: ['**/*.mjs', '**/*.config.*'],

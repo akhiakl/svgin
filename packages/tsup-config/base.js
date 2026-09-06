@@ -1,21 +1,28 @@
 import { defineConfig } from 'tsup';
 
 /**
- * Shared tsup build preset for svgin's library packages (packages/core,
- * packages/react, packages/element): single entry point, dual ESM+CJS
- * output, generated .d.ts files, clean output dir on every build.
+ * Shared tsup build preset for svgin's library packages. A factory, not a
+ * static object: every package extends the same defaults, overriding only
+ * what actually differs for it (typically just `entry` and `external`)
+ * instead of duplicating the whole config.
  *
- * Output extensions are explicit (.mjs / .cjs) rather than left to tsup's
- * type:module-based default (.js for ESM), that default is correct today,
- * but making it explicit means package.json's exports map can't silently
- * drift from what's actually emitted if that default ever changes.
+ * Defaults: single entry `src/index.ts`, dual ESM+CJS output with explicit
+ * `.mjs`/`.cjs` extensions (not left to tsup's `type:module`-based default,
+ * so package.json's exports map can't silently drift from what's actually
+ * emitted), generated `.d.ts` files, sourcemaps, minified, clean output dir
+ * on every build.
  */
-export const baseConfig = defineConfig({
-    entry: ['src/index.ts'],
-    format: ['esm', 'cjs'],
-    dts: true,
-    clean: true,
-    outExtension({ format }) {
-        return { js: format === 'cjs' ? '.cjs' : '.mjs' };
-    },
-});
+export function defineTsupConfig(overrides = {}) {
+    return defineConfig({
+        entry: ['src/index.ts'],
+        format: ['esm', 'cjs'],
+        dts: true,
+        sourcemap: true,
+        clean: true,
+        minify: true,
+        outExtension({ format }) {
+            return { js: format === 'cjs' ? '.cjs' : '.mjs' };
+        },
+        ...overrides,
+    });
+}

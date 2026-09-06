@@ -43,19 +43,56 @@ boundaries, or tooling decisions it describes.
 
 - Root `package.json` only delegates to `turbo run <task>`; task logic lives in each package's own
   `package.json` (see the `turborepo` skill).
-- All three library packages build with the same `tsup` pipeline. No per-package bundler divergence.
-- **Shared tooling config lives in its own workspace packages, not root files** (`svgin-eslint-config`,
-  `svgin-typescript-config`, `svgin-tsup-config`, all under `packages/`). This follows the `turborepo`
-  skill's own guidance: a root `eslint.config.mjs`/`tsconfig.base.json` isn't tracked by Turborepo's
-  task graph (only real `workspace:*` dependencies are), so a change to it can't correctly invalidate
-  just the packages that depend on it, and it also means every package's cache gets busted by any tweak
-  to a file that most of them don't actually use differently. Every package imports/extends from these
-  instead of a relative-path root file. Add a new shared config the same way if one becomes needed
-  (e.g. a `vitest` preset, once packages need divergent test setups; plain defaults are enough for now,
-  so no `svgin-vitest-config` package exists yet). **`apps/tryit` is the one exception**: it uses its
-  own `eslint-config-next`-based config and `svgin-typescript-config/nextjs.json`, not
+- `packages/react` and `packages/element` build with `tsup`. `packages/core` does **not** build at
+  all - see "Why svgin-core has no build step" below.
+- **Shared tooling config lives in its own workspace packages, not root files**
+  (`svgin-eslint-config`, `svgin-typescript-config`, `svgin-tsup-config`, `svgin-vitest-config`, all
+  under `packages/`). This follows the `turborepo` skill's own guidance: a root
+  `eslint.config.mjs`/`tsconfig.base.json` isn't tracked by Turborepo's task graph (only real
+  `workspace:*` dependencies are), so a change to it can't correctly invalidate just the packages that
+  depend on it, and it also means every package's cache gets busted by any tweak to a file that most
+  of them don't actually use differently. **Every one of these is a factory function
+  (`defineTsupConfig(overrides)`, `defineVitestConfig(overrides)`, `defineNextVitestConfig(overrides)`),
+  not a static object or a single fixed entry** - every consumer extends the same shared defaults and
+  overrides only what actually differs for it (typically `entry`/`external` for tsup, `setupFiles`/
+  `coverage` for vitest), instead of duplicating the whole config or writing one from scratch per
+  package. **Never add `vitest` (or `vitest/config`) as one of these config packages' own dependencies**
+  - see the pnpm gotcha below for why that specific one broke `@testing-library/jest-dom`'s type
+    augmentation for every consumer; `defineConfig`/`mergeConfig` are the only things that import would
+    buy, and both are just identity/merge helpers easily replaced with a plain object literal and a
+    few lines of manual merging.
+  **`apps/tryit` is the one exception to reusing the library packages' presets** (not to the factory
+  pattern itself - it gets its own factory, `svgin-vitest-config/next`): it uses its own
+  `eslint-config-next`-based ESLint config and `svgin-typescript-config/nextjs.json`, not
   `svgin-eslint-config`, since a Next.js app needs framework-specific lint rules
-  (`react-hooks`/`core-web-vitals`/`next/link`) that the library preset doesn't provide.
+  (`react-hooks`/`core-web-vitals`/`next/link`) that the library preset doesn't provide, and its vitest
+  setup needs the Vite React plugin plus a different coverage bar (see `svgin-vitest-config`'s own
+  README, and [#16](https://github.com/akhiakl/svgin/issues/16) for bringing it to a real 100%).
+- **Coverage: 100% across every metric, in every package that has it enforced** (`packages/core`,
+  `packages/react`, `packages/element` today, via `svgin-vitest-config`'s default thresholds) -
+  matching `akhiakl/svgin-react`'s own bar for this exact code. `apps/tryit` is deliberately not held
+  to the same bar yet (see the exception above); `pnpm --filter <pkg> exec vitest run --coverage` to
+  check locally (not wired into the default `test` script/turbo pipeline).
+- **A real pnpm gotcha to know about: two physically different installs of the "same" version can
+  silently break ambient type augmentation.** `@testing-library/jest-dom`'s `import
+  '@testing-library/jest-dom/vitest'` augments a *specific resolved* `vitest` module's `Assertion`
+  interface. When pnpm resolves more than one physically distinct `vitest@5.0.0` (different
+  peer-hash variants, driven by differing `@vitest/coverage-v8`/`jsdom`/`@types/node` versions across
+  packages), a package whose own `vitest` differs from the copy `jest-dom` happened to peer-resolve
+  against gets `error TS2339: Property 'toHaveAttribute' does not exist` on every `expect(...)` call
+  - the augmentation is real, it's just attached to a different physical module than the one that
+  package's tests actually import. Fixed here by: pinning `vitest` to an exact version via
+  `pnpm-workspace.yaml`'s `overrides` (same mechanism as the `typescript` pin below), keeping
+  `@types/node` at the same version across every package (`apps/tryit` had drifted to an older pin
+  inherited from the source repo), and never adding `vitest` as a shared config package's own
+  dependency (see above). The same class of problem, for the same reason, is exactly why `typescript`
+  needs the `pnpm.overrides` pin below, not just a per-package exact version.
+- **`svgin-typescript-config`'s `rootDir` gotcha**: always set `rootDir` in the *consuming* package's
+  own `tsconfig.json` `compilerOptions`, never inside `svgin-typescript-config/base.json` itself -
+  relative path options in a base config resolve relative to *that base file's own location* when
+  inherited via `extends`, not the extending package's, so `rootDir` there resolves to a nonexistent
+  `packages/typescript-config/src` for every consumer and breaks `tsc` outright (`TS6059`) for all of
+  them at once. See that package's own README for the fuller version of this note.
 - **Dependency policy: keep everything on latest, with pinned exceptions where something else lacks
   support.** Every package in this repo tracks the newest published version of its dependencies by
   default; pin only when a real incompatibility forces it, and drop the pin once that's fixed
@@ -72,6 +109,20 @@ boundaries, or tooling decisions it describes.
     linting non-component files like `e2e/*.spec.ts`. Only `apps/tryit` is affected; the library
     packages' own `svgin-eslint-config` stays on ESLint 10 since it doesn't hit this code path.
   Re-run `pnpm up --latest -r` periodically and try bumping each pinned dependency back to latest.
+- **Why `svgin-core` has no build step:** its `package.json` `exports` map points directly at raw
+  `.ts` source (`"./*": "./src/*.ts"`), not a `tsup`-built `dist/`. It's internal-only and never
+  published, so there's nothing a build buys it - and a build actively broke things: `tsup`'s
+  per-file bundling hoists code shared between entries into internal chunks (e.g.
+  `resolveSvgPromiseClient.ts`'s dependency on `sanitizeSvgStringClient.ts` got inlined via a shared
+  chunk rather than a real import of `svgin-core/sanitizeSvgStringClient`), so `vi.mock` on that
+  public subpath from `packages/react`'s tests had zero effect on the actual code path - the mocked
+  function and the one actually called were physically different bundled artifacts. Exporting raw
+  source instead restores the single-module-identity property `vi.mock` (and `@testing-library/
+  jest-dom`'s augmentation, see the pnpm gotcha above) depends on: `svgin-core/sanitizeSvgStringClient`
+  and `resolveSvgPromiseClient.ts`'s own `./sanitizeSvgStringClient` now resolve to the exact same
+  file. `packages/react`'s own `tsup` build is what actually bundles `svgin-core`'s source into its
+  output (not marked `external`, unlike `react`/`dompurify`/`jsdom`) - exactly like the original
+  monolithic `akhiakl/svgin-react`, where this was all one package's own source to begin with.
 - `packages/element` builds `<svg-in>` on **vanilla native Custom Elements**
   (`class SvgIn extends HTMLElement`), not Lit, not Stencil. Zero runtime dependency, smallest bundle,
   same tsup pipeline as the other two packages. See the `web-component-design` skill when implementing
@@ -79,6 +130,36 @@ boundaries, or tooling decisions it describes.
 - **Whenever `packages/element` changes its public API or behavior, update its documentation (README
   and any docs-site page) in the same PR/build.** Don't let `<svg-in>`'s docs drift behind its
   implementation the way a fast-moving new component easily can.
+
+## Correctness gotchas caught by review, worth watching for again
+
+- **A `null`-vs-empty-string sentinel needs an explicit `=== null`/`!== null` check, never a truthy
+  check.** Several places track "no result yet" with `state: string | null` where `null` means
+  "loading/absent" and `''` is a real, valid, already-resolved value (sanitization stripping an SVG
+  down to nothing is expected and tested, not an error). A plain `if (!value)` treats both the same,
+  which either gets a component stuck on its loading placeholder forever or wrongly renders the
+  `fallback` prop for a legitimate empty result. Copilot's review of PR #17 caught exactly this twice
+  in the same PR (`SvgIn.client.tsx`'s loading-state check and `SvgInComponent.tsx`'s `fallback` gate)
+  before either was fixed with `=== null`. This is `@typescript-eslint/strict-boolean-expressions`
+  territory, but that rule needs type-checked linting (`parserOptions.project`), which this repo
+  doesn't have yet - not currently enforced automatically, so review changes to any `T | null` state
+  for this pattern by hand until it is.
+- **Code exported from an environment-agnostic entry point (`svgin-react/core`, anything documented as
+  "works in either environment") must pick its environment-specific dependency at call time, never hard-
+  code one.** `preload.ts`'s `preloadSvg` hard-coded a dynamic `import('svgin-core/sanitizeServer')`
+  (jsdom-based) regardless of caller environment, which would fail or needlessly bundle jsdom when
+  called from a real browser. Fixed by branching on `typeof window !== 'undefined' && typeof
+  window.document !== 'undefined'` at call time and importing `sanitizeClient`/`sanitizeServer`
+  accordingly (mirrors how `client.ts`/`server.ts` each wire a fixed sanitizer for their own,
+  non-agnostic entry points - only a genuinely environment-agnostic entry point needs the runtime
+  branch). When adding new code to `core.ts`, ask whether it's really environment-agnostic or secretly
+  assumes one side.
+- **`import type` for type-only imports is enforced by lint, not just style**: `svgin-eslint-config`'s
+  base config sets `@typescript-eslint/consistent-type-imports: 'error'`, added after Copilot's review
+  of PR #17 caught a value import of a type-only binding (`import { SvgInProps } from './types'` where
+  `SvgInProps` was only ever used as a type) - a real bug, not a nitpick: it forces an unnecessary
+  runtime import of the module, which can pull in side effects or defeat tree-shaking. This rule is
+  purely syntactic (no `parserOptions.project` needed), so it runs in every package automatically.
 
 ## Release & publishing
 

@@ -8,9 +8,20 @@ Shared [tsup](https://tsup.egoist.dev) build preset for svgin's library packages
 ## Usage
 
 ```ts
-// packages/<name>/tsup.config.ts
-export { baseConfig as default } from 'svgin-tsup-config';
+// packages/<name>/tsup.config.ts: single entry (the default)
+import { defineTsupConfig } from 'svgin-tsup-config';
+export default defineTsupConfig();
 ```
 
-Override locally in a package's own `tsup.config.ts` if it ever needs different entries or output
-formats, this preset is a starting point, not a hard requirement.
+```ts
+// packages/<name>/tsup.config.ts: multi-entry, custom external deps
+import { defineTsupConfig } from 'svgin-tsup-config';
+export default defineTsupConfig({
+    entry: { client: 'src/client.ts', server: 'src/server.ts' },
+    external: ['react'],
+});
+```
+
+`defineTsupConfig` is a factory, not a static object, precisely so every package extends the same
+shared defaults (dual ESM+CJS, explicit `.mjs`/`.cjs` extensions, `dts`, sourcemaps, minify, clean)
+and overrides only what actually differs for it, instead of duplicating the whole config per package.
