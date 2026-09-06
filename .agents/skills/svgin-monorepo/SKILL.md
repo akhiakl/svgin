@@ -41,6 +41,19 @@ boundaries, or tooling decisions it describes.
 
 ## Build & task pipeline
 
+- **CI caches each workspace's local `.turbo` directory via `actions/cache`**, keyed per job
+  (`turbo-lint-<sha>`, `turbo-typecheck-<sha>`, `turbo-test-node<version>-<sha>`,
+  `turbo-build-<sha>`) with a job-prefix `restore-keys` fallback, so a run only needs a cold `.turbo`
+  the very first time that job's key namespace is ever populated - every run after restores the
+  closest previous cache and lets Turborepo's own content hashing decide real hits/misses inside it.
+  `<sha>` is the PR head SHA on `pull_request` events, not `github.sha` (that's the ephemeral merge
+  commit there, which changes whenever the base branch moves) - falls back to `github.sha` itself on
+  `push`, where it already is the real commit. This is the GitHub Actions cache API, not Vercel Remote
+  Caching: no `TURBO_TOKEN`/`TURBO_TEAM`
+  secret to provision, at the cost of being scoped to this repo only (no cross-fork sharing) - see
+  [#24](https://github.com/akhiakl/svgin/issues/24) if that's ever needed. `release.yml` reuses the
+  same `turbo-build-<sha>` key namespace as `ci.yml`'s `build` job, since a release always fires off a
+  commit that already went through push-to-main CI - usually a real hit, not a cold rebuild.
 - Root `package.json` only delegates to `turbo run <task>`; task logic lives in each package's own
   `package.json` (see the `turborepo` skill).
 - `packages/react` and `packages/element` build with `tsup`. `packages/core` does **not** build at
