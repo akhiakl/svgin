@@ -18,13 +18,13 @@
     "jsdom": "^30.0.1"
   },
   "devDependencies": {
-    "@types/jsdom": "^27.0.0",
+    "@types/jsdom": "^30.0.0",
     "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.10.0",
     "svgin-eslint-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
     "svgin-vitest-config": "workspace:*",
-    "typescript": "5.9.3",
+    "typescript": "7.0.2",
     "vitest": "^5.0.0"
   }
 }
