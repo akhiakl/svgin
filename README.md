@@ -2,7 +2,7 @@
 
 Securely fetch and inline SVGs from URLs, sanitized by default.
 
-This is a Turborepo-managed pnpm monorepo. `packages/core`, `packages/react`, and `packages/element`
+This is a Turborepo-managed pnpm monorepo.`packages/react`, and `packages/element`
 are tooling scaffolding so far; real implementations are ported in later PRs (see each package's
 README for status). `apps/tryit` is real: it's the migrated `akhiakl/svgin-react-tryit` demo app.
 
@@ -10,7 +10,6 @@ README for status). `apps/tryit` is real: it's the migrated `akhiakl/svgin-react
 
 | Path | npm name | Publishes? | What it is |
 | --- | --- | --- | --- |
-| [`packages/core`](packages/core) | `svgin-core` | Never (private) | Shared fetch/sanitize/cache internals |
 | [`packages/react`](packages/react) | `svgin-react` | Yes | React components for inlining SVGs |
 | [`packages/element`](packages/element) | `svgin-element` | Yes | Framework-agnostic `<svg-in>` custom element |
 | [`apps/tryit`](apps/tryit) | n/a | Never (private) | Live `svgin-react` demo app (Next.js), deployed on Vercel |
