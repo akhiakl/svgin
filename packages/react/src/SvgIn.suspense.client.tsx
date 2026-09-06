@@ -1,4 +1,5 @@
-import React, { use, useEffect, useRef } from 'react';
+import type React from 'react';
+import { use, useEffect, useRef } from 'react';
 import type { SvgInProps } from './types';
 import { fetchAndSanitizeSvg } from 'svgin-core/fetchAndSanitizeSvgClient';
 import { sanitizeSvgString } from 'svgin-core/sanitizeSvgStringClient';

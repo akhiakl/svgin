@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import type { SvgInProps } from './types';
 import { escapeHtml, extractSvgAttrs, extractSvgInner, uniquifyIds } from 'svgin-core/svgUtils';
 

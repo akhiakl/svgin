@@ -131,6 +131,36 @@ boundaries, or tooling decisions it describes.
   and any docs-site page) in the same PR/build.** Don't let `<svg-in>`'s docs drift behind its
   implementation the way a fast-moving new component easily can.
 
+## Correctness gotchas caught by review, worth watching for again
+
+- **A `null`-vs-empty-string sentinel needs an explicit `=== null`/`!== null` check, never a truthy
+  check.** Several places track "no result yet" with `state: string | null` where `null` means
+  "loading/absent" and `''` is a real, valid, already-resolved value (sanitization stripping an SVG
+  down to nothing is expected and tested, not an error). A plain `if (!value)` treats both the same,
+  which either gets a component stuck on its loading placeholder forever or wrongly renders the
+  `fallback` prop for a legitimate empty result. Copilot's review of PR #17 caught exactly this twice
+  in the same PR (`SvgIn.client.tsx`'s loading-state check and `SvgInComponent.tsx`'s `fallback` gate)
+  before either was fixed with `=== null`. This is `@typescript-eslint/strict-boolean-expressions`
+  territory, but that rule needs type-checked linting (`parserOptions.project`), which this repo
+  doesn't have yet - not currently enforced automatically, so review changes to any `T | null` state
+  for this pattern by hand until it is.
+- **Code exported from an environment-agnostic entry point (`svgin-react/core`, anything documented as
+  "works in either environment") must pick its environment-specific dependency at call time, never hard-
+  code one.** `preload.ts`'s `preloadSvg` hard-coded a dynamic `import('svgin-core/sanitizeServer')`
+  (jsdom-based) regardless of caller environment, which would fail or needlessly bundle jsdom when
+  called from a real browser. Fixed by branching on `typeof window !== 'undefined' && typeof
+  window.document !== 'undefined'` at call time and importing `sanitizeClient`/`sanitizeServer`
+  accordingly (mirrors how `client.ts`/`server.ts` each wire a fixed sanitizer for their own,
+  non-agnostic entry points - only a genuinely environment-agnostic entry point needs the runtime
+  branch). When adding new code to `core.ts`, ask whether it's really environment-agnostic or secretly
+  assumes one side.
+- **`import type` for type-only imports is enforced by lint, not just style**: `svgin-eslint-config`'s
+  base config sets `@typescript-eslint/consistent-type-imports: 'error'`, added after Copilot's review
+  of PR #17 caught a value import of a type-only binding (`import { SvgInProps } from './types'` where
+  `SvgInProps` was only ever used as a type) - a real bug, not a nitpick: it forces an unnecessary
+  runtime import of the module, which can pull in side effects or defeat tree-shaking. This rule is
+  purely syntactic (no `parserOptions.project` needed), so it runs in every package automatically.
+
 ## Release & publishing
 
 - Versioning/publishing uses **release-please** (manifest mode), matching `svgin-react`, the

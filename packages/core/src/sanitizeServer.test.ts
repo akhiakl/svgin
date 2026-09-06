@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type * as JSDOMModule from 'jsdom';
 import { sanitizeSvg } from './sanitizeServer';
 
 // Integration tests against the real DOMPurify + jsdom pipeline - these are
@@ -49,7 +50,7 @@ describe('sanitizeSvg (server, real DOMPurify + jsdom)', () => {
         vi.resetModules();
         let constructCount = 0;
         vi.doMock('jsdom', async () => {
-            const actual = await vi.importActual<typeof import('jsdom')>('jsdom');
+            const actual = await vi.importActual<typeof JSDOMModule>('jsdom');
             class CountingJSDOM extends actual.JSDOM {
                 constructor(...args: ConstructorParameters<typeof actual.JSDOM>) {
                     super(...args);
