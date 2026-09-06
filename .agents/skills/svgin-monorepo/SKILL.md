@@ -86,6 +86,17 @@ boundaries, or tooling decisions it describes.
   matching `akhiakl/svgin-react`'s own bar for this exact code. `apps/tryit` is deliberately not held
   to the same bar yet (see the exception above); `pnpm --filter <pkg> exec vitest run --coverage` to
   check locally (not wired into the default `test` script/turbo pipeline).
+- **Bundle size budgets**: `packages/react` and `packages/element` (the two packages that actually
+  ship a `dist/`; `packages/core` never builds, see below, so has nothing to budget) each have a
+  `size` script (`node ../../scripts/check-bundle-size.mjs`) and their own `size-budget.json` -
+  per-entry-point gzip KB budgets checked against the built `dist/*.cjs` output (CJS, not ESM: the
+  worst case for size, since ESM is what bundlers tree-shake most aggressively). The checker script
+  itself lives at the repo root (`scripts/check-bundle-size.mjs`, a generalized port of
+  `akhiakl/svgin-react`'s own script) and is declared in `turbo.json`'s `globalDependencies` so a
+  change to it correctly invalidates every package's `size` task cache - a relative `inputs` path
+  reaching outside a package's own directory (e.g. `../../scripts/...`) does **not** get tracked by
+  Turborepo's hashing, silently. Bump a budget only with a PR comment explaining why (the JSON file
+  itself can't hold one) - see each package's own README for its current budget table.
 - **A real pnpm gotcha to know about: two physically different installs of the "same" version can
   silently break ambient type augmentation.** `@testing-library/jest-dom`'s `import
   '@testing-library/jest-dom/vitest'` augments a *specific resolved* `vitest` module's `Assertion`

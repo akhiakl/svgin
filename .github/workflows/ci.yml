@@ -2,10 +2,13 @@ name: CI
 
 # Adapted from akhiakl/svgin-react's ci.yml for this Turborepo monorepo: every
 # `pnpm run <task>` becomes `pnpm turbo run <task>` so Turborepo's caching and
-# package graph apply. The PR size/coverage report job from svgin-react
-# depends on scripts/check-bundle-size.mjs and scripts/pr-report.mjs, which
-# don't exist yet in this stub-only repo, deferred until packages have real
-# size/coverage tooling to report on. The tryit-e2e job is ported from
+# package graph apply. `scripts/check-bundle-size.mjs` (see the build job's
+# "Check bundle size budget" step) is a generalized port of svgin-react's own
+# script, reading each package's own size-budget.json instead of a hard-coded
+# object - see #20. The PR size/coverage report job from svgin-react
+# (scripts/pr-report.mjs, a sticky PR comment comparing head vs base) is
+# still deferred - tracked in #22, a proper superset covering e2e/a11y too,
+# not just size/coverage. The tryit-e2e job is ported from
 # akhiakl/svgin-react-tryit's own ci.yml, scoped to apps/tryit via
 # `pnpm --filter svgin-tryit` since it's the only workspace member with
 # Playwright e2e tests.

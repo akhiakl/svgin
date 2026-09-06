@@ -94,7 +94,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "size": "node ../../scripts/check-bundle-size.mjs"
   },
   "peerDependencies": {
     "react": ">=19.1.0",
