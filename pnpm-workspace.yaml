@@ -4,6 +4,10 @@ packages:
 
 allowBuilds:
   esbuild: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - svgin-react@1.0.1
 
 overrides:
   typescript: 5.9.3

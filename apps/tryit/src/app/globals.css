@@ -1,0 +1,138 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Mustard theme. Primary is #fbae00 (oklch(0.804 0.168 76.8)), picked
+ * directly from a user-supplied swatch and used verbatim in both light and
+ * dark mode - it's bright enough to read the same on either background, so
+ * unlike a typical shadcn primary it pairs with dark text, not white
+ * (verified: 11.16:1 against black, 1.88:1 against white). Every other
+ * token shares its hue (76-77) at low chroma so the rest of the UI reads as
+ * one consistent warm palette instead of a neutral gray UI with a mustard
+ * accent bolted on.
+ */
+:root {
+    --radius: 0.625rem;
+    --background: oklch(0.99 0.004 77);
+    --foreground: oklch(0.2 0.02 77);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.2 0.02 77);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.2 0.02 77);
+    --primary: oklch(0.804 0.168 76.8);
+    --primary-foreground: oklch(0.2 0.03 77);
+    --secondary: oklch(0.96 0.02 77);
+    --secondary-foreground: oklch(0.35 0.06 77);
+    --muted: oklch(0.96 0.02 77);
+    --muted-foreground: oklch(0.5 0.03 77);
+    --accent: oklch(0.92 0.05 77);
+    --accent-foreground: oklch(0.35 0.06 77);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.9 0.02 77);
+    --input: oklch(0.9 0.02 77);
+    --ring: oklch(0.804 0.168 76.8);
+}
+
+/*
+ * Dark mode used to be reachable only via a manual `.dark` class that
+ * nothing in the app ever set, so a visitor with a dark system theme still
+ * got the light page. next-themes now owns applying this class - it reads
+ * the system preference (and any stored manual choice from the toggle in
+ * SiteNav) and sets `.dark` on <html> before first paint, so no separate
+ * `prefers-color-scheme` media query is needed here.
+ */
+.dark {
+    --background: oklch(0.16 0.012 77);
+    --foreground: oklch(0.96 0.01 77);
+    --card: oklch(0.21 0.014 77);
+    --card-foreground: oklch(0.96 0.01 77);
+    --popover: oklch(0.21 0.014 77);
+    --popover-foreground: oklch(0.96 0.01 77);
+    --primary: oklch(0.804 0.168 76.8);
+    --primary-foreground: oklch(0.16 0.02 77);
+    --secondary: oklch(0.28 0.017 77);
+    --secondary-foreground: oklch(0.92 0.01 77);
+    --muted: oklch(0.28 0.017 77);
+    --muted-foreground: oklch(0.68 0.02 77);
+    --accent: oklch(0.32 0.04 77);
+    --accent-foreground: oklch(0.92 0.01 77);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.804 0.168 76.8);
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans:
+        ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono:
+        ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+/*
+ * Code blocks (Bright, using the "min-light"/"min-dark" Shiki themes - see
+ * code-block.tsx). Those themes deliberately only color syntax tokens and
+ * leave everything else transparent, so the block reads as this site's own
+ * surface rather than a foreign docs-theme background dropped on top of it.
+ * Background/text color are set inline by Bright per render, so overriding
+ * them here needs !important; border-radius/font are plain classes on the
+ * wrapping element in code-block.tsx and cascade normally.
+ *
+ * Using --card rather than --muted: min-light/min-dark's token colors are
+ * tuned for contrast against a near-white/near-black editor background, and
+ * --card (pure white in light mode) matches that assumption exactly, unlike
+ * --muted, which is visibly darker and dropped some tokens below WCAG AA
+ * contrast (caught by e2e/a11y.spec.ts).
+ */
+[data-bright-theme] pre {
+    background: var(--card) !important;
+    /* Room for the copy button absolutely positioned over the block. */
+    padding-right: 3rem;
+}
+
+/*
+ * min-light's comment token (#c2c3c5) fails WCAG AA even against its own
+ * theme's white background (1.76:1, caught by e2e/a11y.spec.ts on a code
+ * sample that happened to include a "//" comment) - this is a bug in the
+ * theme itself, not something the --card swap above introduced. min-dark's
+ * comment token (#6b737c) passes, but is swapped too for consistency.
+ */
+[data-bright-theme='min-light'] span[style*='color:#c2c3c5' i] {
+    color: var(--muted-foreground) !important;
+}
+[data-bright-theme='min-dark'] span[style*='color:#6b737c' i] {
+    color: var(--muted-foreground) !important;
+}
