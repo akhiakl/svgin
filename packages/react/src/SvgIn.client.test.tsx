@@ -62,6 +62,18 @@ describe('SvgIn (client component)', () => {
         expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 24 24');
     });
 
+    it('leaves the loading placeholder once resolved, even when sanitization strips everything to an empty string', async () => {
+        // Regression test: `svg` state uses `null`, not `""`, as the loading
+        // sentinel. An empty string is a valid, already-resolved sanitized
+        // result (see fetchAndSanitizeSvgBase.test.ts), not "still loading" -
+        // mistaking the two would keep re-rendering the aria-hidden
+        // placeholder forever instead of ever reaching SvgInComponent (which
+        // renders nothing for an empty svg, same as its `fallback` default).
+        mockFetch.mockResolvedValue('');
+        const { container } = render(<SvgIn src="/empty.svg" />);
+        await waitFor(() => expect(container.querySelector('svg')).toBeNull());
+    });
+
     it('renders the provided fallback when the fetch rejects', async () => {
         mockFetch.mockRejectedValue(new Error('network error'));
         const { container } = render(<SvgIn src="/missing.svg" fallback={<span>fallback</span>} />);

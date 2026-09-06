@@ -163,11 +163,11 @@ export const SvgIn: React.FC<SvgInProps> = (props) => {
     // beforeInjection: a hook for imperative DOM work the declarative props
     // above don't cover.
     useEffect(() => {
-        if (svg && svgRef.current) onMountRef.current?.(svgRef.current);
+        if (svg !== null && svgRef.current) onMountRef.current?.(svgRef.current);
     }, [svg]);
 
     if (error) return fallback ?? null;
-    if (!svg) {
+    if (svg === null) {
         if (loadingFallback !== undefined) return loadingFallback;
         return (
             <svg
