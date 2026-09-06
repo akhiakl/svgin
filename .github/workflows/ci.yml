@@ -5,7 +5,10 @@ name: CI
 # package graph apply. The PR size/coverage report job from svgin-react
 # depends on scripts/check-bundle-size.mjs and scripts/pr-report.mjs, which
 # don't exist yet in this stub-only repo, deferred until packages have real
-# size/coverage tooling to report on.
+# size/coverage tooling to report on. The tryit-e2e job is ported from
+# akhiakl/svgin-react-tryit's own ci.yml, scoped to apps/tryit via
+# `pnpm --filter svgin-tryit` since it's the only workspace member with
+# Playwright e2e tests.
 
 on:
   pull_request:
@@ -108,3 +111,29 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --prod || echo "::warning::pnpm audit reported issues - review before releasing"
+
+  tryit-e2e:
+    name: apps/tryit E2E (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter svgin-tryit exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm --filter svgin-tryit exec playwright test --project=${{ matrix.browser }}
+        env:
+          CI: true
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tryit-playwright-report-${{ matrix.browser }}
+          path: apps/tryit/playwright-report
+          retention-days: 14

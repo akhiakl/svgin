@@ -29,9 +29,14 @@ boundaries, or tooling decisions it describes.
   current published `akhiakl/svgin-react` feature-for-feature at minimum (same export paths: `/client`,
   `/server`, `/core`, `/suspense`, `/shadow`, `/all`; same sanitization guarantees). Changes on top of
   that should be improvements, not regressions.
-- `apps/tryit` is a Next.js demo app for trying `svgin-react`/`svgin-element` live. It is
-  **permanently private**, like `packages/core`: never published, never a release-please component, no
-  npm name.
+- `apps/tryit` (npm name `svgin-tryit`) is the real, migrated `akhiakl/svgin-react-tryit` demo app: one
+  route per `svgin-react` feature (Inspector, RSC fetch, Suspense, Provider, lazy loading, native
+  props, Shadow DOM), with its own Vitest unit tests and Playwright e2e/a11y suite. It installs
+  `svgin-react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
+  the whole point of the demo is to show what's actually published, not the in-progress workspace
+  version. It's **permanently private**, like `packages/core`: never published, never a
+  release-please component, no npm name. `svgin-element` demos aren't added yet; that's for when
+  `<svg-in>` has a real implementation.
 
 ## Build & task pipeline
 
@@ -46,13 +51,23 @@ boundaries, or tooling decisions it describes.
   to a file that most of them don't actually use differently. Every package imports/extends from these
   instead of a relative-path root file. Add a new shared config the same way if one becomes needed
   (e.g. a `vitest` preset, once packages need divergent test setups; plain defaults are enough for now,
-  so no `svgin-vitest-config` package exists yet).
-- **Dependency policy: keep everything on latest, with one pinned exception.** Every package in this
-  repo tracks the newest published version of its dependencies. The sole exception is `typescript`,
-  pinned to `5.9.3` (not the current `7.0.x`) in every package that declares it: TypeScript 7's new API
-  isn't yet supported by `tsup`'s DTS bundler (`rollup-plugin-dts` throws) or by `typescript-eslint`.
-  Re-run `pnpm up --latest -r` and try bumping `typescript` back to latest whenever revisiting
-  dependencies; drop this pin once both tools support TS 7.
+  so no `svgin-vitest-config` package exists yet). **`apps/tryit` is the one exception**: it uses its
+  own `eslint-config-next`-based config and `svgin-typescript-config/nextjs.json`, not
+  `svgin-eslint-config`, since a Next.js app needs framework-specific lint rules
+  (`react-hooks`/`core-web-vitals`/`next/link`) that the library preset doesn't provide.
+- **Dependency policy: keep everything on latest, with pinned exceptions where something else lacks
+  support.** Every package in this repo tracks the newest published version of its dependencies by
+  default; pin only when a real incompatibility forces it, and drop the pin once that's fixed
+  upstream. Two exceptions exist today:
+  - `typescript`, pinned to `5.9.3` (not the current `7.0.x`) in every package that declares it:
+    TypeScript 7's new API isn't yet supported by `tsup`'s DTS bundler (`rollup-plugin-dts` throws) or
+    by `typescript-eslint`.
+  - `apps/tryit`'s `eslint`, pinned to `^9.9.1` (not the monorepo's usual `^10.x`): `eslint-plugin-react`
+    7.37.5 (pulled in transitively by `eslint-config-next`) throws
+    (`contextOrFilename.getFilename is not a function`) under ESLint 10's flat-config context when
+    linting non-component files like `e2e/*.spec.ts`. Only `apps/tryit` is affected; the library
+    packages' own `svgin-eslint-config` stays on ESLint 10 since it doesn't hit this code path.
+  Re-run `pnpm up --latest -r` periodically and try bumping each pinned dependency back to latest.
 - `packages/element` builds `<svg-in>` on **vanilla native Custom Elements**
   (`class SvgIn extends HTMLElement`), not Lit, not Stencil. Zero runtime dependency, smallest bundle,
   same tsup pipeline as the other two packages. See the `web-component-design` skill when implementing
@@ -103,6 +118,5 @@ boundaries, or tooling decisions it describes.
 - `package-publishing`: npm publishing conventions for when `svgin-react`/`svgin-element` go public.
 - `deploy-to-vercel`, `next-dev-loop`, `next-cache-components-adoption`,
   `next-cache-components-optimizer`, `next-partial-prefetching-adoption`, `vercel-optimize`,
-  `vercel-react-view-transitions`: all for `apps/tryit` once it's more than a stub (deployment,
-  dev-loop verification, caching/prefetching adoption, cost/perf optimization, and view-transition
-  demos).
+  `vercel-react-view-transitions`: for `apps/tryit`'s real Next.js app (deployment, dev-loop
+  verification, caching/prefetching adoption, cost/perf optimization, and view-transition demos).

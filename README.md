@@ -2,8 +2,9 @@
 
 Securely fetch and inline SVGs from URLs, sanitized by default.
 
-This is a Turborepo-managed pnpm monorepo. It currently holds tooling and workspace scaffolding;
-real implementations are ported in later PRs (see each package's README for status).
+This is a Turborepo-managed pnpm monorepo. `packages/core`, `packages/react`, and `packages/element`
+are tooling scaffolding so far; real implementations are ported in later PRs (see each package's
+README for status). `apps/tryit` is real: it's the migrated `akhiakl/svgin-react-tryit` demo app.
 
 ## Packages
 
@@ -12,7 +13,7 @@ real implementations are ported in later PRs (see each package's README for stat
 | [`packages/core`](packages/core) | `svgin-core` | Never (private) | Shared fetch/sanitize/cache internals |
 | [`packages/react`](packages/react) | `svgin-react` | Yes | React components for inlining SVGs |
 | [`packages/element`](packages/element) | `svgin-element` | Yes | Framework-agnostic `<svg-in>` custom element |
-| [`apps/tryit`](apps/tryit) | n/a | Never (private) | Next.js demo app for `svgin-react`/`svgin-element` |
+| [`apps/tryit`](apps/tryit) | n/a | Never (private) | Live `svgin-react` demo app (Next.js), deployed on Vercel |
 
 Shared tooling config lives in its own workspace packages rather than a root file, per
 [Turborepo's convention](https://turborepo.dev) (a root config isn't tracked by Turborepo's task
