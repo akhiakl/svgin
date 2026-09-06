@@ -5,7 +5,7 @@ Shared ESLint flat configs for the svgin monorepo, following
 root `eslint.config.mjs` referenced implicitly by every package, so Turborepo's task graph tracks it as
 a proper dependency.
 
-**Internal package — never published to npm.**
+**Internal package, never published to npm.**
 
 ## Usage
 

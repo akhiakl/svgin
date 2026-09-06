@@ -6,7 +6,7 @@ import { defineConfig } from 'tsup';
  * output, generated .d.ts files, clean output dir on every build.
  *
  * Output extensions are explicit (.mjs / .cjs) rather than left to tsup's
- * type:module-based default (.js for ESM) — that default is correct today,
+ * type:module-based default (.js for ESM), that default is correct today,
  * but making it explicit means package.json's exports map can't silently
  * drift from what's actually emitted if that default ever changes.
  */

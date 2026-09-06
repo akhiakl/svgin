@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 export const metadata = {
-    title: 'svgin — try it',
+    title: 'svgin: try it',
     description: 'Live demo app for svgin-react and svgin-element.',
 };
 

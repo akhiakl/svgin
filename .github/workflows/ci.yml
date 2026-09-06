@@ -4,7 +4,7 @@ name: CI
 # `pnpm run <task>` becomes `pnpm turbo run <task>` so Turborepo's caching and
 # package graph apply. The PR size/coverage report job from svgin-react
 # depends on scripts/check-bundle-size.mjs and scripts/pr-report.mjs, which
-# don't exist yet in this stub-only repo — deferred until packages have real
+# don't exist yet in this stub-only repo, deferred until packages have real
 # size/coverage tooling to report on.
 
 on:

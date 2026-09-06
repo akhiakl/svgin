@@ -6,7 +6,7 @@ root `tsconfig.base.json` referenced by relative path, so Turborepo's task graph
 dependency (a change here correctly invalidates only the packages that depend on it, via
 `workspace:*`, rather than a plain file outside the graph).
 
-**Internal package — never published to npm.**
+**Internal package, never published to npm.**
 
 ## Usage
 
@@ -20,6 +20,6 @@ dependency (a change here correctly invalidates only the packages that depend on
 
 - `react.json` extends `base.json` and adds `jsx`/`types` for library packages with JSX
   (`packages/react`).
-- `nextjs.json` is a separate preset (not extending `base.json`) for Next.js apps (`apps/tryit`) —
+- `nextjs.json` is a separate preset (not extending `base.json`) for Next.js apps (`apps/tryit`).
   Next.js needs `noEmit`, `jsx: "preserve"`, and its own TS plugin, which don't fit a library's
   declaration-emitting build config.

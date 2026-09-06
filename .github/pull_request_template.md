@@ -21,7 +21,7 @@
 - [ ] For anything touching sanitization/caching: I considered whether this
       could weaken sanitization guarantees or leak an unsanitized/custom
       result across callers via the shared cache
-- [ ] Commit type/scope accurately reflects the change (`fix`, `feat`, etc.) —
+- [ ] Commit type/scope accurately reflects the change (`fix`, `feat`, etc.):
       release-please derives the version bump and changelog straight from
       conventional commits, no separate release step to remember
 - [ ] If this changes `svgin-react` or `svgin-element` behavior, `apps/tryit`
