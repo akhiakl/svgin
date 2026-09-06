@@ -47,6 +47,12 @@ boundaries, or tooling decisions it describes.
   instead of a relative-path root file. Add a new shared config the same way if one becomes needed
   (e.g. a `vitest` preset, once packages need divergent test setups; plain defaults are enough for now,
   so no `svgin-vitest-config` package exists yet).
+- **Dependency policy: keep everything on latest, with one pinned exception.** Every package in this
+  repo tracks the newest published version of its dependencies. The sole exception is `typescript`,
+  pinned to `5.9.3` (not the current `7.0.x`) in every package that declares it: TypeScript 7's new API
+  isn't yet supported by `tsup`'s DTS bundler (`rollup-plugin-dts` throws) or by `typescript-eslint`.
+  Re-run `pnpm up --latest -r` and try bumping `typescript` back to latest whenever revisiting
+  dependencies; drop this pin once both tools support TS 7.
 - `packages/element` builds `<svg-in>` on **vanilla native Custom Elements**
   (`class SvgIn extends HTMLElement`), not Lit, not Stencil. Zero runtime dependency, smallest bundle,
   same tsup pipeline as the other two packages. See the `web-component-design` skill when implementing

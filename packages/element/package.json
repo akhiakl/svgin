@@ -20,7 +20,9 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "lint": "eslint .",
@@ -35,8 +37,8 @@
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
-    "tsup": "^8.3.5",
-    "typescript": "^5.9.3",
-    "vitest": "^3.0.0"
+    "tsup": "^8.5.1",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.0"
   }
 }

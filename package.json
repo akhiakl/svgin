@@ -5,7 +5,7 @@
   "description": "Monorepo for svgin: securely fetch and inline SVGs from URLs, sanitized by default.",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
   },
   "scripts": {
     "dev": "turbo run dev",
