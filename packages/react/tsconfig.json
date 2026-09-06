@@ -1,0 +1,4 @@
+{
+  "extends": "svgin-typescript-config/react.json",
+  "include": ["src"]
+}
