@@ -1,0 +1,30 @@
+{
+  "name": "svgin-react",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Securely fetch and inline SVGs from URLs as React components, sanitized by default, with client and server support.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": ">=19.1.0"
+  },
+  "dependencies": {
+    "svgin-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "react": "^19.1.0",
+    "tsup": "^8.3.5",
+    "vitest": "^3.0.0"
+  }
+}

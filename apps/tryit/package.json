@@ -1,0 +1,25 @@
+{
+  "name": "svgin-tryit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js demo app for trying svgin-react and svgin-element live. Never published.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "svgin-react": "workspace:*",
+    "svgin-element": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "svgin-element",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Framework-agnostic <svg-in> custom element: securely fetch and inline SVGs from URLs, sanitized by default.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "svgin-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "vitest": "^3.0.0"
+  }
+}
