@@ -1,15 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearSvgCache, getCachedSvg, setCachedSvg } from 'svgin-core/svgCache';
 
-// Mock the server sanitizer so tests don't load jsdom
-vi.mock('svgin-core/sanitizeServer', () => ({
+// The test environment is jsdom, which defines `window`/`window.document` -
+// same as a real browser as far as preload.ts's own runtime check can tell -
+// so this is the sanitizer it actually picks here, not sanitizeServer.
+vi.mock('svgin-core/sanitizeClient', () => ({
     sanitizeSvg: vi.fn().mockResolvedValue('<svg>sanitized</svg>'),
+}));
+vi.mock('svgin-core/sanitizeServer', () => ({
+    sanitizeSvg: vi.fn().mockResolvedValue('<svg>sanitized (server)</svg>'),
 }));
 
 import { preloadSvg } from './preload';
-import { sanitizeSvg } from 'svgin-core/sanitizeServer';
+import { sanitizeSvg as sanitizeSvgClient } from 'svgin-core/sanitizeClient';
+import { sanitizeSvg as sanitizeSvgServer } from 'svgin-core/sanitizeServer';
 
-const mockSanitize = vi.mocked(sanitizeSvg);
+const mockSanitize = vi.mocked(sanitizeSvgClient);
+const mockSanitizeServer = vi.mocked(sanitizeSvgServer);
 
 function mockFetchOk(body: string, contentType?: string) {
     vi.stubGlobal(
@@ -37,6 +44,23 @@ describe('preloadSvg', () => {
         await preloadSvg('https://example.com/preload-default.svg');
         expect(getCachedSvg('https://example.com/preload-default.svg')).toBe('<svg>sanitized</svg>');
         expect(mockSanitize).toHaveBeenCalledWith('<svg><path/></svg>');
+    });
+
+    it('picks the server sanitizer when window is not defined (Node-like environment)', async () => {
+        // Regression test: preloadSvg must not hard-code the server (jsdom-
+        // based) sanitizer regardless of environment - it's exported from
+        // the environment-agnostic 'svgin-react/core' entry point.
+        const originalWindow = globalThis.window;
+        // @ts-expect-error deleting a global that TS types as always-present in this jsdom test environment
+        delete globalThis.window;
+        try {
+            mockFetchOk('<svg><path/></svg>');
+            await preloadSvg('https://example.com/preload-server.svg');
+            expect(mockSanitizeServer).toHaveBeenCalledWith('<svg><path/></svg>');
+            expect(mockSanitize).not.toHaveBeenCalled();
+        } finally {
+            globalThis.window = originalWindow;
+        }
     });
 
     it('skips the fetch entirely when the URL is already cached in default mode', async () => {

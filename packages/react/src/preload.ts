@@ -1,5 +1,5 @@
 import { getCachedSvg, setCachedSvg } from 'svgin-core/svgCache';
-import { SvgInProps } from './types';
+import type { SvgInProps } from './types';
 import { setUniversalCache } from 'svgin-core/universalCache';
 
 async function preloadSvgImpl(
@@ -42,10 +42,18 @@ async function preloadSvgImpl(
         return;
     }
 
-    // Default sanitizer: lazily import the server sanitizer (jsdom + DOMPurify).
-    // On the client, consumers should pass a `sanitizeFn` using `dompurify`
-    // directly to avoid bundling jsdom.
-    const { sanitizeSvg } = await import('svgin-core/sanitizeServer');
+    // Default sanitizer: `preloadSvg` is exported from the environment-
+    // agnostic 'svgin-react/core' entry point and documented as working in
+    // either environment, so it can't hard-code the server (jsdom-based)
+    // sanitizer - that would drag jsdom into a browser bundle (or just fail,
+    // since jsdom depends on Node builtins) whenever preloadSvg runs
+    // client-side. Picked at call time, not module scope, so a jsdom-based
+    // test environment (which does define `window`) is still detected
+    // correctly as "browser-like" and gets the lighter client sanitizer.
+    const isBrowserLike = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+    const { sanitizeSvg } = isBrowserLike
+        ? await import('svgin-core/sanitizeClient')
+        : await import('svgin-core/sanitizeServer');
     const sanitized = await sanitizeSvg(svgText);
     // Guarded by usesSharedCache itself, not by which branch above returned
     // early: disableSanitization/sanitizeFn both return before reaching
