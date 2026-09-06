@@ -30,7 +30,11 @@ name: CI
 # on every single CI run. Deliberately the GitHub Actions cache API, not
 # Vercel Remote Caching (no TURBO_TOKEN/TURBO_TEAM secret to provision) -
 # see #24 if cross-fork or cross-repo sharing is ever needed, which this
-# repo-scoped cache doesn't provide.
+# repo-scoped cache doesn't provide. Keys use the PR head SHA on
+# pull_request events (`github.sha` there is the synthetic, ephemeral merge
+# commit, which changes whenever the base branch moves - keying on it would
+# throw away a cache on every base-branch update for no reason) and fall
+# back to `github.sha` itself on push, where it already is the real commit.
 
 on:
   pull_request:
@@ -65,7 +69,7 @@ jobs:
             .turbo
             packages/*/.turbo
             apps/*/.turbo
-          key: turbo-lint-${{ github.sha }}
+          key: turbo-lint-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-lint-
       - run: pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
@@ -104,7 +108,7 @@ jobs:
             .turbo
             packages/*/.turbo
             apps/*/.turbo
-          key: turbo-typecheck-${{ github.sha }}
+          key: turbo-typecheck-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-typecheck-
       - run: pnpm turbo run typecheck ${{ github.event_name == 'pull_request' && '--affected' || '' }}
       - run: pnpm turbo run typecheck:test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
@@ -132,7 +136,7 @@ jobs:
             .turbo
             packages/*/.turbo
             apps/*/.turbo
-          key: turbo-test-node${{ matrix.node-version }}-${{ github.sha }}
+          key: turbo-test-node${{ matrix.node-version }}-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-test-node${{ matrix.node-version }}-
       - run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
@@ -155,7 +159,7 @@ jobs:
             .turbo
             packages/*/.turbo
             apps/*/.turbo
-          key: turbo-build-${{ github.sha }}
+          key: turbo-build-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-build-
       - run: pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
       - name: Check bundle size budget
