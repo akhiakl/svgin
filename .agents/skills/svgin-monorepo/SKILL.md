@@ -34,9 +34,10 @@ boundaries, or tooling decisions it describes.
   props, Shadow DOM), with its own Vitest unit tests and Playwright e2e/a11y suite. It installs
   `svgin-react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
   the whole point of the demo is to show what's actually published, not the in-progress workspace
-  version. It's **permanently private**, like `packages/core`: never published, never a
-  release-please component, no npm name. `svgin-element` demos aren't added yet; that's for when
-  `<svg-in>` has a real implementation.
+  version. It's **permanently private**, like `packages/core`: `package.json` has a name
+  (`svgin-tryit`) for local workspace/tooling purposes, but it's never published to npm and never a
+  release-please component. `svgin-element` demos aren't added yet; that's for when `<svg-in>` has a
+  real implementation.
 
 ## Build & task pipeline
 

@@ -5,7 +5,7 @@ import { SiteNav } from '@/components/site-nav';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 
 const DESCRIPTION =
-    'Live demos of svgin-react: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, and lazy loading.';
+    'Live demos of svgin-react: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG/DOM prop forwarding, and SvgInShadow.';
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
