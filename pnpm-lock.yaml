@@ -195,9 +195,6 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.7(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.1.1
-        version: 6.1.1(vite@8.2.2(@types/node@26.4.1)(esbuild@0.27.7)(jiti@2.6.1))
       '@vitest/coverage-v8':
         specifier: ^5.0.0
         version: 5.0.0(vitest@5.0.0)
@@ -210,6 +207,9 @@ importers:
       svgin-typescript-config:
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      svgin-vitest-config:
+        specifier: workspace:*
+        version: link:../../packages/vitest-config
       tailwindcss:
         specifier: ^4
         version: 4.3.3
@@ -263,6 +263,9 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^5.0.0
+        version: 5.0.0(vitest@5.0.0)
       eslint:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.6.1)(supports-color@7.2.0)
@@ -275,6 +278,9 @@ importers:
       svgin-typescript-config:
         specifier: workspace:*
         version: link:../typescript-config
+      svgin-vitest-config:
+        specifier: workspace:*
+        version: link:../vitest-config
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(supports-color@7.2.0)(typescript@5.9.3)

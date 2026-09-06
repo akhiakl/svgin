@@ -1,23 +1,9 @@
-import { fileURLToPath } from 'node:url';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { defineNextVitestConfig } from 'svgin-vitest-config/next';
 
-export default defineConfig({
-    plugins: [react()],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url)),
-        },
-    },
+export default defineNextVitestConfig({
     test: {
-        environment: 'jsdom',
-        globals: true,
         setupFiles: ['./test/setup.ts'],
-        include: ['test/**/*.test.{ts,tsx}'],
         coverage: {
-            provider: 'v8',
-            reporter: ['text', 'lcov'],
-            include: ['src/**/*.{ts,tsx}'],
             exclude: ['src/app/**/layout.tsx', 'src/app/**/page.tsx'],
         },
     },
