@@ -15,8 +15,6 @@
     "typecheck:test": "turbo run typecheck:test",
     "test": "turbo run test",
     "size": "turbo run size",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
     "commitlint": "commitlint",
     "prepare": "husky"
   },
@@ -30,7 +28,6 @@
   "packageManager": "pnpm@12.3.4",
   "type": "module",
   "devDependencies": {
-    "@changesets/cli": "^3.0.2",
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
     "@eslint/js": "^10.0.1",

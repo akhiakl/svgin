@@ -30,10 +30,11 @@ across all workspace packages/apps in dependency order, with caching.
 
 ## Versioning & releases
 
-This repo uses [Changesets](https://github.com/changesets/changesets), not release-please (the tool
-`svgin-react`'s standalone predecessor repo uses) — see the `svgin-monorepo` skill under
-[`.claude/skills`](.claude/skills) for why. Run `pnpm changeset` to record a change intended for a
-release.
+This repo uses [release-please](https://github.com/googleapis/release-please), matching
+`svgin-react`. Versions and changelogs are derived automatically from
+[Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint — so there's no
+separate manual release step. See the `svgin-monorepo` skill under [`.claude/skills`](.claude/skills)
+for the full rationale and its one known limitation.
 
 ## License
 

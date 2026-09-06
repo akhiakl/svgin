@@ -3,8 +3,8 @@ name: svgin-monorepo
 description: >
   Conventions for the svgin monorepo — package/app boundaries, build/release
   pipeline, and tooling choices. Use when adding a package or app, changing
-  turbo.json/Changesets config, cutting a release, or touching packages/core,
-  packages/react, packages/element, or apps/tryit.
+  turbo.json/release-please config, cutting a release, or touching
+  packages/core, packages/react, packages/element, or apps/tryit.
 ---
 
 # svgin monorepo conventions
@@ -15,7 +15,8 @@ pipeline, package boundaries, or tooling decisions it describes.
 ## Package boundaries
 
 - `packages/core` (npm name `svgin-core`) is **permanently private** — never
-  published, never given a Changesets release. It holds the shared
+  published, never a release-please component (deliberately absent from
+  `release-please-config.json`'s `packages` map). It holds the shared
   fetch/sanitize/cache internals that `packages/react` and `packages/element`
   both consume over a `workspace:*` dependency. It is not an independent
   public API.
@@ -34,7 +35,7 @@ pipeline, package boundaries, or tooling decisions it describes.
   Changes on top of that should be improvements, not regressions.
 - `apps/tryit` is a Next.js demo app for trying `svgin-react`/`svgin-element`
   live — **permanently private**, like `packages/core`: never published,
-  never a Changesets release component, no npm name.
+  never a release-please component, no npm name.
 
 ## Build & task pipeline
 
@@ -53,17 +54,31 @@ pipeline, package boundaries, or tooling decisions it describes.
 
 ## Release & publishing
 
-- Versioning/publishing uses **Changesets**, not release-please (which
-  svgin-react, the single-package sibling repo, uses). Changesets fits a
-  monorepo with an internal shared dependency better: it skips
-  `"private": true` packages automatically (no exclusion list needed for
-  `packages/core`), and it auto-bumps a dependent's version when a
-  `workspace:*` dependency it consumes (`svgin-core`) changes.
-- `.changeset/config.json`'s `access` stays `"restricted"` until the PR that
-  actually publishes `packages/react`/`packages/element` — then flip it to
-  `"public"`.
-- See the `package-publishing` skill for npm publishing conventions once that
-  PR is underway.
+- Versioning/publishing uses **release-please** (manifest mode), matching
+  `svgin-react`, the single-package sibling repo. This was a deliberate
+  choice over Changesets: this repo already enforces Conventional Commits via
+  commitlint, and release-please derives the version bump + changelog
+  entirely from commit messages — no separate manual step (Changesets
+  requires someone to run `pnpm changeset` and pick a bump type on every PR
+  that should ship; skipping that silently means "no release," not "wrong
+  version"). Given "no manual version bumping" as the hard requirement, that
+  makes release-please the better fit here, even though Changesets is the
+  more commonly recommended default for monorepos in general.
+- `release-please-config.json`'s `packages` map lists only `packages/react`
+  and `packages/element` — `packages/core` and `apps/tryit` are deliberately
+  absent, so they're never versioned or released. No `"private"` flag check
+  needed; simply not being in the map is the exclusion.
+- **Known limitation, by design, not yet worked around:** release-please
+  determines which package(s) a commit affects by which package directory the
+  commit's changed files touch. A commit that touches only
+  `packages/core/**` won't by itself trigger a release for `packages/react`
+  or `packages/element`, even though both depend on it. Until this is
+  automated, a PR that changes shared `svgin-core` logic in a way that should
+  ship should also touch something under `packages/react/**` or
+  `packages/element/**` (even a trivial version-bump-triggering change, or
+  scope the commit accordingly) so release-please picks it up.
+- See the `package-publishing` skill for npm publishing conventions once
+  `packages/react`/`packages/element` actually start publishing.
 - **Every release that changes `svgin-react` or `svgin-element` must update
   `apps/tryit` in the same PR** (bump its dependency on the released package,
   and touch whatever demo surface exercises the change) — the tryit app is
