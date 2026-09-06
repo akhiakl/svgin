@@ -1,1 +1,3 @@
-export { baseConfig as default } from 'svgin-tsup-config';
+import { defineTsupConfig } from 'svgin-tsup-config';
+
+export default defineTsupConfig();

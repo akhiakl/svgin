@@ -6,22 +6,9 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    "./*": {
-      "import": {
-        "types": "./dist/*.d.ts",
-        "default": "./dist/*.mjs"
-      },
-      "require": {
-        "types": "./dist/*.d.cts",
-        "default": "./dist/*.cjs"
-      }
-    }
+    "./*": "./src/*.ts"
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsup",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -36,7 +23,7 @@
     "eslint": "^10.10.0",
     "svgin-eslint-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
-    "tsup": "^8.5.1",
+    "svgin-vitest-config": "workspace:*",
     "typescript": "5.9.3",
     "vitest": "^5.0.0"
   }

@@ -1,4 +1,7 @@
 {
   "extends": "svgin-typescript-config/react.json",
+  "compilerOptions": {
+    "rootDir": "src"
+  },
   "include": ["src"]
 }

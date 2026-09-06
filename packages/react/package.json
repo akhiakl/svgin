@@ -5,18 +5,83 @@
   "description": "Securely fetch and inline SVGs from URLs as React components, sanitized by default, with client and server support.",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "react-server": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.mjs"
+      },
+      "react-client": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.mjs"
+      },
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.mjs"
       },
       "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
+    },
+    "./client": {
+      "import": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.mjs"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.mjs"
+      },
+      "require": {
+        "types": "./dist/server.d.cts",
+        "default": "./dist/server.cjs"
+      }
+    },
+    "./core": {
+      "import": {
+        "types": "./dist/core.d.ts",
+        "default": "./dist/core.mjs"
+      },
+      "require": {
+        "types": "./dist/core.d.cts",
+        "default": "./dist/core.cjs"
+      }
+    },
+    "./suspense": {
+      "import": {
+        "types": "./dist/suspense.d.ts",
+        "default": "./dist/suspense.mjs"
+      },
+      "require": {
+        "types": "./dist/suspense.d.cts",
+        "default": "./dist/suspense.cjs"
+      }
+    },
+    "./shadow": {
+      "import": {
+        "types": "./dist/shadow.d.ts",
+        "default": "./dist/shadow.mjs"
+      },
+      "require": {
+        "types": "./dist/shadow.d.cts",
+        "default": "./dist/shadow.cjs"
+      }
+    },
+    "./all": {
+      "import": {
+        "types": "./dist/all.d.ts",
+        "default": "./dist/all.mjs"
+      },
+      "require": {
+        "types": "./dist/all.d.cts",
+        "default": "./dist/all.cjs"
       }
     }
   },
@@ -27,23 +92,40 @@
     "build": "tsup",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "react": ">=19.1.0"
+    "react": ">=19.1.0",
+    "dompurify": "^3.4.14",
+    "jsdom": "^26.1.0 || ^27.0.0 || ^28.0.0 || ^29.0.0 || ^30.0.0"
+  },
+  "peerDependenciesMeta": {
+    "dompurify": {
+      "optional": true
+    },
+    "jsdom": {
+      "optional": true
+    }
   },
   "dependencies": {
     "svgin-core": "workspace:*"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^19.2.18",
     "eslint": "^10.10.0",
     "react": "^19.2.8",
+    "react-dom": "19.2.8",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
+    "svgin-vitest-config": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "5.9.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.0"
   }
 }
