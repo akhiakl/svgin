@@ -1,6 +1,18 @@
-// TODO: implement the <svg-in> custom element on vanilla native Custom
-// Elements (class SvgIn extends HTMLElement), no Lit, no Stencil, wrapping
-// svgin-core's fetch/sanitize/cache logic. See the svgin-monorepo and
-// web-component-design skills. Update this package's docs in the same PR/
-// build that changes its public API or behavior.
-export const placeholder = 'svgin-element' as const;
+import { SvgIn } from './SvgIn';
+
+export { SvgIn } from './SvgIn';
+export type { SvgInErrorEvent, SvgInErrorEventDetail, SvgInLoadEvent, SvgInLoadEventDetail } from './SvgIn';
+
+// Guards against double-registration: a page that loads this module more
+// than once (two separate bundles, an HMR reload during development, a
+// duplicate <script> tag) would otherwise hit `customElements.define`'s own
+// "already defined" DOMException on the second call.
+if (!customElements.get('svg-in')) {
+    customElements.define('svg-in', SvgIn);
+}
+
+declare global {
+    interface HTMLElementTagNameMap {
+        'svg-in': SvgIn;
+    }
+}

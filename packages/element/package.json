@@ -28,6 +28,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "size": "node ../../scripts/check-bundle-size.mjs"
   },
@@ -35,6 +36,8 @@
     "svgin-core": "workspace:*"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@types/node": "^26.4.1",
     "eslint": "^10.10.0",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
