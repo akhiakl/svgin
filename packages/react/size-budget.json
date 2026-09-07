@@ -1,8 +1,8 @@
 {
-  "client.cjs": 2.0,
-  "server.cjs": 1.5,
-  "core.cjs": 1.2,
-  "suspense.cjs": 1.75,
-  "shadow.cjs": 1.5,
-  "all.cjs": 3.5
+  "client.cjs": 3.5,
+  "server.cjs": 3.0,
+  "core.cjs": 1.75,
+  "suspense.cjs": 3.0,
+  "shadow.cjs": 3.25,
+  "all.cjs": 5.0
 }

@@ -19,13 +19,18 @@ output (the worst case for size - ESM is what bundlers tree-shake most aggressiv
 
 | Entry point | Budget (gzip) |
 | --- | --- |
-| `/client` | 2.0 KB |
-| `/server` | 1.5 KB |
-| `/core` | 1.2 KB |
-| `/suspense` | 1.75 KB |
-| `/shadow` | 1.5 KB |
-| `/all` | 3.5 KB |
+| `/client` | 3.5 KB |
+| `/server` | 3.0 KB |
+| `/core` | 1.75 KB |
+| `/suspense` | 3.0 KB |
+| `/shadow` | 3.25 KB |
+| `/all` | 5.0 KB |
 
 Bump a budget only with a comment (in the PR, since `size-budget.json` itself can't hold one) explaining
 why the change legitimately needs the extra size - this is meant to catch accidental bloat, not to
-block every change.
+block every change. These specific numbers jumped once (see [#15](https://github.com/akhiakl/svgin/issues/15)'s
+parity check): the original budgets in #20 were measured against a build that silently never bundled
+`svgin-core` at all (tsup/esbuild auto-externalizes anything listed in this package's own
+`dependencies`, `svgin-core` included, unless told `noExternal` - see `tsup.config.ts`'s own comment).
+That build would have been broken for every real consumer (`svgin-core` is never published to npm) -
+these are the real, honest numbers for a build that actually works.
