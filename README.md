@@ -17,8 +17,8 @@ app, deployed at [svgin-tryit.vercel.app](https://svgin-tryit.vercel.app).
 | Path | npm name | Publishes? | What it is |
 | --- | --- | --- | --- |
 | [`packages/core`](packages/core) | `svgin-core` | Never (private) | Shared fetch/sanitize/cache internals `svgin-react` and `svgin-element` are both built on |
-| [`packages/react`](packages/react) | `svgin-react` | Yes | React components for inlining SVGs |
-| [`packages/element`](packages/element) | `svgin-element` | Yes | Framework-agnostic `<svg-in>` custom element |
+| [`packages/react`](packages/react) | `svgin-react` | Not yet from here ([#19](https://github.com/akhiakl/svgin/issues/19)) | React components for inlining SVGs |
+| [`packages/element`](packages/element) | `svgin-element` | Not yet ([#19](https://github.com/akhiakl/svgin/issues/19)) | Framework-agnostic `<svg-in>` custom element |
 | [`apps/tryit`](apps/tryit) | n/a | Never (private) | Live demo app (Next.js) for both packages, deployed on Vercel |
 
 Shared tooling config lives in its own workspace packages rather than a root file, per

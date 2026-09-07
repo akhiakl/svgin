@@ -4,8 +4,10 @@ Framework-agnostic `<svg-in>` custom element: securely fetch and inline SVGs fro
 default.
 
 Built on **vanilla native Custom Elements** (`class SvgIn extends HTMLElement`), no Lit, no Stencil,
-for zero runtime dependency and the smallest possible bundle, wrapping [`svgin-core`](../core)'s
+for zero *framework* dependency and the smallest possible bundle, wrapping [`svgin-core`](../core)'s
 fetch/sanitize/cache logic - the same internals [`svgin-react`](../react)'s `<SvgIn />` is built on.
+The default sanitizer still needs [DOMPurify](https://github.com/cure53/DOMPurify) (an optional peer
+dependency, same as `svgin-react`), unless you pass your own `sanitizeFn` or `disableSanitization`.
 
 > **Status:** real implementation (see [#18](https://github.com/akhiakl/svgin/issues/18)), demoed live
 > in `apps/tryit` at [`/element`](https://svgin-tryit.vercel.app/element) (see
