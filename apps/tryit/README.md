@@ -1,6 +1,8 @@
-# svgin-react: try it
+# svgin: try it
 
-Live demos of [`svgin-react`](https://github.com/akhiakl/svgin-react), installed as a real npm dependency (not imported from its source), each one exercising a different real feature of the library. This app lives at `apps/tryit` in the [`svgin`](../../README.md) monorepo; see [AGENTS.md](AGENTS.md) for how it fits alongside `packages/react`/`packages/element`.
+Live demos of [`svgin-react`](https://github.com/akhiakl/svgin-react) (installed as a real npm dependency, not imported from its source) and `svgin-element`'s `<svg-in>` custom element, each route exercising a different real feature. This app lives at `apps/tryit` in the [`svgin`](../../README.md) monorepo; see [AGENTS.md](AGENTS.md) for how it fits alongside `packages/react`/`packages/element` (including why `svgin-element` is the one temporary exception to the "real npm dependency" rule above, until its own first publish).
+
+The live site itself is still titled "svgin-react: Try it" in its own nav/metadata (`src/lib/site.ts`) - that's a separate, deployed branding decision, unrelated to this file's own heading.
 
 ## What svgin-react is
 
@@ -35,6 +37,7 @@ Full API reference (props, `<SvgInSuspense />`, `<SvgInProvider />`, `preloadSvg
 | `/lazy`      | `<SvgIn loading="lazy" />` deferring fetch/sanitize via `IntersectionObserver`.             |
 | `/native-props` | Standard SVG/DOM props (`style`, `onClick`, `role`, `tabIndex`, `data-*`) forwarded onto the rendered `<svg>`. |
 | `/shadow`    | `<SvgInShadow />` encapsulating style in a shadow root, immune to page-wide CSS in either direction. |
+| `/element`   | `<svg-in>`, `svgin-element`'s framework-agnostic Custom Element - no React wrapper, plain HTML attributes and `CustomEvent`s. |
 
 ## Getting started
 
