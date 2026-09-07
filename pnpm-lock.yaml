@@ -161,6 +161,9 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      svgin-element:
+        specifier: workspace:*
+        version: link:../../packages/element
       svgin-react:
         specifier: ^1.0.1
         version: 1.0.1(dompurify@3.4.14)(jsdom@30.0.1)(react@19.2.8)

@@ -20,7 +20,13 @@ Turborepo monorepo (see the root `svgin-monorepo` skill for the monorepo's overa
 depends on `svgin-react` as a real published dependency, not the workspace's own `packages/react`
 (never imports from that package's source), and has one route per real feature of the library: the
 sanitizer Inspector, a server-component fetch, `<SvgInSuspense />`, `<SvgInProvider />` defaults,
-`loading="lazy"`, native SVG/DOM prop forwarding, and `<SvgInShadow />`.
+`loading="lazy"`, native SVG/DOM prop forwarding, `<SvgInShadow />`, and `<svg-in>` (`svgin-element`'s
+web component).
+
+**`svgin-element` is a deliberate, temporary exception to the "real published dependency" rule
+above**: it's still `workspace:*` (see #21/#19) because `svgin-element` hasn't had its first npm
+publish yet, unlike `svgin-react`. Swap it to a real published version (same as `svgin-react`) once
+that first publish ships - don't leave it on `workspace:*` past that point.
 
 This app is a demo, not the package. Do not add sanitization or fetch/cache logic here. If a demo
 needs new library behavior, that change belongs in `svgin-react` itself, released, then picked up
@@ -28,7 +34,7 @@ here as a dependency bump.
 
 ## Source layout
 
-- `src/app/` : one route per demo (`inspector/`, `rsc/`, `suspense/`, `provider/`, `lazy/`, `native-props/`, `shadow/`) plus the home page linking to all of them. `src/app/rsc/page.tsx` is the only server-only demo; the rest are client components (several wrapped in a small `*-client-loader.tsx` file using `next/dynamic({ ssr: false })`, see the comment in `suspense-client-loader.tsx` for why: `<SvgIn src>`/`<SvgInSuspense src>`/`<SvgInShadow src>` resolve a relative URL against `window.location`, which doesn't exist during SSR).
+- `src/app/` : one route per demo (`inspector/`, `rsc/`, `suspense/`, `provider/`, `lazy/`, `native-props/`, `shadow/`, `element/`) plus the home page linking to all of them. `src/app/rsc/page.tsx` is the only server-only demo; the rest are client components (several wrapped in a small `*-client-loader.tsx` file using `next/dynamic({ ssr: false })`, see the comment in `suspense-client-loader.tsx` for why: `<SvgIn src>`/`<SvgInSuspense src>`/`<SvgInShadow src>`/`<svg-in src>` resolve a relative URL against `window.location`, which doesn't exist during SSR).
 - `src/components/` : demo components and `src/components/ui/` (shadcn/ui primitives, hand-written, see below).
 - `src/lib/diff.ts`, `src/lib/examples.ts` : the Inspector's own logic (a rough tag/attribute diff between pasted and sanitized markup, and the example presets). Everything else about "what gets sanitized" comes from the real `svgin-react` package via its own public API (`onMount` on `<SvgIn svg={...} />`). This repo never reaches into the package's internals.
 - `test/` : Vitest unit/component tests.
