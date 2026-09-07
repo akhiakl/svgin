@@ -259,10 +259,19 @@ importers:
 
   packages/element:
     dependencies:
+      dompurify:
+        specifier: ^3.4.14
+        version: 3.4.14
       svgin-core:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@testing-library/jest-dom':
+        specifier: ^7.0.1
+        version: 7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.0)
+      '@types/node':
+        specifier: ^26.4.1
+        version: 26.4.1
       '@vitest/coverage-v8':
         specifier: ^5.0.0
         version: 5.0.0(vitest@5.0.0)
