@@ -23,6 +23,7 @@ const ROUTES = [
     '/lazy',
     '/native-props',
     '/shadow',
+    '/element',
 ];
 
 for (const route of ROUTES) {

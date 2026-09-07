@@ -46,4 +46,10 @@ export const DEMOS = [
         badge: 'Client',
         description: '<SvgInShadow /> encapsulating an SVG (and its own styles) inside a shadow root, immune to page-wide CSS in either direction.',
     },
+    {
+        href: '/element',
+        title: 'Web Component',
+        badge: 'Vanilla JS',
+        description: '<svg-in>, a framework-agnostic native Custom Element from svgin-element, usable without React at all.',
+    },
 ] as const;

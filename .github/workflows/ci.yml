@@ -236,7 +236,11 @@ jobs:
     # Always runs on push to main (safety net, same as the other jobs above);
     # on a PR, only when apps/tryit itself changed - it depends on the real
     # published svgin-react, not the workspace one, so a packages/react/core
-    # change can never affect what this job actually exercises.
+    # change can never affect what this job actually exercises. svgin-element
+    # is the one exception (still workspace:*, see #21/#19), which is why the
+    # build step below exists at all - unlike svgin-react, there's no
+    # published dist to install; packages/element's own dist has to be built
+    # here first, or Next's build fails with "Can't resolve 'svgin-element'".
     if: github.event_name != 'pull_request' || needs.tryit-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
     strategy:
@@ -251,6 +255,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter svgin-element build
       - run: pnpm --filter svgin-tryit exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm --filter svgin-tryit exec playwright test --project=${{ matrix.browser }}
         env:
@@ -343,6 +348,18 @@ jobs:
         # On a PR from a fork, GITHUB_TOKEN is read-only and this step would
         # just fail; skip posting rather than failing the whole workflow.
         if: github.event.pull_request.head.repo.full_name == github.repository
+        # continue-on-error, not just the fork check above: this repo's own
+        # Settings -> Actions -> General -> Workflow permissions is
+        # "Read repository contents permission" (read-only) by default,
+        # which the job's own `issues: write` grant above does not override -
+        # confirmed via `gh api repos/.../actions/permissions/workflow`
+        # returning default_workflow_permissions: "read". Flipping that to
+        # "Read and write permissions" is a repo-wide security setting
+        # affecting every workflow, not something to change without the
+        # repo owner's own say-so - continue-on-error here means the report
+        # is generated and visible in this job's own logs either way, it
+        # just won't post as a comment until/unless that setting changes.
+        continue-on-error: true
         uses: actions/github-script@v9
         with:
           script: |

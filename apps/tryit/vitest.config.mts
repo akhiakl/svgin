@@ -14,6 +14,11 @@ export default defineNextVitestConfig({
                 // Playwright's e2e suite (a real browser, real Next.js
                 // build) is for. See #16.
                 'src/components/*-client-loader.tsx',
+                // Pure ambient type declarations (JSX.IntrinsicElements
+                // augmentation for <svg-in>, etc.) - no runtime code, so
+                // "0% covered" is a meaningless artifact of coverage.include
+                // matching *.ts, not a real gap.
+                'src/types/**/*.d.ts',
             ],
         },
     },
