@@ -8,17 +8,20 @@ import react from '@vitejs/plugin-react';
  *
  * - Needs the Vite React plugin for JSX transform in tests - the library
  *   packages build through tsup/esbuild instead, which doesn't need it.
- * - Does NOT enforce a coverage threshold. A Next app's actual coverage
- *   strategy here is Playwright e2e/a11y across every route (see
- *   playwright.config.ts and e2e/a11y.spec.ts), not unit tests - unit tests
- *   are reserved for the trickiest pure logic (see apps/tryit/src/lib/
- *   diff.ts's test, for example). Forcing the library packages' 100% unit
- *   bar onto an app whose coverage strategy is deliberately split across two
- *   test runners would be dishonest, not just inconvenient - it would mean
- *   either gaming the number with low-value tests or lowering the bar
- *   everywhere else too. Pass `coverage.thresholds` in overrides if a
- *   specific app genuinely wants one (tracked for apps/tryit itself in
- *   https://github.com/akhiakl/svgin/issues/16).
+ * - Defaults to the same 100% coverage thresholds as ./base.js (see
+ *   https://github.com/akhiakl/svgin/issues/16: apps/tryit reached a real,
+ *   non-gamed 100% - unit tests for the logic actually worth unit testing,
+ *   real integration-style tests against the real svgin-react for the demo
+ *   components, and a documented, narrow coverage.exclude only for the
+ *   handful of files with no logic of their own to test at all, e.g. the
+ *   `*-client-loader.tsx` `next/dynamic` wrappers - not a blanket opt-out).
+ *   A Next app's *other* real coverage layer is Playwright e2e/a11y across
+ *   every route (see playwright.config.ts and e2e/a11y.spec.ts), which this
+ *   threshold does not replace - the two are complementary, not either/or.
+ *   A future app extending this preset that genuinely can't meet 100% yet
+ *   should override `coverage.thresholds` explicitly (and say why in the
+ *   PR), the same as any other override here - not have the shared default
+ *   quietly lowered for everyone.
  *
  * Like ./base.js, deliberately does not import anything from
  * `vitest`/`vitest/config` - see that file's comment for why (a second,
@@ -49,6 +52,7 @@ export function defineNextVitestConfig(overrides = {}) {
                 provider: 'v8',
                 reporter: ['text', 'lcov', 'json-summary'],
                 include: ['src/**/*.{ts,tsx}'],
+                thresholds: { statements: 100, branches: 100, functions: 100, lines: 100 },
                 ...coverageOverrides,
             },
             ...restTestOverrides,

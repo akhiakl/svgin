@@ -34,8 +34,12 @@ export default defineNextVitestConfig();
 ```
 
 A separate preset (`./next.js`), not an override of the base one: a Next app needs the Vite React
-plugin for JSX in tests (the library packages build through tsup/esbuild instead), and deliberately
-does **not** enforce a coverage threshold: a Next app's real coverage strategy here is Playwright
-e2e/a11y across every route, not unit tests alone (see `apps/tryit/AGENTS.md` and
-[#16](https://github.com/akhiakl/svgin/issues/16), which tracks bringing that app to a real 100% bar
-across both). Pass `coverage.thresholds` in overrides once a specific app is ready to enforce one.
+plugin for JSX in tests (the library packages build through tsup/esbuild instead). Defaults to the
+same 100% coverage thresholds as the base preset (see
+[#16](https://github.com/akhiakl/svgin/issues/16): `apps/tryit` reached a real 100% - unit tests for
+logic worth unit testing, real integration-style tests against the real `svgin-react` for its demo
+components, and a narrow, documented `coverage.exclude` only for files with no logic of their own,
+like the `*-client-loader.tsx` `next/dynamic` wrappers). This is on top of, not instead of, a Next
+app's other real coverage layer: Playwright e2e/a11y across every route (see `apps/tryit/AGENTS.md`).
+A future app that genuinely can't meet 100% yet should override `coverage.thresholds` explicitly and
+say why, not have the shared default quietly lowered for everyone.

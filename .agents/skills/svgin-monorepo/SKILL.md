@@ -75,17 +75,32 @@ boundaries, or tooling decisions it describes.
     buy, and both are just identity/merge helpers easily replaced with a plain object literal and a
     few lines of manual merging.
   **`apps/tryit` is the one exception to reusing the library packages' presets** (not to the factory
-  pattern itself - it gets its own factory, `svgin-vitest-config/next`): it uses its own
-  `eslint-config-next`-based ESLint config and `svgin-typescript-config/nextjs.json`, not
-  `svgin-eslint-config`, since a Next.js app needs framework-specific lint rules
-  (`react-hooks`/`core-web-vitals`/`next/link`) that the library preset doesn't provide, and its vitest
-  setup needs the Vite React plugin plus a different coverage bar (see `svgin-vitest-config`'s own
-  README, and [#16](https://github.com/akhiakl/svgin/issues/16) for bringing it to a real 100%).
-- **Coverage: 100% across every metric, in every package that has it enforced** (`packages/core`,
-  `packages/react`, `packages/element` today, via `svgin-vitest-config`'s default thresholds) -
-  matching `akhiakl/svgin-react`'s own bar for this exact code. `apps/tryit` is deliberately not held
-  to the same bar yet (see the exception above); `pnpm --filter <pkg> exec vitest run --coverage` to
-  check locally (not wired into the default `test` script/turbo pipeline).
+  pattern itself, and not to the coverage bar either since [#16](https://github.com/akhiakl/svgin/issues/16) -
+  it gets its own factory, `svgin-vitest-config/next`): it uses its own `eslint-config-next`-based
+  ESLint config and `svgin-typescript-config/nextjs.json`, not `svgin-eslint-config`, since a Next.js
+  app needs framework-specific lint rules (`react-hooks`/`core-web-vitals`/`next/link`) that the
+  library preset doesn't provide, and its vitest setup needs the Vite React plugin (see
+  `svgin-vitest-config`'s own README).
+- **Coverage: 100% across every metric, in every package/app that has it enforced** (`packages/core`,
+  `packages/react`, `packages/element`, and `apps/tryit` as of [#16](https://github.com/akhiakl/svgin/issues/16),
+  via `svgin-vitest-config`'s default thresholds on both the base and `/next` presets) - matching
+  `akhiakl/svgin-react`'s own bar for this exact code. `apps/tryit`'s 100% is unit-tests-only, not
+  combined with its separate Playwright e2e/a11y suite (a deliberate choice - see #16's discussion):
+  logic worth unit testing gets a real unit test, the handful of files with no logic of their own
+  (e.g. the `*-client-loader.tsx` `next/dynamic` wrappers) get a narrow, documented
+  `coverage.exclude` entry instead of a low-value smoke test, and demo components that call the real
+  `svgin-react` get real integration-style tests against a stubbed `fetch` (see
+  `apps/tryit/test/helpers/mockSvgFetch.ts`) rather than mocking `svgin-react` itself away.
+  `pnpm --filter <pkg> exec vitest run --coverage` to check locally (not wired into the default
+  `test` script/turbo pipeline).
+- **React 19's `use()` + `Suspense` doesn't reliably re-render after the awaited promise resolves,
+  under `@testing-library/react` + jsdom, without help.** Reproduced with a minimal `use()`/`Suspense`
+  case with no svgin-react involved at all, so it's an environment quirk, not a library bug: awaiting
+  the thrown promise (even wrapped in `act()`) resolves it, but the previously-suspended fiber isn't
+  re-rendered until something asks React to render again. Call the test's own `rerender()` with the
+  same element after awaiting - `use()` on an already-settled promise returns synchronously instead of
+  re-suspending, so this is cheap and doesn't need touching product code. See
+  `apps/tryit/test/suspense-client.test.tsx`'s `flushSuspense` helper.
 - **Bundle size budgets**: `packages/react` and `packages/element` (the two packages that actually
   ship a `dist/`; `packages/core` never builds, see below, so has nothing to budget) each have a
   `size` script (`node ../../scripts/check-bundle-size.mjs`) and their own `size-budget.json` -
