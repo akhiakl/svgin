@@ -17,6 +17,7 @@ export function ThemeToggle() {
     const mounted = useSyncExternalStore(
         noopSubscribe,
         () => true,
+        /* v8 ignore next */
         () => false
     );
 

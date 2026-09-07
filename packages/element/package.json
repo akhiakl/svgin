@@ -28,6 +28,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "size": "node ../../scripts/check-bundle-size.mjs"
   },
   "dependencies": {

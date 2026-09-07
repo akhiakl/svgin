@@ -45,7 +45,7 @@ jobs:
           # hit reusing that run's build/lint/test outputs, not a cold start.
           key: turbo-build-${{ github.sha }}
           restore-keys: turbo-build-
-      - run: pnpm turbo run lint typecheck typecheck:test test build size
+      - run: pnpm turbo run lint typecheck typecheck:test test test:coverage build size
 
       - name: Determine released package from the tag
         id: pkg
