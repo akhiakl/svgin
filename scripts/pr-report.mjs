@@ -12,10 +12,13 @@
 //
 // Usage: node scripts/pr-report.mjs <reports-dir>
 // Reads <reports-dir>/{head,base}-{coverage,size,test}-<packageId>.json for
-// each package below. Any file that's missing or unreadable is treated as
-// "no data" for that side/package, not a failure - a package that predates
-// this tooling, or whose build failed on the base branch, still gets a
-// report, just with that cell/section rendered as n/a.
+// each package below, plus <reports-dir>/head-e2e-<browser>.json (one of
+// E2E_BROWSERS below, apps/tryit's own Playwright --reporter=json output -
+// head only, no base-branch comparison for E2E/a11y). Any file that's
+// missing or unreadable is treated as "no data" for that side/package, not
+// a failure - a package that predates this tooling, or whose build failed
+// on the base branch, still gets a report, just with that cell/section
+// rendered as n/a.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -144,6 +147,8 @@ function e2eSection(reportsByBrowser) {
     const rows = [];
     let anyData = false;
     let anyFailure = false;
+    let anyA11yData = false;
+    let anyA11yFailure = false;
     for (const browser of E2E_BROWSERS) {
         const report = reportsByBrowser[browser];
         if (!report) {
@@ -163,10 +168,14 @@ function e2eSection(reportsByBrowser) {
         }
         if (overall.failed > 0) anyFailure = true;
         const overallIcon = overall.failed > 0 ? '❌' : '✅';
-        const a11yCell =
-            a11y.total > 0
-                ? `${a11y.failed > 0 ? '❌' : '✅'} ${a11y.passed}/${a11y.total} routes`
-                : '_no a11y results found_';
+        let a11yCell;
+        if (a11y.total > 0) {
+            anyA11yData = true;
+            if (a11y.failed > 0) anyA11yFailure = true;
+            a11yCell = `${a11y.failed > 0 ? '❌' : '✅'} ${a11y.passed}/${a11y.total} checks`;
+        } else {
+            a11yCell = '_no a11y results found_';
+        }
         rows.push(
             `| ${browser} | ${overallIcon} ${overall.passed}/${overall.passed + overall.failed} specs | ${a11yCell} |`
         );
@@ -174,6 +183,16 @@ function e2eSection(reportsByBrowser) {
     if (!anyData) {
         return '**E2E & accessibility (apps/tryit)**: _skipped - apps/tryit unchanged, or no results found._';
     }
+    // A dedicated a11y footnote, not folded into the general e2e
+    // pass/fail one: a browser with zero a11y results found (a parsing
+    // mismatch, or the spec not running for some reason) must not be
+    // reported as "scanned, zero violations" - that would be a false
+    // positive an actual accessibility regression could hide behind.
+    const a11yFootnote = !anyA11yData
+        ? '_No accessibility (axe-core) results found for any browser - see the raw JSON reporter output rather than trusting this summary._'
+        : anyA11yFailure
+          ? '_One or more accessibility checks failed - see the `apps/tryit E2E` job logs/artifacts for the actual violations._'
+          : '_Every accessibility check that ran reported zero violations (WCAG 2.0/2.1 A/AA) - browsers with "no a11y results found" above are not included in this._';
     return [
         '**E2E & accessibility (apps/tryit)**',
         '',
@@ -183,7 +202,9 @@ function e2eSection(reportsByBrowser) {
         '',
         anyFailure
             ? '_A failure here already fails CI outright - this is a summary, not the full picture. See the `apps/tryit E2E` job logs/artifacts for details._'
-            : '_All routes scanned with axe-core (WCAG 2.0/2.1 A/AA) reported zero violations._',
+            : '_Every E2E spec that ran passed._',
+        '',
+        a11yFootnote,
     ].join('\n');
 }
 

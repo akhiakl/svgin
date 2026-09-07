@@ -359,7 +359,7 @@ jobs:
         # Entirely best-effort: no artifacts exist at all when tryit-e2e was
         # skipped (apps/tryit unchanged), and continue-on-error covers any
         # other download hiccup - pr-report.mjs already treats a missing
-        # head-test-tryit-e2e-<browser>.json as "n/a", not a failure.
+        # head-e2e-<browser>.json (see the next step) as "n/a", not a failure.
         continue-on-error: true
         uses: actions/download-artifact@v7
         with:
