@@ -25,7 +25,7 @@ async function preloadSvgImpl(
     const res = options?.fetchOptions ? await fetch(url, options.fetchOptions) : await fetch(url);
     if (!res.ok) throw new Error(`Failed to fetch SVG: ${url}`);
     const contentType = res.headers?.get('content-type') ?? '';
-    if (contentType && !contentType.includes('svg') && !contentType.includes('xml') && !contentType.includes('octet-stream') && !contentType.includes('text/plain')) {
+    if (contentType !== '' && !contentType.includes('svg') && !contentType.includes('xml') && !contentType.includes('octet-stream') && !contentType.includes('text/plain')) {
         throw new Error(`Unexpected content-type for SVG: ${contentType}`);
     }
     const svgText = await res.text();

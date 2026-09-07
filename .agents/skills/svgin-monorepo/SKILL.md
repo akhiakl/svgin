@@ -202,10 +202,13 @@ boundaries, or tooling decisions it describes.
   which either gets a component stuck on its loading placeholder forever or wrongly renders the
   `fallback` prop for a legitimate empty result. Copilot's review of PR #17 caught exactly this twice
   in the same PR (`SvgIn.client.tsx`'s loading-state check and `SvgInComponent.tsx`'s `fallback` gate)
-  before either was fixed with `=== null`. This is `@typescript-eslint/strict-boolean-expressions`
-  territory, but that rule needs type-checked linting (`parserOptions.project`), which this repo
-  doesn't have yet - not currently enforced automatically, so review changes to any `T | null` state
-  for this pattern by hand until it is.
+  before either was fixed with `=== null`. **Enforced automatically as of #23**:
+  `@typescript-eslint/strict-boolean-expressions` (`allowNullableBoolean: true`, everything else
+  disallowed) is on in `svgin-eslint-config/base.js`, type-checked via each consuming package's own
+  `languageOptions.parserOptions.projectService` + `tsconfigRootDir` (see that package's own README
+  for the exact snippet - same rootDir-per-consumer pattern as `svgin-typescript-config`'s own
+  gotcha). `apps/tryit` is the one exception, still out of scope (its own `eslint-config-next` setup,
+  not this package) - Playwright e2e/a11y coverage is judged to de-risk it enough there for now.
 - **Code exported from an environment-agnostic entry point (`svgin-react/core`, anything documented as
   "works in either environment") must pick its environment-specific dependency at call time, never hard-
   code one.** `preload.ts`'s `preloadSvg` hard-coded a dynamic `import('svgin-core/sanitizeServer')`
@@ -222,6 +225,26 @@ boundaries, or tooling decisions it describes.
   `SvgInProps` was only ever used as a type) - a real bug, not a nitpick: it forces an unnecessary
   runtime import of the module, which can pull in side effects or defeat tree-shaking. This rule is
   purely syntactic (no `parserOptions.project` needed), so it runs in every package automatically.
+- **A later, unscoped flat-config object always wins over an earlier one for the same file - order
+  matters when disabling type-checked linting for config files.** `svgin-eslint-config/base.js` turns
+  type-checked rules back off for `**/*.mjs`/`**/*.config.*` (via `tseslint.configs.disableTypeChecked`,
+  which sets `parserOptions.projectService: false` for those files) so `eslint.config.mjs`/
+  `tsup.config.ts`/`vitest.config.mts` don't error with "not found by the project service" - but each
+  consuming package's own `parserOptions.projectService: true` overlay (see the README) must scope
+  itself to `files: ['src/**/*.ts', 'src/**/*.tsx']`, not a bare `**/*.ts`, or it re-enables
+  `projectService` for those same config files by simply appearing later in the array and breaks
+  parsing again. Same reasoning applies to stacking `/* v8 ignore */` and
+  `// eslint-disable-next-line` comments on the same line: use `/* v8 ignore start */`/`stop` around
+  both, not `next`/`next N`, once more than one directive-comment line sits between the marker and its
+  target - `next N` counts physical lines from the marker, not "the next N lines that aren't
+  comments," so an interposed comment line throws off the count.
+- **React's `act()` needs `await act(async () => { ... })` even when the callback has no `await` of
+  its own** - confirmed by breaking real tests trying to "fix" this per `require-await`'s advice.
+  `@typescript-eslint/require-await` is turned off for `**/*.test.{ts,tsx}` files in
+  `svgin-eslint-config/base.js` specifically because of this: it's a testing-library idiom, not
+  unnecessary async, and the rule can't tell the difference. A genuinely async-for-no-reason test body
+  (no `act()`/`waitFor()` involved at all) is still worth simplifying by hand - the rule just no longer
+  flags it automatically in test files.
 
 ## Release & publishing
 

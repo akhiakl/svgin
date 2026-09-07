@@ -214,7 +214,7 @@ describe('SvgIn (client component)', () => {
         await new Promise(r => setTimeout(r, 20));
     });
 
-    it('releases the fetch on unmount with the same src/sanitizeFn/disableSanitization it was acquired with', async () => {
+    it('releases the fetch on unmount with the same src/sanitizeFn/disableSanitization it was acquired with', () => {
         mockFetch.mockReturnValue(new Promise(() => {})); // never resolves
         const customFn = vi.fn();
 
@@ -231,7 +231,7 @@ describe('SvgIn (client component)', () => {
         );
     });
 
-    it('releases the previous fetch when src changes, before acquiring the new one', async () => {
+    it('releases the previous fetch when src changes, before acquiring the new one', () => {
         mockFetch
             .mockReturnValueOnce(new Promise(() => {}))
             .mockReturnValueOnce(new Promise(() => {}));
@@ -245,14 +245,14 @@ describe('SvgIn (client component)', () => {
         expect(mockFetch).toHaveBeenNthCalledWith(2, '/b.svg', expect.anything());
     });
 
-    it('does not call release when there is no src (svg prop path)', async () => {
+    it('does not call release when there is no src (svg prop path)', () => {
         mockSanitizeString.mockReturnValue(new Promise(() => {}));
         const { unmount } = render(<SvgIn svg="<svg><path/></svg>" />);
         unmount();
         expect(mockRelease).not.toHaveBeenCalled();
     });
 
-    it('does not call release when both svg and src are given (svg takes precedence, fetchAndSanitizeSvg is never called)', async () => {
+    it('does not call release when both svg and src are given (svg takes precedence, fetchAndSanitizeSvg is never called)', () => {
         // Regression test for a real bug found in review: `svg` takes
         // precedence over `src` (see resolveSvgPromise), so this instance
         // never acquires a share of any in-flight fetch for `src`.
@@ -289,7 +289,7 @@ describe('SvgIn (client component)', () => {
         expect(mockFetch).toHaveBeenCalledWith('/a.svg', expect.objectContaining({ fetchOptions }));
     });
 
-    it('renders a <title> from the title prop and does not leak it onto the loading placeholder', async () => {
+    it('renders a <title> from the title prop and does not leak it onto the loading placeholder', () => {
         mockFetch.mockReturnValue(new Promise(() => {})); // stays in the loading state
         const { container } = render(<SvgIn src="/a.svg" title="Alert icon" />);
         // React's `title` prop on a raw DOM element becomes a native tooltip
@@ -316,6 +316,16 @@ describe('SvgIn (client component)', () => {
         const onError = vi.fn();
         render(<SvgIn src="/missing.svg" onError={onError} />);
         await waitFor(() => expect(onError).toHaveBeenCalledWith(err));
+    });
+
+    it('wraps a non-Error rejection into a real Error', async () => {
+        mockFetch.mockRejectedValue('boom');
+        const onError = vi.fn();
+        render(<SvgIn src="/missing.svg" onError={onError} />);
+        await waitFor(() => expect(onError).toHaveBeenCalled());
+        const err = onError.mock.calls[0][0] as Error;
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toBe('boom');
     });
 
     it('does not call onError on a successful fetch', async () => {
@@ -406,6 +416,9 @@ describe('SvgIn (client component)', () => {
                 <SvgIn fallback={<span>bad usage</span>} onError={onError} />
             );
             await waitFor(() => expect(container.textContent).toBe('bad usage'));
+            // expect.stringContaining/objectContaining are typed `any` by
+            // vitest's own types, not a real unchecked-any value here.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('src') }));
             expect(mockFetch).not.toHaveBeenCalled();
             expect(mockSanitizeString).not.toHaveBeenCalled();

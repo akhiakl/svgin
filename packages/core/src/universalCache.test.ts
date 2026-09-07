@@ -171,6 +171,11 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
     });
 
     it('keeps memoizing a resolved promise across repeated calls', async () => {
+        // async, not a plain return: setUniversalCache's own promise-
+        // eviction logic branches on whether the wrapped fn returns
+        // something thenable, so this mock needs to actually return a
+        // Promise - there's nothing to await inside it.
+        // eslint-disable-next-line @typescript-eslint/require-await
         const impl = vi.fn(async (n: number) => n * 2);
         const cached = setUniversalCache(impl);
 
@@ -191,6 +196,11 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
 
     it('removes a rejected promise from the cache so the next call retries', async () => {
         let callCount = 0;
+        // async, not a plain function: the thrown Error needs to become a
+        // rejected Promise (a synchronous throw would not exercise the
+        // rejection-eviction path this test is actually for) - there's
+        // nothing to await inside it.
+        // eslint-disable-next-line @typescript-eslint/require-await
         const impl = vi.fn(async () => {
             callCount++;
             if (callCount === 1) throw new Error('first call fails');
