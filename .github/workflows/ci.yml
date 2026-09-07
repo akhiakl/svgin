@@ -5,13 +5,14 @@ name: CI
 # package graph apply. `scripts/check-bundle-size.mjs` (see the build job's
 # "Check bundle size budget" step) is a generalized port of svgin-react's own
 # script, reading each package's own size-budget.json instead of a hard-coded
-# object - see #20. The PR size/coverage report job from svgin-react
-# (scripts/pr-report.mjs, a sticky PR comment comparing head vs base) is
-# still deferred - tracked in #22, a proper superset covering e2e/a11y too,
-# not just size/coverage. The tryit-e2e job is ported from
-# akhiakl/svgin-react-tryit's own ci.yml, scoped to apps/tryit via
-# `pnpm --filter svgin-tryit` since it's the only workspace member with
-# Playwright e2e tests.
+# object - see #20. The pr-report job (scripts/pr-report.mjs, a sticky PR
+# comment comparing head vs base) is likewise a generalized port of
+# svgin-react's own job - one section per package instead of one, plus a unit
+# test pass/fail summary the original didn't have. E2E and axe-core a11y
+# summaries are a deliberately separate, later phase - see #22. The tryit-e2e
+# job is ported from akhiakl/svgin-react-tryit's own ci.yml, scoped to
+# apps/tryit via `pnpm --filter svgin-tryit` since it's the only workspace
+# member with Playwright e2e tests.
 #
 # --affected on pull_request: only runs a task for packages that actually
 # changed since the PR's base branch (plus anything that depends on them, via
@@ -260,3 +261,110 @@ jobs:
           name: tryit-playwright-report-${{ matrix.browser }}
           path: apps/tryit/playwright-report
           retention-days: 14
+
+  pr-report:
+    name: PR report (tests, coverage, size)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          path: head
+      - name: Checkout PR base
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - uses: pnpm/action-setup@v6
+        with:
+          # PR head/base are checked out into head/ and base/ subdirectories
+          # (not the workspace root), so pnpm/action-setup has no root
+          # package.json to read the "packageManager" field from unless told
+          # where to look.
+          package_json_file: head/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            head/pnpm-lock.yaml
+            base/pnpm-lock.yaml
+
+      - name: Collect data from PR head
+        working-directory: head
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm turbo run build
+          mkdir -p "$GITHUB_WORKSPACE/reports"
+          declare -A DIRS=( [core]=packages/core [react]=packages/react [element]=packages/element [tryit]=apps/tryit )
+          declare -A HAS_SIZE=( [react]=1 [element]=1 )
+          for pkg in "${!DIRS[@]}"; do
+            dir="${DIRS[$pkg]}"
+            (cd "$dir" && pnpm exec vitest run --coverage --reporter=default --reporter=json --outputFile="$GITHUB_WORKSPACE/reports/head-test-$pkg.json") || true
+            cp "$dir/coverage/coverage-summary.json" "$GITHUB_WORKSPACE/reports/head-coverage-$pkg.json" 2>/dev/null || true
+            if [ "${HAS_SIZE[$pkg]:-}" = "1" ]; then
+              (cd "$dir" && node ../../scripts/check-bundle-size.mjs --json --no-fail) > "$GITHUB_WORKSPACE/reports/head-size-$pkg.json" 2>/dev/null || true
+            fi
+          done
+
+      # The base branch may be missing these scripts (predates this
+      # tooling), have an older lockfile, or fail its own build entirely -
+      # none of that should fail this PR's CI. Every step here is
+      # best-effort; pr-report.mjs treats missing data as "n/a", not a
+      # failure.
+      - name: Collect data from PR base (best effort)
+        working-directory: base
+        continue-on-error: true
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm turbo run build
+          declare -A DIRS=( [core]=packages/core [react]=packages/react [element]=packages/element [tryit]=apps/tryit )
+          declare -A HAS_SIZE=( [react]=1 [element]=1 )
+          for pkg in "${!DIRS[@]}"; do
+            dir="${DIRS[$pkg]}"
+            (cd "$dir" && pnpm exec vitest run --coverage --reporter=default --reporter=json --outputFile="$GITHUB_WORKSPACE/reports/base-test-$pkg.json") || true
+            cp "$dir/coverage/coverage-summary.json" "$GITHUB_WORKSPACE/reports/base-coverage-$pkg.json" 2>/dev/null || true
+            if [ "${HAS_SIZE[$pkg]:-}" = "1" ]; then
+              (cd "$dir" && node ../../scripts/check-bundle-size.mjs --json --no-fail) > "$GITHUB_WORKSPACE/reports/base-size-$pkg.json" 2>/dev/null || true
+            fi
+          done
+
+      - name: Build report
+        run: node head/scripts/pr-report.mjs reports > report.md
+
+      - name: Post or update PR comment
+        # On a PR from a fork, GITHUB_TOKEN is read-only and this step would
+        # just fail; skip posting rather than failing the whole workflow.
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('report.md', 'utf8');
+            const marker = '<!-- svgin-pr-report -->';
+            const fullBody = `${marker}\n${body}`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: fullBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fullBody,
+              });
+            }

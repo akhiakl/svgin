@@ -118,6 +118,23 @@ boundaries, or tooling decisions it describes.
   reaching outside a package's own directory (e.g. `../../scripts/...`) does **not** get tracked by
   Turborepo's hashing, silently. Bump a budget only with a PR comment explaining why (the JSON file
   itself can't hold one) - see each package's own README for its current budget table.
+- **`noExternal` is required to actually bundle `svgin-core` into `packages/react`/`packages/element`'s
+  built output, not just omitting it from `external`.** tsup/esbuild auto-externalizes anything listed
+  in a package's own `dependencies` by default, regardless of what `external` itself lists -
+  `svgin-core` is a real `dependencies` entry (`workspace:*`) in both packages, so without
+  `noExternal: ['svgin-core']` in `tsup.config.ts`, the built `dist/*.cjs` silently kept a runtime
+  `require("svgin-core/...")` that would break for any real npm consumer (`svgin-core` is never
+  published). Caught during #15's parity check by actually grepping the built output for a lingering
+  `require("svgin-core`, not by trusting a comment's stated intent - worth that same direct check
+  again if this ever regresses.
+- **PR report**: `ci.yml`'s `pr-report` job posts/updates one sticky PR comment (marker
+  `<!-- svgin-pr-report -->`) with a per-package unit test pass/fail summary, bundle size table (head
+  vs base, `packages/react`/`packages/element` only), and coverage table (head vs base, all four
+  packages) - `scripts/pr-report.mjs`, a generalized port of `akhiakl/svgin-react`'s own script.
+  Checks out the PR's base ref into a sibling `base/` directory and rebuilds/retests it the same way
+  as `head/`, entirely best-effort (`continue-on-error`, every data source treated as "n/a" rather
+  than a failure) - a base branch that predates this tooling, or whose build fails outright, still
+  gets a report. E2E and axe-core a11y summaries are a deliberately separate, later phase - see #22.
 - **A real pnpm gotcha to know about: two physically different installs of the "same" version can
   silently break ambient type augmentation.** `@testing-library/jest-dom`'s `import
   '@testing-library/jest-dom/vitest'` augments a *specific resolved* `vitest` module's `Assertion`
