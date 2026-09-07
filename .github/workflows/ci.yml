@@ -7,12 +7,15 @@ name: CI
 # script, reading each package's own size-budget.json instead of a hard-coded
 # object - see #20. The pr-report job (scripts/pr-report.mjs, a sticky PR
 # comment comparing head vs base) is likewise a generalized port of
-# svgin-react's own job - one section per package instead of one, plus a unit
-# test pass/fail summary the original didn't have. E2E and axe-core a11y
-# summaries are a deliberately separate, later phase - see #22. The tryit-e2e
-# job is ported from akhiakl/svgin-react-tryit's own ci.yml, scoped to
-# apps/tryit via `pnpm --filter svgin-tryit` since it's the only workspace
-# member with Playwright e2e tests.
+# svgin-react's own job - one section per package instead of one, a unit
+# test pass/fail summary the original didn't have, and (see #22) a
+# per-browser E2E/axe-core accessibility summary for apps/tryit, parsed
+# best-effort from the tryit-e2e job's own JSON reporter artifacts (needs:
+# tryit-e2e, but runs even when that job is skipped - apps/tryit unchanged -
+# via the explicit always()/result check on this job's own `if:`). The
+# tryit-e2e job is ported from akhiakl/svgin-react-tryit's own ci.yml,
+# scoped to apps/tryit via `pnpm --filter svgin-tryit` since it's the only
+# workspace member with Playwright e2e tests.
 #
 # --affected on pull_request: only runs a task for packages that actually
 # changed since the PR's base branch (plus anything that depends on them, via
@@ -269,7 +272,18 @@ jobs:
 
   pr-report:
     name: PR report (tests, coverage, size)
-    if: github.event_name == 'pull_request'
+    needs: [tryit-changed, tryit-e2e]
+    # needs: [..., tryit-e2e] so the E2E/a11y artifact download below can't
+    # race its upload - but tryit-e2e's own `if:` skips it whenever
+    # apps/tryit didn't change, and a skipped dependency makes a dependent
+    # job skip too by default (its implicit condition is success(), which
+    # does not count "skipped" as success) - always() plus an explicit
+    # result check is the standard workaround for "run unless it actually
+    # failed".
+    if: >
+      always() &&
+      github.event_name == 'pull_request' &&
+      (needs.tryit-e2e.result == 'success' || needs.tryit-e2e.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -339,6 +353,24 @@ jobs:
             if [ "${HAS_SIZE[$pkg]:-}" = "1" ]; then
               (cd "$dir" && node ../../scripts/check-bundle-size.mjs --json --no-fail) > "$GITHUB_WORKSPACE/reports/base-size-$pkg.json" 2>/dev/null || true
             fi
+          done
+
+      - name: Download E2E/a11y results (best effort)
+        # Entirely best-effort: no artifacts exist at all when tryit-e2e was
+        # skipped (apps/tryit unchanged), and continue-on-error covers any
+        # other download hiccup - pr-report.mjs already treats a missing
+        # head-test-tryit-e2e-<browser>.json as "n/a", not a failure.
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          pattern: tryit-playwright-report-*
+          path: e2e-artifacts
+
+      - name: Extract E2E/a11y JSON results (best effort)
+        run: |
+          for browser in chromium firefox webkit; do
+            cp "e2e-artifacts/tryit-playwright-report-$browser/results.json" \
+              "reports/head-e2e-$browser.json" 2>/dev/null || true
           done
 
       - name: Build report
