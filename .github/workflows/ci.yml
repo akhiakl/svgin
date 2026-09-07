@@ -287,10 +287,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # A PR comment is an "issue comment" in GitHub's API model regardless
-      # of pull-requests: write above - issues.listComments/updateComment/
-      # createComment need issues: write, not the PR-specific scope.
+      # Both needed simultaneously, confirmed by GitHub's own 403 response
+      # header (`x-accepted-github-permissions: issues=write;
+      # pull_requests=write`) on a real run of this job after a previous fix
+      # here mistakenly kept only issues: write, dropping pull-requests:
+      # write entirely instead of adding issues: write alongside it - the
+      # actual root cause of every prior "PR report can't post its comment"
+      # investigation in this repo's history, not the repo-wide default
+      # workflow permissions setting that got blamed at the time.
       issues: write
+      pull-requests: write
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v7
@@ -380,17 +386,11 @@ jobs:
         # On a PR from a fork, GITHUB_TOKEN is read-only and this step would
         # just fail; skip posting rather than failing the whole workflow.
         if: github.event.pull_request.head.repo.full_name == github.repository
-        # continue-on-error, not just the fork check above: this repo's own
-        # Settings -> Actions -> General -> Workflow permissions is
-        # "Read repository contents permission" (read-only) by default,
-        # which the job's own `issues: write` grant above does not override -
-        # confirmed via `gh api repos/.../actions/permissions/workflow`
-        # returning default_workflow_permissions: "read". Flipping that to
-        # "Read and write permissions" is a repo-wide security setting
-        # affecting every workflow, not something to change without the
-        # repo owner's own say-so - continue-on-error here means the report
-        # is generated and visible in this job's own logs either way, it
-        # just won't post as a comment until/unless that setting changes.
+        # continue-on-error kept as a defensive safety net now that the real
+        # cause (missing pull-requests: write, see the permissions block
+        # above) is fixed - if posting ever fails for some other reason
+        # (rate limiting, a future permissions change, etc.), the report is
+        # still generated and visible in this job's own logs either way.
         continue-on-error: true
         uses: actions/github-script@v9
         with:
