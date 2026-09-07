@@ -13,10 +13,11 @@ other two packages don't duplicate fetch/sanitization/caching logic.
 
 Multi-entry, not a single bundled index: several modules deliberately export the same name for
 different runtimes (`sanitizeClient.ts` and `sanitizeServer.ts` both export `sanitizeSvg`, for
-example), so they can never be combined into one barrel without a collision. Each file builds to its
-own output and is imported by its own subpath, `svgin-core/sanitizeServer`,
-`svgin-core/fetchAndSanitizeSvgClient`, etc., matching how these modules were already split in the
-source repo.
+example), so they can never be combined into one barrel without a collision. There's no build step at
+all - `package.json`'s `exports` map points each subpath (`svgin-core/sanitizeServer`,
+`svgin-core/fetchAndSanitizeSvgClient`, etc.) directly at its own raw `.ts` file, bundled straight into
+`packages/react`/`packages/element`'s own `tsup` output instead (see those packages' own
+`tsup.config.ts` for why - a real `dist/` here once broke `vi.mock` on these subpaths).
 
 - `fetchAndSanitizeSvgBase.ts` / `-Client.ts` / `-Server.ts`, fetch a URL and sanitize the result,
   with the client/server split isolating `jsdom` (server-only, lazily imported) from the client bundle.
@@ -29,11 +30,14 @@ source repo.
 - `universalCache.ts`, request memoization shared between client/server render paths.
 - `buildSvgMarkup.ts`, `svgUtils.ts`, SVG markup manipulation (attribute extraction, ID
   uniquification for multiple instances of the same SVG on one page).
-- `instanceId.ts`, `resolveSvgPromiseClient.ts`, small shared helpers used by more than one
-  `packages/react` component.
+- `instanceId.ts`, used by both `packages/react` and `packages/element` for per-instance SVG id
+  uniquification; `resolveSvgPromiseClient.ts`, `packages/react`-only (the `(src|svg)` precedence
+  resolver `<SvgIn />`'s fetch effect uses).
 
 ## Testing
 
-Ported alongside the implementation from the source repo's own test suite, which enforces 100% branch
-coverage on this exact code (`vitest run --coverage`; not wired into the default `test` script/CI yet;
-see `vitest.config.mts`).
+Ported alongside the implementation from the source repo's own test suite, which enforces 100%
+coverage on this exact code across all four metrics (statements/branches/functions/lines). Run
+`pnpm run test:coverage` (`vitest run --coverage`) locally; CI enforces this for real via its own
+"Coverage thresholds" job (`turbo run test:coverage`, separate from the plain `test` job - see the
+root `svgin-monorepo` skill for why).

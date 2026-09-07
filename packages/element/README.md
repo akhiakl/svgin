@@ -7,10 +7,19 @@ Built on **vanilla native Custom Elements** (`class SvgIn extends HTMLElement`),
 for zero runtime dependency and the smallest possible bundle, wrapping [`svgin-core`](../core)'s
 fetch/sanitize/cache logic - the same internals [`svgin-react`](../react)'s `<SvgIn />` is built on.
 
-> **Status:** real implementation (see [#18](https://github.com/akhiakl/svgin/issues/18)). Not
-> published from this monorepo yet, and not yet showcased in `apps/tryit` (both tracked separately).
-> **Update this README (and any docs-site page) in the same PR/build whenever `<svg-in>`'s public API
-> or behavior changes**, see the `svgin-monorepo` skill.
+> **Status:** real implementation (see [#18](https://github.com/akhiakl/svgin/issues/18)), demoed live
+> in `apps/tryit` at [`/element`](https://svgin-tryit.vercel.app/element) (see
+> [#21](https://github.com/akhiakl/svgin/issues/21)). Not published to npm from this monorepo yet -
+> see [#19](https://github.com/akhiakl/svgin/issues/19). **Update this README (and any docs-site page)
+> in the same PR/build whenever `<svg-in>`'s public API or behavior changes**, see the
+> `svgin-monorepo` skill.
+
+## Using React?
+
+[`svgin-react`](../react)'s `<SvgIn />` is the same sanitize-by-default SVG loading as a React
+component, with client and server variants, `<SvgInProvider>` shared defaults, Suspense support, and
+more - built on the same [`svgin-core`](../core) internals as this package. Already published to npm
+as [`svgin-react`](https://npmjs.com/package/svgin-react) (continuing that existing package).
 
 ## Usage
 
