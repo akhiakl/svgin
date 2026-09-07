@@ -259,6 +259,9 @@ importers:
 
   packages/element:
     dependencies:
+      dompurify:
+        specifier: ^3.4.14
+        version: 3.4.14
       svgin-core:
         specifier: workspace:*
         version: link:../core

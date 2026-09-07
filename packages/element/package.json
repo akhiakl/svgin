@@ -32,6 +32,14 @@
     "test:coverage": "vitest run --coverage",
     "size": "node ../../scripts/check-bundle-size.mjs"
   },
+  "peerDependencies": {
+    "dompurify": "^3.4.14"
+  },
+  "peerDependenciesMeta": {
+    "dompurify": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "svgin-core": "workspace:*"
   },
