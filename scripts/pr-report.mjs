@@ -73,7 +73,7 @@ function coverageRow(label, headTotal, baseTotal, key) {
 }
 
 function coverageSection(pkg, headCoverage, baseCoverage) {
-    if (!headCoverage) return null;
+    if (!headCoverage) return '**Coverage**: _no data (coverage run may have failed)._';
     const headTotal = headCoverage.total;
     const baseTotal = baseCoverage?.total;
     return [
