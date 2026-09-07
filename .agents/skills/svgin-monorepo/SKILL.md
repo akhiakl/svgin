@@ -91,8 +91,14 @@ boundaries, or tooling decisions it describes.
   `coverage.exclude` entry instead of a low-value smoke test, and demo components that call the real
   `svgin-react` get real integration-style tests against a stubbed `fetch` (see
   `apps/tryit/test/helpers/mockSvgFetch.ts`) rather than mocking `svgin-react` itself away.
-  `pnpm --filter <pkg> exec vitest run --coverage` to check locally (not wired into the default
-  `test` script/turbo pipeline).
+  **Actually enforced in CI**, not just locally: a real gap Copilot's review of PR #29 caught -
+  `coverage.thresholds` is only evaluated when coverage is actually collected, and every package's
+  `test` script is plain `vitest run` (no `--coverage`) for a fast default dev/CI loop, so the
+  thresholds were silently never checked anywhere before this. Fixed with a separate `test:coverage`
+  script per package (`vitest run --coverage`) and turbo task, run by its own `Coverage thresholds`
+  CI job (Node 22 only - coverage correctness doesn't vary by Node version) and by `release.yml`'s
+  quality gate, both via `turbo run test:coverage`. `pnpm --filter <pkg> exec vitest run --coverage`
+  (or `test:coverage`) still works the same way locally.
 - **React 19's `use()` + `Suspense` doesn't reliably re-render after the awaited promise resolves,
   under `@testing-library/react` + jsdom, without help.** Reproduced with a minimal `use()`/`Suspense`
   case with no svgin-react involved at all, so it's an environment quirk, not a library bug: awaiting

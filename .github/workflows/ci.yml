@@ -143,6 +143,36 @@ jobs:
           restore-keys: turbo-test-node${{ matrix.node-version }}-
       - run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
+  coverage:
+    name: Coverage thresholds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            packages/*/.turbo
+            apps/*/.turbo
+          key: turbo-coverage-${{ github.event.pull_request.head.sha || github.sha }}
+          restore-keys: turbo-coverage-
+      # Separate from the `test` job above (which runs plain `vitest run`,
+      # no coverage collection, on both Node versions): each package's own
+      # coverage.thresholds (see svgin-vitest-config) are only evaluated
+      # when coverage is actually collected, so a plain `turbo run test`
+      # here would silently never enforce them. Node 22 only - coverage
+      # correctness doesn't vary by Node version, and running it twice
+      # would just double the cost for no signal.
+      - run: pnpm turbo run test:coverage ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
   build:
     name: Build
     runs-on: ubuntu-latest
