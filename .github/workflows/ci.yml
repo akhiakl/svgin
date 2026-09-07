@@ -7,12 +7,15 @@ name: CI
 # script, reading each package's own size-budget.json instead of a hard-coded
 # object - see #20. The pr-report job (scripts/pr-report.mjs, a sticky PR
 # comment comparing head vs base) is likewise a generalized port of
-# svgin-react's own job - one section per package instead of one, plus a unit
-# test pass/fail summary the original didn't have. E2E and axe-core a11y
-# summaries are a deliberately separate, later phase - see #22. The tryit-e2e
-# job is ported from akhiakl/svgin-react-tryit's own ci.yml, scoped to
-# apps/tryit via `pnpm --filter svgin-tryit` since it's the only workspace
-# member with Playwright e2e tests.
+# svgin-react's own job - one section per package instead of one, a unit
+# test pass/fail summary the original didn't have, and (see #22) a
+# per-browser E2E/axe-core accessibility summary for apps/tryit, parsed
+# best-effort from the tryit-e2e job's own JSON reporter artifacts (needs:
+# tryit-e2e, but runs even when that job is skipped - apps/tryit unchanged -
+# via the explicit always()/result check on this job's own `if:`). The
+# tryit-e2e job is ported from akhiakl/svgin-react-tryit's own ci.yml,
+# scoped to apps/tryit via `pnpm --filter svgin-tryit` since it's the only
+# workspace member with Playwright e2e tests.
 #
 # --affected on pull_request: only runs a task for packages that actually
 # changed since the PR's base branch (plus anything that depends on them, via
@@ -269,14 +272,31 @@ jobs:
 
   pr-report:
     name: PR report (tests, coverage, size)
-    if: github.event_name == 'pull_request'
+    needs: [tryit-changed, tryit-e2e]
+    # needs: [..., tryit-e2e] so the E2E/a11y artifact download below can't
+    # race its upload - but tryit-e2e's own `if:` skips it whenever
+    # apps/tryit didn't change, and a skipped dependency makes a dependent
+    # job skip too by default (its implicit condition is success(), which
+    # does not count "skipped" as success) - always() plus an explicit
+    # result check is the standard workaround for "run unless it actually
+    # failed".
+    if: >
+      always() &&
+      github.event_name == 'pull_request' &&
+      (needs.tryit-e2e.result == 'success' || needs.tryit-e2e.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # A PR comment is an "issue comment" in GitHub's API model regardless
-      # of pull-requests: write above - issues.listComments/updateComment/
-      # createComment need issues: write, not the PR-specific scope.
+      # Both needed simultaneously, confirmed by GitHub's own 403 response
+      # header (`x-accepted-github-permissions: issues=write;
+      # pull_requests=write`) on a real run of this job after a previous fix
+      # here mistakenly kept only issues: write, dropping pull-requests:
+      # write entirely instead of adding issues: write alongside it - the
+      # actual root cause of every prior "PR report can't post its comment"
+      # investigation in this repo's history, not the repo-wide default
+      # workflow permissions setting that got blamed at the time.
       issues: write
+      pull-requests: write
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v7
@@ -341,6 +361,24 @@ jobs:
             fi
           done
 
+      - name: Download E2E/a11y results (best effort)
+        # Entirely best-effort: no artifacts exist at all when tryit-e2e was
+        # skipped (apps/tryit unchanged), and continue-on-error covers any
+        # other download hiccup - pr-report.mjs already treats a missing
+        # head-e2e-<browser>.json (see the next step) as "n/a", not a failure.
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          pattern: tryit-playwright-report-*
+          path: e2e-artifacts
+
+      - name: Extract E2E/a11y JSON results (best effort)
+        run: |
+          for browser in chromium firefox webkit; do
+            cp "e2e-artifacts/tryit-playwright-report-$browser/results.json" \
+              "reports/head-e2e-$browser.json" 2>/dev/null || true
+          done
+
       - name: Build report
         run: node head/scripts/pr-report.mjs reports > report.md
 
@@ -348,17 +386,11 @@ jobs:
         # On a PR from a fork, GITHUB_TOKEN is read-only and this step would
         # just fail; skip posting rather than failing the whole workflow.
         if: github.event.pull_request.head.repo.full_name == github.repository
-        # continue-on-error, not just the fork check above: this repo's own
-        # Settings -> Actions -> General -> Workflow permissions is
-        # "Read repository contents permission" (read-only) by default,
-        # which the job's own `issues: write` grant above does not override -
-        # confirmed via `gh api repos/.../actions/permissions/workflow`
-        # returning default_workflow_permissions: "read". Flipping that to
-        # "Read and write permissions" is a repo-wide security setting
-        # affecting every workflow, not something to change without the
-        # repo owner's own say-so - continue-on-error here means the report
-        # is generated and visible in this job's own logs either way, it
-        # just won't post as a comment until/unless that setting changes.
+        # continue-on-error kept as a defensive safety net now that the real
+        # cause (missing pull-requests: write, see the permissions block
+        # above) is fixed - if posting ever fails for some other reason
+        # (rate limiting, a future permissions change, etc.), the report is
+        # still generated and visible in this job's own logs either way.
         continue-on-error: true
         uses: actions/github-script@v9
         with:

@@ -4,16 +4,21 @@
 // akhiakl/svgin-react's own scripts/pr-report.mjs (same diff-arrow
 // formatting, same head-vs-base comparison idea), generalized from that
 // single-package repo's report to a proper superset for this monorepo: one
-// section per package/app instead of one, plus a unit-test pass/fail
-// summary the original didn't have. E2E/axe-core summaries are a
-// deliberately separate, later phase - see #22.
+// section per package/app instead of one, a unit-test pass/fail summary the
+// original didn't have, and a per-browser E2E/axe-core accessibility
+// summary for apps/tryit (parsed from Playwright's own --reporter=json
+// output, best-effort - see e2eSection()/countPlaywrightSpecs() below for
+// why that parsing is defensive rather than assumed correct).
 //
 // Usage: node scripts/pr-report.mjs <reports-dir>
 // Reads <reports-dir>/{head,base}-{coverage,size,test}-<packageId>.json for
-// each package below. Any file that's missing or unreadable is treated as
-// "no data" for that side/package, not a failure - a package that predates
-// this tooling, or whose build failed on the base branch, still gets a
-// report, just with that cell/section rendered as n/a.
+// each package below, plus <reports-dir>/head-e2e-<browser>.json (one of
+// E2E_BROWSERS below, apps/tryit's own Playwright --reporter=json output -
+// head only, no base-branch comparison for E2E/a11y). Any file that's
+// missing or unreadable is treated as "no data" for that side/package, not
+// a failure - a package that predates this tooling, or whose build failed
+// on the base branch, still gets a report, just with that cell/section
+// rendered as n/a.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -112,6 +117,97 @@ function sizeSection(pkg, headSize, baseSize) {
     ].join('\n');
 }
 
+const E2E_BROWSERS = ['chromium', 'firefox', 'webkit'];
+
+// Best-effort, defensive traversal of Playwright's own JSON reporter output
+// (--reporter=json, see playwright.config.ts) - deliberately wrapped so any
+// mismatch between this parsing and Playwright's actual (undocumented in
+// detail beyond what a real local run confirmed) JSON shape degrades to
+// "n/a" rather than crashing the whole report. Recursively walks `suites`
+// for specs matching `fileMatch`, counting each spec's own `ok` boolean
+// (Playwright's own "did this spec succeed, accounting for retries"
+// verdict - verified directly against a real --reporter=json run rather
+// than assumed) as either passed or not.
+function countPlaywrightSpecs(report, fileMatch) {
+    let passed = 0;
+    let failed = 0;
+    function walk(suite) {
+        for (const spec of suite.specs ?? []) {
+            if (fileMatch && !String(spec.file ?? '').includes(fileMatch)) continue;
+            if (spec.ok) passed++;
+            else failed++;
+        }
+        for (const child of suite.suites ?? []) walk(child);
+    }
+    for (const suite of report.suites ?? []) walk(suite);
+    return { passed, failed, total: passed + failed };
+}
+
+function e2eSection(reportsByBrowser) {
+    const rows = [];
+    let anyData = false;
+    let anyFailure = false;
+    let anyA11yData = false;
+    let anyA11yFailure = false;
+    for (const browser of E2E_BROWSERS) {
+        const report = reportsByBrowser[browser];
+        if (!report) {
+            rows.push(`| ${browser} | _no data (skipped or not run)_ | |`);
+            continue;
+        }
+        anyData = true;
+        let overall;
+        let a11y;
+        try {
+            const stats = report.stats ?? {};
+            overall = { passed: stats.expected ?? 0, failed: stats.unexpected ?? 0 };
+            a11y = countPlaywrightSpecs(report, 'a11y.spec.ts');
+        } catch {
+            rows.push(`| ${browser} | _could not parse results_ | |`);
+            continue;
+        }
+        if (overall.failed > 0) anyFailure = true;
+        const overallIcon = overall.failed > 0 ? '❌' : '✅';
+        let a11yCell;
+        if (a11y.total > 0) {
+            anyA11yData = true;
+            if (a11y.failed > 0) anyA11yFailure = true;
+            a11yCell = `${a11y.failed > 0 ? '❌' : '✅'} ${a11y.passed}/${a11y.total} checks`;
+        } else {
+            a11yCell = '_no a11y results found_';
+        }
+        rows.push(
+            `| ${browser} | ${overallIcon} ${overall.passed}/${overall.passed + overall.failed} specs | ${a11yCell} |`
+        );
+    }
+    if (!anyData) {
+        return '**E2E & accessibility (apps/tryit)**: _skipped - apps/tryit unchanged, or no results found._';
+    }
+    // A dedicated a11y footnote, not folded into the general e2e
+    // pass/fail one: a browser with zero a11y results found (a parsing
+    // mismatch, or the spec not running for some reason) must not be
+    // reported as "scanned, zero violations" - that would be a false
+    // positive an actual accessibility regression could hide behind.
+    const a11yFootnote = !anyA11yData
+        ? '_No accessibility (axe-core) results found for any browser - see the raw JSON reporter output rather than trusting this summary._'
+        : anyA11yFailure
+          ? '_One or more accessibility checks failed - see the `apps/tryit E2E` job logs/artifacts for the actual violations._'
+          : '_Every accessibility check that ran reported zero violations (WCAG 2.0/2.1 A/AA) - browsers with "no a11y results found" above are not included in this._';
+    return [
+        '**E2E & accessibility (apps/tryit)**',
+        '',
+        '| Browser | E2E (all specs) | Accessibility (axe-core) |',
+        '| --- | --- | --- |',
+        ...rows,
+        '',
+        anyFailure
+            ? '_A failure here already fails CI outright - this is a summary, not the full picture. See the `apps/tryit E2E` job logs/artifacts for details._'
+            : '_Every E2E spec that ran passed._',
+        '',
+        a11yFootnote,
+    ].join('\n');
+}
+
 function testSection(headTest) {
     if (!headTest) return '**Unit tests**: _no data (test run may have failed)._';
     const { numTotalTests, numPassedTests, numFailedTests, numPendingTests } = headTest;
@@ -144,6 +240,13 @@ const sections = PACKAGES.map((pkg) => {
     return [`### ${pkg.label}`, ...parts].join('\n\n');
 });
 
+const e2eReports = Object.fromEntries(E2E_BROWSERS.map((b) => [b, readJson(join(reportsDir, `head-e2e-${b}.json`))]));
+const e2eText = e2eSection(e2eReports);
+if (Object.values(e2eReports).some((r) => r !== null)) {
+    anyData = true;
+    if (E2E_BROWSERS.some((b) => e2eReports[b] && (e2eReports[b].stats?.unexpected ?? 0) > 0)) anyFailure = true;
+}
+
 const lines = [
     '## PR report: tests, coverage & bundle size',
     '',
@@ -155,7 +258,11 @@ const lines = [
     '',
     sections.join('\n\n'),
     '',
-    '<sub>Base branch numbers come from rebuilding its current head in this same workflow run. 🟢/🔴 mark whether this PR made a number better or worse; missing data (base predates a script, a build failed) is shown as n/a rather than counted either way. E2E and accessibility summaries are a separate, later phase - see [#22](https://github.com/akhiakl/svgin/issues/22).</sub>',
+    '### apps/tryit E2E & accessibility',
+    '',
+    e2eText,
+    '',
+    '<sub>Base branch numbers come from rebuilding its current head in this same workflow run. 🟢/🔴 mark whether this PR made a number better or worse; missing data (base predates a script, a build failed) is shown as n/a rather than counted either way. E2E/accessibility results have no base-branch comparison (Playwright is not re-run against base) - head-only pass/fail, per browser.</sub>',
 ].join('\n');
 
 console.log(lines);
