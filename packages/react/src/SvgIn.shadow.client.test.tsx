@@ -140,6 +140,16 @@ describe('SvgInShadow (client component)', () => {
         expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'network error' }));
     });
 
+    it('wraps a non-Error rejection into a real Error', async () => {
+        mockFetch.mockRejectedValue('boom');
+        const onError = vi.fn();
+        render(<SvgInShadow src="/missing.svg" onError={onError} />);
+        await waitFor(() => expect(onError).toHaveBeenCalled());
+        const err = onError.mock.calls[0][0] as Error;
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toBe('boom');
+    });
+
     it('renders null (no DOM node) when the fetch rejects and no fallback is given', async () => {
         mockFetch.mockRejectedValue(new Error('network error'));
         const { container } = render(<SvgInShadow src="/missing.svg" />);
@@ -181,7 +191,7 @@ describe('SvgInShadow (client component)', () => {
         expect(onMount).not.toHaveBeenCalled();
     });
 
-    it('renders a div host instead of a span when as="div" is given', async () => {
+    it('renders a div host instead of a span when as="div" is given', () => {
         mockFetch.mockResolvedValue('<svg><path/></svg>');
         const { container } = render(<SvgInShadow src="/test.svg" as="div" />);
         expect(container.querySelector('div')).not.toBeNull();
@@ -222,7 +232,7 @@ describe('SvgInShadow (client component)', () => {
         await waitFor(() => expect(shadowRoot(host).querySelector('circle')).not.toBeNull());
     });
 
-    it('applies className/style to the host element, not the svg inside the shadow root', async () => {
+    it('applies className/style to the host element, not the svg inside the shadow root', () => {
         mockFetch.mockResolvedValue('<svg><path/></svg>');
         const { container } = render(
             <SvgInShadow src="/test.svg" className="icon-host" style={{ display: 'inline-block' }} />
@@ -281,6 +291,9 @@ describe('SvgInShadow (client component)', () => {
         ).not.toThrow();
         await waitFor(() =>
             expect(onMount).toHaveBeenLastCalledWith(
+                // expect.stringContaining/objectContaining are typed `any`
+                // by vitest's own types, not a real unchecked-any value here.
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 expect.objectContaining({ tagName: 'svg', innerHTML: expect.stringContaining('second') })
             )
         );
@@ -300,14 +313,14 @@ describe('SvgInShadow (client component)', () => {
         expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
-    it('releases the in-flight fetch on unmount', async () => {
+    it('releases the in-flight fetch on unmount', () => {
         mockFetch.mockReturnValue(new Promise(() => {}));
         const { unmount } = render(<SvgInShadow src="/test.svg" />);
         unmount();
         expect(mockRelease).toHaveBeenCalledWith('/test.svg', expect.objectContaining({ disableSanitization: undefined }));
     });
 
-    it('does not release anything on unmount when svg took precedence over src', async () => {
+    it('does not release anything on unmount when svg took precedence over src', () => {
         mockSanitizeString.mockReturnValue(new Promise(() => {}));
         const { unmount } = render(<SvgInShadow svg="<svg/>" src="/unused.svg" />);
         unmount();

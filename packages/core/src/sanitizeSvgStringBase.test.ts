@@ -41,6 +41,10 @@ describe('createSanitizeSvgString', () => {
     });
 
     it('does not share a cache entry across different markup', async () => {
+        // async, not a plain return: the real sanitizeFn signature returns a
+        // Promise, and this mock needs to match it - there's just nothing
+        // to actually await.
+        // eslint-disable-next-line @typescript-eslint/require-await
         const defaultSanitize = vi.fn().mockImplementation(async (s: string) => `clean:${s}`);
         const sanitizeSvgString = createSanitizeSvgString(defaultSanitize);
 

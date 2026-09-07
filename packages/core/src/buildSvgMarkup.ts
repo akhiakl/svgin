@@ -38,16 +38,25 @@ export interface BuildSvgMarkupOptions {
  * Returns `null` for anything that isn't a well-formed `<svg>...</svg>`
  * string (mirrors extractSvgInner).
  */
+// An optional string field being absent (undefined) or present-but-empty
+// ('') are both "nothing to render" here - a plain truthy check already
+// treats them the same way, but strict-boolean-expressions requires that to
+// be spelled out explicitly rather than relying on '' and undefined both
+// being falsy.
+function hasContent(s: string | undefined): s is string {
+    return s !== undefined && s !== '';
+}
+
 export function buildSvgMarkup(svg: string, options: BuildSvgMarkupOptions = {}): string | null {
     let inner = extractSvgInner(svg);
     if (inner === null) return null;
     const { title, description, idSuffix, attrs = {} } = options;
-    if (idSuffix) inner = uniquifyIds(inner, idSuffix);
+    if (hasContent(idSuffix)) inner = uniquifyIds(inner, idSuffix);
 
-    const titleId = title ? `svgin-title-${idSuffix ?? ''}` : undefined;
-    const descId = description ? `svgin-desc-${idSuffix ?? ''}` : undefined;
-    if (description) inner = `<desc id="${descId}">${escapeHtml(description)}</desc>${inner}`;
-    if (title) inner = `<title id="${titleId}">${escapeHtml(title)}</title>${inner}`;
+    const titleId = hasContent(title) ? `svgin-title-${idSuffix ?? ''}` : undefined;
+    const descId = hasContent(description) ? `svgin-desc-${idSuffix ?? ''}` : undefined;
+    if (hasContent(description)) inner = `<desc id="${descId}">${escapeHtml(description)}</desc>${inner}`;
+    if (hasContent(title)) inner = `<title id="${titleId}">${escapeHtml(title)}</title>${inner}`;
 
     const merged = parseSvgAttrs(extractSvgAttrs(svg));
     for (const [key, value] of Object.entries(attrs)) {
@@ -63,8 +72,9 @@ export function buildSvgMarkup(svg: string, options: BuildSvgMarkupOptions = {})
     // review: SvgInComponent still wires aria-labelledby to the injected
     // title even when the source's own aria-label is present, so this must
     // match).
-    if (!attrs['aria-label'] && titleId) merged['aria-labelledby'] = titleId;
-    if (descId) merged['aria-describedby'] = descId;
+    const ariaLabelGiven = attrs['aria-label'] !== undefined && attrs['aria-label'] !== '';
+    if (!ariaLabelGiven && titleId !== undefined) merged['aria-labelledby'] = titleId;
+    if (descId !== undefined) merged['aria-describedby'] = descId;
 
     const attrString = Object.entries(merged)
         .map(([key, value]) => ` ${key}="${escapeHtml(value)}"`)

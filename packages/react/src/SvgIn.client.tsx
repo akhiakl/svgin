@@ -134,7 +134,18 @@ export const SvgIn: React.FC<SvgInProps> = (props) => {
         const currentFetchOptions = fetchOptionsRef.current;
         resolveSvgPromiseClient('<SvgIn />', src, svgProp, currentSanitizeFn, disableSanitization, currentFetchOptions)
             .then((sanitized) => { if (mounted) setSvg(sanitized); })
-            .catch((e) => { if (mounted) { setError(e); onErrorRef.current?.(e); } });
+            .catch((e: unknown) => {
+                // A rejection value isn't guaranteed to be a real Error
+                // (anything can be thrown/rejected with) - wrapped here so
+                // `error` state and onError's own contract (Error | null,
+                // (error: Error) => void) actually hold, same protection
+                // SvgIn.suspense.client.tsx and svgin-element's SvgIn.ts
+                // already give this same class of rejection.
+                if (!mounted) return;
+                const err = e instanceof Error ? e : new Error(String(e));
+                setError(err);
+                onErrorRef.current?.(err);
+            });
         return () => {
             mounted = false;
             // Release this caller's share of the in-flight fetch - but only

@@ -81,7 +81,19 @@ export function setUniversalCache<T extends (...args: any[]) => any>(fn: T): T {
             // react/cache is optional (only present in a React Server Components
             // runtime) and has no bundled types; `require` may also be undefined in
             // pure-ESM environments, which throws here too and is handled below.
-            cacheImpl = (require as any)('react/cache').cache;
+            // require(...) itself is typed `any` (Node's own NodeRequire
+            // signature), so asserting straight to a concrete shape here -
+            // rather than reading `.cache` off the `any` result directly -
+            // is what the rest of this function actually uses, not an
+            // unchecked `any` value.
+            // Deliberate require(), not import: this needs to attempt a
+            // synchronous, catchable load of an optional module - ESM's
+            // static `import` can't fail gracefully like this, and dynamic
+            // `import()` is asynchronous, which this synchronous function
+            // can't use.
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const reactCache = require('react/cache') as { cache: CacheWrapper<any> };
+            cacheImpl = reactCache.cache;
         } catch {
             cacheImpl = (<F extends (...args: any[]) => any>(fn: F) => {
                 const inMemoryCache = new Map<string, ReturnType<F>>();
@@ -90,7 +102,7 @@ export function setUniversalCache<T extends (...args: any[]) => any>(fn: T): T {
                     if (!inMemoryCache.has(key)) {
                         const result = fn(...args) as ReturnType<F>;
                         let cached: ReturnType<F>;
-                        if (result && typeof (result as PromiseLike<unknown>).then === 'function') {
+                        if (Boolean(result) && typeof (result as PromiseLike<unknown>).then === 'function') {
                             // If fn returns a promise that rejects (e.g. a failed fetch),
                             // evict it so the next call with the same arguments retries
                             // instead of replaying the same rejection forever.
@@ -133,9 +145,15 @@ export function setUniversalCache<T extends (...args: any[]) => any>(fn: T): T {
     }
     // cacheImpl is always assigned above to something truthy (either
     // react/cache's real `cache`, or the in-memory fallback closure) - this
-    // is a type-narrowing/defensive guard for TypeScript, not a reachable
-    // branch.
-    /* v8 ignore next */
+    // is a defensive guard, not a reachable branch (TypeScript's own control
+    // flow analysis already proves the condition below is always false,
+    // which is exactly why strict-boolean-expressions flags it too).
+    /* v8 ignore start */
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!cacheImpl) throw new Error('Universal cache implementation missing');
-    return cacheImpl(fn);
+    /* v8 ignore stop */
+    // cacheImpl(fn) is typed any (CacheWrapper<any>'s own return type) -
+    // asserting it back to T here is what the caller actually asked for
+    // (setUniversalCache<T>(fn: T): T), not an unchecked any escaping.
+    return cacheImpl(fn) as T;
 }

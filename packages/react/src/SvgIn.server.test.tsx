@@ -104,6 +104,9 @@ describe('SvgIn (server component)', () => {
         const element = await SvgIn({ fallback: <span>bad usage</span>, onError });
         const { container } = render(element as React.ReactElement);
         expect(container.textContent).toBe('bad usage');
+        // expect.stringContaining/objectContaining are typed `any` by
+        // vitest's own types, not a real unchecked-any value here.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('src') }));
         expect(mockFetch).not.toHaveBeenCalled();
         expect(mockSanitizeString).not.toHaveBeenCalled();

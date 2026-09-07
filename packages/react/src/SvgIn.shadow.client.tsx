@@ -122,7 +122,14 @@ export function SvgInShadow({
         const currentFetchOptions = fetchOptionsRef.current;
         resolveSvgPromiseClient('<SvgInShadow />', src, svgProp, currentSanitizeFn, disableSanitization, currentFetchOptions)
             .then((sanitized) => { if (mounted) setSvg(sanitized); })
-            .catch((e) => { if (mounted) { setError(e); onErrorRef.current?.(e); } });
+            .catch((e: unknown) => {
+                // See the matching comment in SvgIn.client.tsx: a rejection
+                // value isn't guaranteed to be a real Error.
+                if (!mounted) return;
+                const err = e instanceof Error ? e : new Error(String(e));
+                setError(err);
+                onErrorRef.current?.(err);
+            });
         return () => {
             mounted = false;
             // See the matching comment in SvgIn.client.tsx: only release
@@ -159,9 +166,12 @@ export function SvgInShadow({
         if (shadowRootRef.current && shadowRootRef.current.host !== host) {
             shadowRootRef.current = null;
         }
-        if (!svg) {
-            // Nothing resolved yet (or the last resolution failed) - don't
-            // leave a previous src/svg's stale content showing.
+        if (svg === null || svg === '') {
+            // Nothing resolved yet, or resolved to nothing (both treated
+            // the same way here - unlike SvgIn.client.tsx/SvgInComponent,
+            // there's no separate "fallback" content to render differently
+            // for the two cases, just an empty shadow root either way) -
+            // don't leave a previous src/svg's stale content showing.
             if (shadowRootRef.current) shadowRootRef.current.root.innerHTML = '';
             return;
         }
@@ -186,7 +196,7 @@ export function SvgInShadow({
         // it purely as text, the same way a native <style> tag's content
         // always would, with no HTML-injection risk regardless of content.
         root.innerHTML = markup;
-        if (styles) {
+        if (styles !== undefined && styles !== '') {
             const styleEl = document.createElement('style');
             styleEl.textContent = styles;
             root.prepend(styleEl);

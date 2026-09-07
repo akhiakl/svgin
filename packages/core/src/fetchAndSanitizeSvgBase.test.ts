@@ -239,6 +239,9 @@ describe('createFetchAndSanitizeSvg', () => {
         // cancellation signal fetchAndSanitizeSvg attaches to every call.
         expect(fetchMock).toHaveBeenCalledWith(
             'https://example.com/auth.svg',
+            // expect.anything() is typed `any` by vitest's own types, not a
+            // real unchecked-any value from this codebase.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             expect.objectContaining({ ...fetchOptions, signal: expect.anything() })
         );
     });
@@ -319,7 +322,7 @@ describe('createFetchAndSanitizeSvg', () => {
         const { fetchAndSanitizeSvg } = createFetchAndSanitizeSvg(vi.fn());
         const callerController = new AbortController();
 
-        fetchAndSanitizeSvg('https://example.com/caller-signal.svg', {
+        void fetchAndSanitizeSvg('https://example.com/caller-signal.svg', {
             fetchOptions: { signal: callerController.signal },
         });
 
@@ -341,7 +344,7 @@ describe('createFetchAndSanitizeSvg', () => {
         const alreadyAborted = new AbortController();
         alreadyAborted.abort();
 
-        fetchAndSanitizeSvg('https://example.com/pre-aborted.svg', {
+        void fetchAndSanitizeSvg('https://example.com/pre-aborted.svg', {
             fetchOptions: { signal: alreadyAborted.signal },
         });
 
@@ -370,8 +373,8 @@ describe('createFetchAndSanitizeSvg', () => {
         const controllerA = new AbortController();
         const controllerB = new AbortController();
 
-        fetchAndSanitizeSvg('https://example.com/shared-signal.svg', { fetchOptions: { signal: controllerA.signal } });
-        fetchAndSanitizeSvg('https://example.com/shared-signal.svg', { fetchOptions: { signal: controllerB.signal } });
+        void fetchAndSanitizeSvg('https://example.com/shared-signal.svg', { fetchOptions: { signal: controllerA.signal } });
+        void fetchAndSanitizeSvg('https://example.com/shared-signal.svg', { fetchOptions: { signal: controllerB.signal } });
 
         // B still needs it - A's own signal firing must not abort the fetch.
         controllerA.abort();
@@ -423,7 +426,7 @@ describe('createFetchAndSanitizeSvg', () => {
             expect(() => releaseFetchAndSanitizeSvg('https://example.com/never-called.svg')).not.toThrow();
         });
 
-        it('does not abort the underlying fetch while another caller still holds a share of it', async () => {
+        it('does not abort the underlying fetch while another caller still holds a share of it', () => {
             let capturedSignal: AbortSignal | undefined;
             const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
                 capturedSignal = init?.signal ?? undefined;
@@ -433,8 +436,8 @@ describe('createFetchAndSanitizeSvg', () => {
             const { fetchAndSanitizeSvg, releaseFetchAndSanitizeSvg } = createFetchAndSanitizeSvg(vi.fn());
 
             // Two "callers" acquire a share of the same in-flight request.
-            fetchAndSanitizeSvg('https://example.com/refcount.svg');
-            fetchAndSanitizeSvg('https://example.com/refcount.svg');
+            void fetchAndSanitizeSvg('https://example.com/refcount.svg');
+            void fetchAndSanitizeSvg('https://example.com/refcount.svg');
             expect(fetchMock).toHaveBeenCalledTimes(1);
 
             releaseFetchAndSanitizeSvg('https://example.com/refcount.svg');
@@ -453,7 +456,7 @@ describe('createFetchAndSanitizeSvg', () => {
             vi.stubGlobal('fetch', fetchMock);
             const { fetchAndSanitizeSvg, releaseFetchAndSanitizeSvg } = createFetchAndSanitizeSvg(vi.fn());
 
-            fetchAndSanitizeSvg('https://example.com/single.svg');
+            void fetchAndSanitizeSvg('https://example.com/single.svg');
             releaseFetchAndSanitizeSvg('https://example.com/single.svg');
             expect(capturedSignal?.aborted).toBe(true);
         });
@@ -472,8 +475,8 @@ describe('createFetchAndSanitizeSvg', () => {
             const { fetchAndSanitizeSvg, releaseFetchAndSanitizeSvg } = createFetchAndSanitizeSvg(vi.fn());
             const customFn = vi.fn();
 
-            fetchAndSanitizeSvg('https://example.com/keyed.svg');
-            fetchAndSanitizeSvg('https://example.com/keyed.svg', { sanitizeFn: customFn });
+            void fetchAndSanitizeSvg('https://example.com/keyed.svg');
+            void fetchAndSanitizeSvg('https://example.com/keyed.svg', { sanitizeFn: customFn });
             expect(fetchMock).toHaveBeenCalledTimes(2);
 
             // Releasing the custom-sanitizeFn share must not abort the
@@ -499,7 +502,7 @@ describe('createFetchAndSanitizeSvg', () => {
             expect(() => releaseFetchAndSanitizeSvg('https://example.com/settled.svg')).not.toThrow();
         });
 
-        it('keeps bookkeeping fully separate between two createFetchAndSanitizeSvg instances', async () => {
+        it('keeps bookkeeping fully separate between two createFetchAndSanitizeSvg instances', () => {
             // Regression test for a real bug found in review: pendingByKey used
             // to live at module scope, shared across every createFetchAndSanitizeSvg
             // call (e.g. the client and server entry points, which could both be
@@ -521,11 +524,11 @@ describe('createFetchAndSanitizeSvg', () => {
 
             const instanceA = createFetchAndSanitizeSvg(vi.fn());
             vi.stubGlobal('fetch', fetchMockA);
-            instanceA.fetchAndSanitizeSvg('https://example.com/isolated.svg');
+            void instanceA.fetchAndSanitizeSvg('https://example.com/isolated.svg');
 
             const instanceB = createFetchAndSanitizeSvg(vi.fn());
             vi.stubGlobal('fetch', fetchMockB);
-            instanceB.fetchAndSanitizeSvg('https://example.com/isolated.svg');
+            void instanceB.fetchAndSanitizeSvg('https://example.com/isolated.svg');
 
             // Releasing instance B's only share aborts instance B's fetch, but
             // must leave instance A's still-in-flight fetch untouched.

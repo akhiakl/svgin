@@ -9,6 +9,7 @@ vi.mock('svgin-core/sanitizeSvgStringClient', () => ({
 }));
 
 import { SvgIn } from './SvgIn';
+import type { SvgInErrorEvent, SvgInLoadEvent } from './SvgIn';
 import { fetchAndSanitizeSvg, releaseFetchAndSanitizeSvg } from 'svgin-core/fetchAndSanitizeSvgClient';
 import { sanitizeSvgString } from 'svgin-core/sanitizeSvgStringClient';
 
@@ -67,14 +68,14 @@ describe('SvgIn (custom element)', () => {
     it('renders the SVG inline after a successful fetch and dispatches svg-in-load', async () => {
         mockFetch.mockResolvedValue('<svg viewBox="0 0 24 24"><circle r="12"/></svg>');
         const el = mount({ src: '/test.svg' });
-        const onLoad = vi.fn();
+        const onLoad = vi.fn<(e: Event) => void>();
         el.addEventListener('svg-in-load', onLoad);
         await flush();
         const svg = el.querySelector('svg');
         expect(svg).toHaveAttribute('viewBox', '0 0 24 24');
         expect(el.querySelector('circle')).not.toBeNull();
         expect(onLoad).toHaveBeenCalledTimes(1);
-        expect(onLoad.mock.calls[0][0].detail.svg).toBe(svg);
+        expect((onLoad.mock.calls[0][0] as SvgInLoadEvent).detail.svg).toBe(svg);
     });
 
     it('treats an empty sanitized result as a real resolved value, not still-loading', async () => {
@@ -90,33 +91,33 @@ describe('SvgIn (custom element)', () => {
     it('clears content and dispatches svg-in-error when the fetch rejects', async () => {
         mockFetch.mockRejectedValue(new Error('network error'));
         const el = mount({ src: '/missing.svg' });
-        const onError = vi.fn();
+        const onError = vi.fn<(e: Event) => void>();
         el.addEventListener('svg-in-error', onError);
         await flush();
         expect(el.querySelector('svg')).toBeNull();
         expect(onError).toHaveBeenCalledTimes(1);
-        expect(onError.mock.calls[0][0].detail.error).toBeInstanceOf(Error);
-        expect(onError.mock.calls[0][0].detail.error.message).toBe('network error');
+        expect((onError.mock.calls[0][0] as SvgInErrorEvent).detail.error).toBeInstanceOf(Error);
+        expect((onError.mock.calls[0][0] as SvgInErrorEvent).detail.error.message).toBe('network error');
     });
 
     it('wraps a non-Error rejection into an Error', async () => {
         mockFetch.mockRejectedValue('boom');
         const el = mount({ src: '/missing.svg' });
-        const onError = vi.fn();
+        const onError = vi.fn<(e: Event) => void>();
         el.addEventListener('svg-in-error', onError);
         await flush();
-        const detail = onError.mock.calls[0][0].detail;
+        const detail = (onError.mock.calls[0][0] as SvgInErrorEvent).detail;
         expect(detail.error).toBeInstanceOf(Error);
         expect(detail.error.message).toBe('boom');
     });
 
     it('dispatches svg-in-error and renders nothing when neither src nor svg is given', async () => {
         const el = mount();
-        const onError = vi.fn();
+        const onError = vi.fn<(e: Event) => void>();
         el.addEventListener('svg-in-error', onError);
         await flush();
         expect(el.querySelector('svg')).toBeNull();
-        expect(onError.mock.calls[0][0].detail.error.message).toBe('<svg-in> requires a `src` or `svg` attribute.');
+        expect((onError.mock.calls[0][0] as SvgInErrorEvent).detail.error.message).toBe('<svg-in> requires a `src` or `svg` attribute.');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -216,7 +217,7 @@ describe('SvgIn (custom element)', () => {
             expect(svg).toHaveAttribute('class', 'big');
         });
 
-        it('re-renders the still-pending placeholder when a presentational attribute changes', async () => {
+        it('re-renders the still-pending placeholder when a presentational attribute changes', () => {
             mockFetch.mockReturnValue(new Promise(() => {}));
             const el = mount({ src: '/a.svg' });
             el.setAttribute('width', '40');
@@ -297,7 +298,7 @@ describe('SvgIn (custom element)', () => {
             let resolveFetch: (value: string) => void = () => {};
             mockFetch.mockReturnValue(new Promise((resolve) => { resolveFetch = resolve; }));
             const el = mount({ src: '/a.svg' });
-            const onLoad = vi.fn();
+            const onLoad = vi.fn<(e: Event) => void>();
             el.addEventListener('svg-in-load', onLoad);
             await flush();
             el.remove();
@@ -310,7 +311,7 @@ describe('SvgIn (custom element)', () => {
             let rejectFetch: (err: Error) => void = () => {};
             mockFetch.mockReturnValue(new Promise((_resolve, reject) => { rejectFetch = reject; }));
             const el = mount({ src: '/a.svg' });
-            const onError = vi.fn();
+            const onError = vi.fn<(e: Event) => void>();
             el.addEventListener('svg-in-error', onError);
             await flush();
             el.remove();

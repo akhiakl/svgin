@@ -96,7 +96,7 @@ export function createFetchAndSanitizeSvg(sanitizeSvg: (svg: string) => string |
             : await fetch(url, { signal });
         if (!res.ok) throw new Error(`Failed to fetch SVG: ${url}`);
         const contentType = res.headers?.get('content-type') ?? '';
-        if (contentType && !contentType.includes('svg') && !contentType.includes('xml') && !contentType.includes('octet-stream') && !contentType.includes('text/plain')) {
+        if (contentType !== '' && !contentType.includes('svg') && !contentType.includes('xml') && !contentType.includes('octet-stream') && !contentType.includes('text/plain')) {
             throw new Error(`Unexpected content-type for SVG: ${contentType}`);
         }
         const raw = await res.text();

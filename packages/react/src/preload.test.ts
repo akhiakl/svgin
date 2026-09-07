@@ -23,7 +23,7 @@ function mockFetchOk(body: string, contentType?: string) {
         'fetch',
         vi.fn().mockResolvedValue({
             ok: true,
-            headers: contentType ? { get: () => contentType } : undefined,
+            headers: contentType !== undefined ? { get: () => contentType } : undefined,
             text: () => Promise.resolve(body),
         })
     );

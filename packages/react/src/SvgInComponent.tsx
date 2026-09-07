@@ -12,6 +12,15 @@ import { escapeHtml, extractSvgAttrs, extractSvgInner, uniquifyIds } from 'svgin
  * `className`, `ariaLabel`) always take precedence over the source
  * attributes.
  */
+// An optional string prop being absent (undefined) or present-but-empty
+// ('') are both "nothing to apply" here - matches buildSvgMarkup.ts's own
+// identically-named helper (not shared between the two: svgin-core doesn't
+// depend on this package, and it's a one-line function not worth a shared
+// module over).
+function hasContent(s: string | undefined): s is string {
+    return s !== undefined && s !== '';
+}
+
 function parseSvgAttrs(attrString: string): Record<string, string> {
     const result: Record<string, string> = {};
     // Match name="value", name='value', or bare name (boolean attrs)
@@ -72,16 +81,16 @@ export const SvgInComponent: React.FC<
     if (svg === null) return fallback;
     let inner = extractSvgInner(svg);
     if (inner !== null) {
-        if (idSuffix) inner = uniquifyIds(inner, idSuffix);
+        if (hasContent(idSuffix)) inner = uniquifyIds(inner, idSuffix);
         // Ids for the <title>/<desc> elements this injects, so the root <svg>
         // can point aria-labelledby/aria-describedby at them - the more
         // broadly-compatible way to wire an accessible name/description than
         // relying on assistive tech to treat a bare <title>/<desc> as implicit
         // labelling, which not every screen reader does consistently.
-        const titleId = title ? `svgin-title-${idSuffix ?? ''}` : undefined;
-        const descId = description ? `svgin-desc-${idSuffix ?? ''}` : undefined;
-        if (description) inner = `<desc id="${descId}">${escapeHtml(description)}</desc>${inner}`;
-        if (title) inner = `<title id="${titleId}">${escapeHtml(title)}</title>${inner}`;
+        const titleId = hasContent(title) ? `svgin-title-${idSuffix ?? ''}` : undefined;
+        const descId = hasContent(description) ? `svgin-desc-${idSuffix ?? ''}` : undefined;
+        if (hasContent(description)) inner = `<desc id="${descId}">${escapeHtml(description)}</desc>${inner}`;
+        if (hasContent(title)) inner = `<title id="${titleId}">${escapeHtml(title)}</title>${inner}`;
         const sourceAttrs = parseSvgAttrs(extractSvgAttrs(svg));
         // Explicit ariaLabel always wins over the auto-wired title id, same
         // precedence as every other explicit prop in this component.
@@ -92,10 +101,10 @@ export const SvgInComponent: React.FC<
                 {...rest}
                 {...(width !== undefined ? { width } : {})}
                 {...(height !== undefined ? { height } : {})}
-                {...(fill ? { fill } : {})}
-                {...(className ? { className } : {})}
-                {...(ariaLabel ? { 'aria-label': ariaLabel } : titleId ? { 'aria-labelledby': titleId } : {})}
-                {...(descId ? { 'aria-describedby': descId } : {})}
+                {...(hasContent(fill) ? { fill } : {})}
+                {...(hasContent(className) ? { className } : {})}
+                {...(hasContent(ariaLabel) ? { 'aria-label': ariaLabel } : titleId !== undefined ? { 'aria-labelledby': titleId } : {})}
+                {...(descId !== undefined ? { 'aria-describedby': descId } : {})}
                 dangerouslySetInnerHTML={{ __html: inner }}
             />
         );
