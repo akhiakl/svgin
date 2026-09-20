@@ -12,3 +12,6 @@ minimumReleaseAgeExclude:
 overrides:
   typescript: 5.9.3
   vitest: 5.0.0
+  "@vitest/coverage-v8": 5.0.0
+  "@types/node": 26.6.2
+  jsdom: 30.0.1
