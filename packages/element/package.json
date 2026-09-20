@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.1",
     "eslint": "^10.10.0",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
