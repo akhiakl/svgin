@@ -367,7 +367,7 @@ jobs:
         # other download hiccup - pr-report.mjs already treats a missing
         # head-e2e-<browser>.json (see the next step) as "n/a", not a failure.
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: tryit-playwright-report-*
           path: e2e-artifacts
