@@ -5,6 +5,50 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    # Scoped to just the root package.json's own deps (turbo/husky/commitlint).
+    # Without this allow-list, this entry's pnpm-workspace scan proposes bumps
+    # for every workspace member's dependencies too, duplicating exactly what
+    # each package's own dedicated entry below already covers.
+    allow:
+      - dependency-name: "turbo"
+      - dependency-name: "husky"
+      - dependency-name: "@commitlint/*"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/eslint-config"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/tsup-config"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/vitest-config"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
     groups:
       dev-dependencies:
         dependency-type: "development"
