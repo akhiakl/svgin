@@ -141,8 +141,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       dompurify:
-        specifier: ^3.4.14
-        version: 3.4.14
+        specifier: ^3.4.15
+        version: 3.4.15
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
@@ -166,7 +166,7 @@ importers:
         version: link:../../packages/element
       svgin-react:
         specifier: ^1.0.1
-        version: 1.0.1(dompurify@3.4.14)(jsdom@30.0.1)(react@19.3.0)
+        version: 1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -264,7 +264,7 @@ importers:
     dependencies:
       dompurify:
         specifier: ^3.4.14
-        version: 3.4.14
+        version: 3.4.15
       svgin-core:
         specifier: workspace:*
         version: link:../core
@@ -325,7 +325,7 @@ importers:
     dependencies:
       dompurify:
         specifier: ^3.4.14
-        version: 3.4.14
+        version: 3.4.15
       jsdom:
         specifier: ^26.1.0 || ^27.0.0 || ^28.0.0 || ^29.0.0 || ^30.0.0
         version: 30.0.1
@@ -2240,9 +2240,6 @@ packages:
 
   dom-accessibility-api@0.6.3:
     resolution: {integrity: sha512-7ZgogeTnjuHbo+ct10G9Ffp0mif17idi0IyWNVA/wcwcm7NPOD/WEHVP3n7n3MhXqxoIYm8d6MuZohYWIZ4T3w==}
-
-  dompurify@3.4.14:
-    resolution: {integrity: sha512-dVoH9z+MY+C9IilgGCk3YfFqjLi3fChm2OiKJMzh6axrJ5qwxqWaZamgmHrpv22CN/KdbZJuGEGgfQoL00LTdg==}
 
   dompurify@3.4.15:
     resolution: {integrity: sha512-EUBjM+B+lkDE41iE82DDSCfkoPGfXx8IxFxPMjNzm/Uk4xDet77rTN9wqlxlVg71kK7XGuUMv6wUxJUwwv+Xyw==}
@@ -5620,10 +5617,6 @@ snapshots:
 
   dom-accessibility-api@0.6.3: {}
 
-  dompurify@3.4.14:
-    optionalDependencies:
-      '@types/trusted-types': 2.0.7
-
   dompurify@3.4.15:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
@@ -7258,11 +7251,11 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svgin-react@1.0.1(dompurify@3.4.14)(jsdom@30.0.1)(react@19.3.0):
+  svgin-react@1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0):
     dependencies:
       react: 19.3.0
     optionalDependencies:
-      dompurify: 3.4.14
+      dompurify: 3.4.15
       jsdom: 30.0.1
 
   symbol-tree@3.2.4: {}
