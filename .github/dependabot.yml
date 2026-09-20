@@ -20,6 +20,9 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -32,6 +35,9 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -44,6 +50,9 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -56,6 +65,11 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore"
       include: "scope"
