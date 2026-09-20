@@ -119,7 +119,7 @@
     "@types/react": "^19.2.18",
     "eslint": "^10.10.0",
     "react": "^19.2.8",
-    "react-dom": "19.2.8",
+    "react-dom": "19.3.0",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
