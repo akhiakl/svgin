@@ -116,17 +116,17 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "eslint": "^10.10.0",
-    "react": "^19.2.8",
-    "react-dom": "19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "19.3.0",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",
     "svgin-vitest-config": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "5.9.3",
-    "vitest": "^5.0.0",
-    "@vitest/coverage-v8": "^5.0.0"
+    "vitest": "^5.0.1",
+    "@vitest/coverage-v8": "^5.0.1"
   }
 }
