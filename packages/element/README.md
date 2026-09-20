@@ -1,4 +1,4 @@
-# svgin-element
+# @svgin/element
 
 Framework-agnostic `<svg-in>` custom element: securely fetch and inline SVGs from URLs, sanitized by
 default.
@@ -12,7 +12,7 @@ dependency, same as `svgin-react`), unless you pass your own `sanitizeFn` or `di
 > **Status:** real implementation (see [#18](https://github.com/akhiakl/svgin/issues/18)), demoed live
 > in `apps/tryit` at [`/element`](https://svgin-tryit.vercel.app/element) (see
 > [#21](https://github.com/akhiakl/svgin/issues/21)). Published to npm as
-> [`svgin-element`](https://npmjs.com/package/svgin-element). **Update this README (and any docs-site
+> [`@svgin/element`](https://npmjs.com/package/@svgin/element). **Update this README (and any docs-site
 > page) in the same PR/build whenever `<svg-in>`'s public API or behavior changes**, see the
 > `svgin-monorepo` skill.
 
@@ -27,7 +27,7 @@ as [`svgin-react`](https://npmjs.com/package/svgin-react) (continuing that exist
 
 ```html
 <script type="module">
-    import 'svgin-element'; // registers <svg-in> as a side effect
+    import '@svgin/element'; // registers <svg-in> as a side effect
 </script>
 
 <svg-in src="/icons/logo.svg" width="24" height="24" fill="currentColor"></svg-in>

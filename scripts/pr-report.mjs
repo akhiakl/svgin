@@ -35,8 +35,8 @@ if (!reportsDir) {
 // silently isn't reported, rather than crashing the job).
 const PACKAGES = [
     { id: 'core', label: 'svgin-core', hasSize: false },
-    { id: 'react', label: 'svgin-react', hasSize: true },
-    { id: 'element', label: 'svgin-element', hasSize: true },
+    { id: 'react', label: '@svgin/react', hasSize: true },
+    { id: 'element', label: '@svgin/element', hasSize: true },
     { id: 'tryit', label: 'svgin-tryit', hasSize: false },
 ];
 

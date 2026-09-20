@@ -180,7 +180,7 @@ consumers who don't use them - see each entry point's own bundle-size budget bel
 
 ## Not using React?
 
-[`svgin-element`](../element) is the same sanitize-by-default SVG loading as a framework-agnostic
+[`@svgin/element`](../element) is the same sanitize-by-default SVG loading as a framework-agnostic
 native Custom Element (`<svg-in src="..." />`) - works in any HTML page, no React required, built on
 the same [`svgin-core`](../core) internals as this package. Not published to npm yet - see
 [#18](https://github.com/akhiakl/svgin/issues/18)/[#19](https://github.com/akhiakl/svgin/issues/19).

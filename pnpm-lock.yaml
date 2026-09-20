@@ -134,6 +134,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.7.0
         version: 1.8.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@svgin/element':
+        specifier: workspace:*
+        version: link:../../packages/element
       bright:
         specifier: 1.0.0
         version: 1.0.0(react@19.3.0)
@@ -164,9 +167,6 @@ importers:
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
-      svgin-element:
-        specifier: workspace:*
-        version: link:../../packages/element
       svgin-react:
         specifier: ^1.0.1
         version: 1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0)

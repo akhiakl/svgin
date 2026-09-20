@@ -139,7 +139,7 @@ export const SvgIn: React.FC<SvgInProps> = (props) => {
                 // (anything can be thrown/rejected with) - wrapped here so
                 // `error` state and onError's own contract (Error | null,
                 // (error: Error) => void) actually hold, same protection
-                // SvgIn.suspense.client.tsx and svgin-element's SvgIn.ts
+                // SvgIn.suspense.client.tsx and @svgin/element's SvgIn.ts
                 // already give this same class of rejection.
                 if (!mounted) return;
                 const err = e instanceof Error ? e : new Error(String(e));

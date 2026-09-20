@@ -1,12 +1,12 @@
 import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 
-// svgin-element's own `declare global { interface HTMLElementTagNameMap }`
+// @svgin/element's own `declare global { interface HTMLElementTagNameMap }`
 // (see its src/index.ts) covers document.createElement/querySelector typing
 // but not JSX - React 19's @types/react declares JSX.IntrinsicElements as
 // `React.JSX.IntrinsicElements` (a `declare module 'react'` augmentation,
 // not the older global `JSX` namespace), so that's what needs augmenting
 // here too, or a plain `<svg-in src="..." />` fails to typecheck.
-// `svgin-element` itself doesn't (and shouldn't) provide this - it's a
+// `@svgin/element` itself doesn't (and shouldn't) provide this - it's a
 // framework-agnostic package with no React dependency - so it belongs in
 // this React app's own types instead.
 //
