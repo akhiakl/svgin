@@ -40,13 +40,11 @@
       "optional": true
     }
   },
-  "dependencies": {
-    "svgin-core": "workspace:*"
-  },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
     "@types/node": "^26.6.1",
     "eslint": "^10.10.0",
+    "svgin-core": "workspace:*",
     "svgin-eslint-config": "workspace:*",
     "svgin-tsup-config": "workspace:*",
     "svgin-typescript-config": "workspace:*",

@@ -268,9 +268,6 @@ importers:
       dompurify:
         specifier: ^3.4.14
         version: 3.4.15
-      svgin-core:
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^7.0.1
@@ -284,6 +281,9 @@ importers:
       eslint:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.6.1)(supports-color@7.2.0)
+      svgin-core:
+        specifier: workspace:*
+        version: link:../core
       svgin-eslint-config:
         specifier: workspace:*
         version: link:../eslint-config
@@ -332,9 +332,6 @@ importers:
       jsdom:
         specifier: 30.0.1
         version: 30.0.1
-      svgin-core:
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^7.0.1
@@ -357,6 +354,9 @@ importers:
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
+      svgin-core:
+        specifier: workspace:*
+        version: link:../core
       svgin-eslint-config:
         specifier: workspace:*
         version: link:../eslint-config
