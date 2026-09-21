@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.1...svgin-react-v1.1.2) (2026-09-21)
+
+
+### Documentation
+
+* sync every doc with the actual post-publish state ([cc6c4de](https://github.com/akhiakl/svgin/commit/cc6c4dec282ec6170c7bf015dd0191bdd18636e4))
+* sync every doc with the actual post-publish state ([db7d867](https://github.com/akhiakl/svgin/commit/db7d8679177e67a8f2c03f3c4f158faf9af38b96))
+
 ## [1.1.1](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.0...svgin-react-v1.1.1) (2026-09-21)
 
 
