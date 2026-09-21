@@ -4,6 +4,11 @@
   "private": false,
   "description": "Securely fetch and inline SVGs from URLs as React components, sanitized by default, with client and server support.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akhiakl/svgin.git",
+    "directory": "packages/react"
+  },
   "type": "module",
   "exports": {
     ".": {
