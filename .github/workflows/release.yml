@@ -29,7 +29,8 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write # for the apps/tryit bump PR below, in addition to checkout
+  pull-requests: write # to open/update that PR
   id-token: write # for npm provenance
 
 jobs:
@@ -106,6 +107,7 @@ jobs:
       - run: pnpm turbo run lint typecheck typecheck:test test test:coverage build size --filter="${{ steps.pkg.outputs.name }}"
 
       - name: Verify package.json version matches the release tag
+        id: verify
         run: |
           TAG="${{ steps.tag.outputs.tag }}"
           TAG_VERSION="${TAG##*-v}"
@@ -114,6 +116,7 @@ jobs:
             echo "::error::Release tag ($TAG) does not match ${{ steps.pkg.outputs.dir }}/package.json version ($PKG_VERSION)"
             exit 1
           fi
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Publish to npm
         # Trusted publishing (OIDC) needs npm CLI >= 11.5.1, newer than what
@@ -128,3 +131,104 @@ jobs:
         run: |
           npm install -g npm@^11.5.1
           npm publish --access public --provenance
+
+      # From here on: open a PR bumping apps/tryit's dependency on the
+      # package that was just published. This only runs after a real,
+      # successful npm publish (not just a GitHub Release existing - see the
+      # two runs linked in the turbo-filter comment above, where the release
+      # existed but publish itself failed both times). Never auto-merged: CI
+      # on the PR catches a breaking change (build/typecheck/test/e2e simply
+      # fail), but nothing here can tell whether a new feature in the release
+      # deserves a new demo route - that's still a human call, flagged in the
+      # PR body's checklist line rather than silently skipped.
+      - name: Checkout main for the apps/tryit bump
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: tryit-bump
+
+      - name: Extract this version's changelog entry
+        id: changelog
+        working-directory: tryit-bump
+        env:
+          VERSION: ${{ steps.verify.outputs.version }}
+          DIR: ${{ steps.pkg.outputs.dir }}
+        run: |
+          VERSION_RE=$(printf '%s' "$VERSION" | sed 's/\./\\./g')
+          START=$(grep -n "^## \[$VERSION_RE\]" "$DIR/CHANGELOG.md" | head -1 | cut -d: -f1)
+          if [ -z "$START" ]; then
+            echo "::warning::No CHANGELOG.md entry found for $VERSION in $DIR - PR body will skip it"
+            echo "entry=" >> "$GITHUB_OUTPUT"
+          else
+            REST_LINES=$(tail -n "+$((START + 1))" "$DIR/CHANGELOG.md" | grep -n "^## \[" | head -1 | cut -d: -f1)
+            if [ -n "$REST_LINES" ]; then
+              END=$((START + REST_LINES - 1))
+              ENTRY=$(sed -n "$((START + 1)),${END}p" "$DIR/CHANGELOG.md")
+            else
+              ENTRY=$(tail -n "+$((START + 1))" "$DIR/CHANGELOG.md")
+            fi
+            {
+              echo "entry<<CHANGELOG_EOF"
+              echo "$ENTRY"
+              echo "CHANGELOG_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump apps/tryit's dependency
+        id: bump
+        working-directory: tryit-bump
+        env:
+          PKG_NAME: ${{ steps.pkg.outputs.name }}
+          VERSION: ${{ steps.verify.outputs.version }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = 'apps/tryit/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            pkg.dependencies['$PKG_NAME'] = '^$VERSION';
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+          "
+          corepack enable
+          pnpm install --no-frozen-lockfile
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open the bump PR
+        if: steps.bump.outputs.changed == 'true'
+        working-directory: tryit-bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PKG_NAME: ${{ steps.pkg.outputs.name }}
+          PKG_SHORT: ${{ steps.pkg.outputs.dir == 'packages/react' && 'react' || 'element' }}
+          VERSION: ${{ steps.verify.outputs.version }}
+          CHANGELOG_ENTRY: ${{ steps.changelog.outputs.entry }}
+        run: |
+          BRANCH="chore/bump-tryit-${PKG_SHORT}-${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -am "chore(tryit): bump ${PKG_NAME} to ${VERSION}"
+          git push --force-with-lease origin "$BRANCH"
+
+          BODY_FILE=$(mktemp)
+          {
+            echo "Bumps \`${PKG_NAME}\` to \`${VERSION}\` in \`apps/tryit\`, opened automatically after that version published to npm."
+            echo
+            if [ -n "$CHANGELOG_ENTRY" ]; then
+              echo "### What changed in ${PKG_NAME}@${VERSION}"
+              echo "$CHANGELOG_ENTRY"
+            fi
+            echo
+            echo "### Before merging"
+            echo "- [ ] If this release added new public API or changed behavior, add or update a demo route that exercises it (see the \`svgin-monorepo\` skill's \`apps/tryit\` update rule) - CI passing here only means nothing broke, not that the demo actually shows the change."
+          } > "$BODY_FILE"
+
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' || true)
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr edit "$EXISTING_PR" --body-file "$BODY_FILE"
+          else
+            gh pr create --title "chore(tryit): bump ${PKG_NAME} to ${VERSION}" --body-file "$BODY_FILE" --base main --head "$BRANCH"
+          fi
