@@ -1,6 +1,6 @@
 # svgin: try it
 
-Live demos of [`svgin-react`](https://github.com/akhiakl/svgin-react) (installed as a real npm dependency, not imported from its source) and `@svgin/element`'s `<svg-in>` custom element, each route exercising a different real feature. This app lives at `apps/tryit` in the [`svgin`](../../README.md) monorepo; see [AGENTS.md](AGENTS.md) for how it fits alongside `packages/react`/`packages/element` (including why `@svgin/element` is the one temporary exception to the "real npm dependency" rule above, until its own first publish).
+Live demos of [`svgin-react`](https://github.com/akhiakl/svgin-react) (installed as a real npm dependency, not imported from its source) and `@svgin/element`'s `<svg-in>` custom element, each route exercising a different real feature. This app lives at `apps/tryit` in the [`svgin`](../../README.md) monorepo; see [AGENTS.md](AGENTS.md) for how it fits alongside `packages/react`/`packages/element` (including why `@svgin/element` is still the one temporary exception to the "real npm dependency" rule above, even though it's now published - the cutover is a separate step).
 
 The live site's own nav (`src/components/site-nav.tsx`) and title/metadata (`src/lib/site.ts`) now
 say "@svgin/react", matching this app's real dependency and every other page heading. They used to

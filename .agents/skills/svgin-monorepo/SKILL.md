@@ -48,10 +48,10 @@ boundaries, or tooling decisions it describes.
   the whole point of the demo is to show what's actually published, not the in-progress workspace
   version. It's **permanently private**, like `packages/core`: `package.json` has a name
   (`svgin-tryit`) for local workspace/tooling purposes, but it's never published to npm and never a
-  release-please component. `@svgin/element`'s `<svg-in>` demo route (`/element`) now also depends on
-  the real published `@svgin/element` package (also `^0.0.1`, not `workspace:*`) - the deferred
-  cutover both packages were waiting on (see "Release & publishing" below) has shipped, so `apps/tryit`
-  no longer has a `workspace:*` exception at all.
+  release-please component. `@svgin/element`'s `<svg-in>` demos (`/element` and its five focused
+  sub-demos under it) now also depend on the real published `@svgin/element` package (also `^0.0.1`, not
+  `workspace:*`) - the deferred cutover both packages were waiting on (see "Release & publishing" below)
+  has shipped, so `apps/tryit` no longer has a `workspace:*` exception at all.
 
 ## Build & task pipeline
 
@@ -281,6 +281,29 @@ boundaries, or tooling decisions it describes.
   `packages/element/**` (even a trivial version-bump-triggering change, or scope the commit
   accordingly) so release-please picks it up.
 - See the `package-publishing` skill for npm publishing conventions.
+- **Actual first-publish history, for context on why things look the way they do:** both packages were
+  bootstrapped with a one-time manual `pnpm publish --access public` (not the automated OIDC pipeline -
+  npm requires a package to already exist before a trusted publisher can be configured against it).
+  - `svgin-element` (unscoped) was published first, at `0.0.0`, then found to be broken for every real
+    consumer: `svgin-core` was listed under `"dependencies"` in both `packages/element/package.json` and
+    `packages/react/package.json` as `"workspace:*"`, which pnpm/npm converts to a real version number
+    on publish - but `svgin-core` is never published, so `npm install` 404s trying to fetch it. Both
+    packages actually bundle `svgin-core`'s source straight into their built `dist/` via tsup's
+    `noExternal` (see each `tsup.config.ts`'s own comment), so it was never a real runtime dependency in
+    the first place - fixed by moving it to `devDependencies` in both (workspace-resolved for local
+    builds, simply not installed by a real consumer, like any other devDependency).
+  - The broken `svgin-element@0.0.0` was unpublished. npm blocks republishing the exact same
+    name+version for 24 hours after an unpublish (regardless of version bump - the block is on the
+    package name as a whole, confirmed by a `0.0.1` republish attempt hitting the same 403), so the plan
+    shifted mid-flight to the `@svgin` scope migration described above rather than waiting it out -
+    `@svgin/element` is a brand-new registry entry, unaffected by the unscoped name's block.
+  - Both `@svgin/react` and `@svgin/element` were verified before publishing with the full
+    `pnpm turbo run lint typecheck test test:coverage build size` suite, plus packing each into a real
+    tarball, installing it into a clean scratch project, and smoke-testing actual sanitize/render
+    behavior (SSR via `renderToStaticMarkup` and client via `createRoot` for `@svgin/react`; a real
+    fetch/sanitize/render cycle through the custom element for `@svgin/element`) - not just unit tests
+    in-repo, since a packaging bug like the one above doesn't show up in workspace-local testing at all
+    (everything resolves via workspace links there, never through what a real `npm install` would do).
 - **Every release that changes `@svgin/react` or `@svgin/element` must update `apps/tryit` in the same
   PR** (bump its dependency on the released package, and touch whatever demo surface exercises the
   change). The tryit app is meant to always demo current behavior, not a stale prior version. Treat a
