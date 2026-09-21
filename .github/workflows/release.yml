@@ -6,8 +6,10 @@ name: Release
 # packages/react and packages/element are tracked - packages/core and
 # apps/tryit stay private and are never released); merging that PR is what
 # creates the GitHub Release (and tag) that triggers this workflow. Re-runs
-# the full quality gate before publishing so a release can never skip
-# lint/typecheck/test/build.
+# the quality gate (lint/typecheck/test/build) for the released package before
+# publishing, so a release can never skip it - scoped with --filter to just
+# that package's own workspace graph, not the whole repo (see the comment on
+# the turbo step below).
 
 on:
   release:
@@ -33,6 +35,24 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Determine released package from the tag
+        id: pkg
+        run: |
+          # release-please's manifest mode tags releases as
+          # "<component>-vX.Y.Z" (e.g. svgin-react-v1.0.2, svgin-element-v0.1.0).
+          TAG="${GITHUB_REF_NAME}"
+          case "$TAG" in
+            svgin-react-v*) DIR="packages/react"; NAME="@svgin/react" ;;
+            svgin-element-v*) DIR="packages/element"; NAME="@svgin/element" ;;
+            *)
+              echo "::error::Unrecognized release tag: $TAG"
+              exit 1
+              ;;
+          esac
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
       - uses: actions/cache@v6
         with:
           path: |
@@ -45,23 +65,19 @@ jobs:
           # hit reusing that run's build/lint/test outputs, not a cold start.
           key: turbo-build-${{ github.sha }}
           restore-keys: turbo-build-
-      - run: pnpm turbo run lint typecheck typecheck:test test test:coverage build size
-
-      - name: Determine released package from the tag
-        id: pkg
-        run: |
-          # release-please's manifest mode tags releases as
-          # "<component>-vX.Y.Z" (e.g. svgin-react-v1.0.2, svgin-element-v0.1.0).
-          TAG="${GITHUB_REF_NAME}"
-          case "$TAG" in
-            svgin-react-v*) DIR="packages/react" ;;
-            svgin-element-v*) DIR="packages/element" ;;
-            *)
-              echo "::error::Unrecognized release tag: $TAG"
-              exit 1
-              ;;
-          esac
-          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+      # --filter, not a repo-wide run: this only needs to verify the package
+      # actually being published (svgin-core is its only workspace dependency,
+      # via each package's own devDependencies + tsup noExternal - see the
+      # svgin-monorepo skill). apps/tryit is deliberately excluded: it consumes
+      # @svgin/react and @svgin/element as real npm dependencies, not workspace:*,
+      # so it's not in this graph at all, and it is never released from this
+      # workflow - gating a package release on an unrelated app's tests (or a
+      # flake in them) blocks a real publish for no correctness benefit. See
+      # https://github.com/akhiakl/svgin/actions/runs/35581884193 and
+      # https://github.com/akhiakl/svgin/actions/runs/35581886165, where exactly
+      # this happened: both releases failed pre-publish on an apps/tryit test
+      # timeout unrelated to either published package.
+      - run: pnpm turbo run lint typecheck typecheck:test test test:coverage build size --filter="${{ steps.pkg.outputs.name }}"
 
       - name: Verify package.json version matches the release tag
         run: |
