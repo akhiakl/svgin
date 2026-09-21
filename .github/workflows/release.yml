@@ -14,6 +14,19 @@ name: Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: >
+          Release tag to (re-)publish, e.g. svgin-react-v1.1.0. For retrying a
+          release whose automatic publish failed: re-running the original
+          failed run instead replays the *old* workflow file pinned to that
+          tag's commit, missing any fix landed on main since (release-triggered
+          runs source the workflow from the tag's ref, not main). Dispatching
+          this from main picks up the current workflow logic while still
+          checking out and publishing the tagged commit's package code.
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -25,7 +38,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm-publish
     steps:
+      - name: Resolve the release tag
+        id: tag
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=$DISPATCH_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
 
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
@@ -41,7 +67,7 @@ jobs:
         run: |
           # release-please's manifest mode tags releases as
           # "<component>-vX.Y.Z" (e.g. svgin-react-v1.0.2, svgin-element-v0.1.0).
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ steps.tag.outputs.tag }}"
           case "$TAG" in
             svgin-react-v*) DIR="packages/react"; NAME="@svgin/react" ;;
             svgin-element-v*) DIR="packages/element"; NAME="@svgin/element" ;;
@@ -81,10 +107,11 @@ jobs:
 
       - name: Verify package.json version matches the release tag
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME##*-v}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          TAG_VERSION="${TAG##*-v}"
           PKG_VERSION=$(node -p "require('./${{ steps.pkg.outputs.dir }}/package.json').version")
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Release tag ($GITHUB_REF_NAME) does not match ${{ steps.pkg.outputs.dir }}/package.json version ($PKG_VERSION)"
+            echo "::error::Release tag ($TAG) does not match ${{ steps.pkg.outputs.dir }}/package.json version ($PKG_VERSION)"
             exit 1
           fi
 
