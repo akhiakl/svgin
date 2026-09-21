@@ -5,13 +5,13 @@ import { SiteNav } from '@/components/site-nav';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 
 const DESCRIPTION =
-    'Live demos of svgin-react: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG/DOM prop forwarding, and SvgInShadow.';
+    'Live demos of @svgin/react: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG/DOM prop forwarding, and SvgInShadow.';
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
     title: {
         default: SITE_NAME,
-        template: '%s | svgin-react',
+        template: '%s | @svgin/react',
     },
     description: DESCRIPTION,
     // Per-page metadata (see lib/metadata.ts) overrides title/description
@@ -42,7 +42,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
                     <main className="flex-1">{children}</main>
                     <footer className="border-t px-6 py-6 text-sm text-muted-foreground">
                         <div className="mx-auto max-w-5xl flex flex-wrap items-center justify-between gap-2">
-                            <span>Demos for the svgin-react npm package.</span>
+                            <span>Demos for the @svgin/react npm package.</span>
                             <a
                                 className="underline underline-offset-4 hover:text-foreground"
                                 href="https://github.com/akhiakl/svgin-react"

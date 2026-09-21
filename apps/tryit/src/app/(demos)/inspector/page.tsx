@@ -4,7 +4,7 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
     title: 'Inspector',
     description:
-        "Paste SVG markup and see what svgin-react's <SvgIn svg={...} /> actually renders, using its real onMount callback to read the sanitized DOM.",
+        "Paste SVG markup and see what @svgin/react's <SvgIn svg={...} /> actually renders, using its real onMount callback to read the sanitized DOM.",
     path: '/inspector',
 });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useId, useMemo, useState } from 'react';
-import { SvgIn } from 'svgin-react/client';
+import { SvgIn } from '@svgin/react/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -73,7 +73,7 @@ export function InspectorClient() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>What svgin-react rendered</CardTitle>
+                    <CardTitle>What @svgin/react rendered</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-center rounded-md border bg-muted/30 p-6" id={outputId}>

@@ -4,7 +4,7 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
     title: 'Web Component',
     description:
-        '<svg-in>, a framework-agnostic native Custom Element from @svgin/element, built on the same fetch/sanitize/cache internals as svgin-react, usable without React at all.',
+        '<svg-in>, a framework-agnostic native Custom Element from @svgin/element, built on the same fetch/sanitize/cache internals as @svgin/react, usable without React at all.',
     path: '/element',
 });
 

@@ -19,17 +19,19 @@ boundaries, or tooling decisions it describes.
   It holds the shared fetch/sanitize/cache internals that `packages/react` and `packages/element` both
   consume over a `workspace:*` dependency. It is not an independent public API.
 - `packages/react` (npm name `@svgin/react`) and `packages/element` (npm name `@svgin/element`) are the
-  two public npm packages, both under the `@svgin` npm [organization](https://www.npmjs.com/settings/svgin)
-  scope. This is a deliberate identity change, not a seamless continuation: `svgin-react` (unscoped) is
-  a real, currently-published npm package with real history at `1.0.1`, migrated from the previously-
-  separate `akhiakl/svgin-react` repo; `@svgin/element` was briefly published unscoped as `svgin-element`,
-  found broken, and unpublished. Neither history carries over to the new scoped names - npm treats a
-  scoped and unscoped name as entirely unrelated packages, even when one succeeds the other. `packages/
-  react/package.json`'s version field still reads `1.0.1` (kept for local bookkeeping/continuity), but
-  `@svgin/react`'s first publish under this scope is its own first-ever publish as far as npm's registry
-  is concerned. `@svgin/element` has not been published under the new scope yet either. See "Release &
-  publishing" below and the root `README.md`'s "First npm publish checklist" for the actual publish
-  sequencing.
+  two public npm packages, both **published** under the `@svgin` npm
+  [organization](https://www.npmjs.com/settings/svgin) scope: `@svgin/react@1.0.1` and
+  `@svgin/element@0.0.1`. This was a deliberate identity change, not a seamless continuation:
+  `svgin-react` (unscoped) is a real, still-live npm package with real history at `1.0.1`, migrated from
+  the previously-separate `akhiakl/svgin-react` repo; `svgin-element` (unscoped) was briefly published,
+  found broken (see "Release & publishing" below), and unpublished before the move to this scope.
+  Neither history carries over to the new scoped names - npm treats a scoped and unscoped name as
+  entirely unrelated packages, even when one succeeds the other. `packages/react/package.json`'s version
+  field still reads `1.0.1` (kept for local bookkeeping/continuity, and because that's what was actually
+  published under the new scope), but `@svgin/react`'s publish under this scope was its own first-ever
+  publish as far as npm's registry is concerned - zero downloads/dependents carried over. See "Release &
+  publishing" below for the actual publish history: both packages are live, and `apps/tryit` now depends
+  on both real, published packages (no `workspace:*` dependency remains there).
 - Naming is deliberately `svgin-core` (unscoped, permanently private/internal) plus `@svgin/react` /
   `@svgin/element` (scoped, public) under the `@svgin` npm organization, not a bare `svgin` package. The
   bare `svgin` name is the project/repo identity, not any one package. The `<svg-in>` custom element tag
@@ -40,17 +42,16 @@ boundaries, or tooling decisions it describes.
   not the npm package name, which is deliberately changing to `@svgin/react`. Changes on top of that
   behavioral baseline should be improvements, not regressions.
 - `apps/tryit` (npm name `svgin-tryit`) is the real, migrated `akhiakl/svgin-react-tryit` demo app: one
-  route per `svgin-react` feature (Inspector, RSC fetch, Suspense, Provider, lazy loading, native
+  route per `@svgin/react` feature (Inspector, RSC fetch, Suspense, Provider, lazy loading, native
   props, Shadow DOM), with its own Vitest unit tests and Playwright e2e/a11y suite. It installs
-  `svgin-react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
+  `@svgin/react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
   the whole point of the demo is to show what's actually published, not the in-progress workspace
   version. It's **permanently private**, like `packages/core`: `package.json` has a name
   (`svgin-tryit`) for local workspace/tooling purposes, but it's never published to npm and never a
-  release-please component. `@svgin/element`'s `<svg-in>` demo route (`/element`) uses the workspace
-  `@svgin/element` package directly, as `workspace:*` - the one deliberate exception to the "real npm
-  dependency" rule above, since `@svgin/element` hasn't had its first publish yet (see `AGENTS.md` in
-  that app). Swap it to a real published version, matching `svgin-react`'s treatment, once that first
-  publish ships.
+  release-please component. `@svgin/element`'s `<svg-in>` demo route (`/element`) now also depends on
+  the real published `@svgin/element` package (also `^0.0.1`, not `workspace:*`) - the deferred
+  cutover both packages were waiting on (see "Release & publishing" below) has shipped, so `apps/tryit`
+  no longer has a `workspace:*` exception at all.
 
 ## Build & task pipeline
 
@@ -279,8 +280,7 @@ boundaries, or tooling decisions it describes.
   in a way that should ship should also touch something under `packages/react/**` or
   `packages/element/**` (even a trivial version-bump-triggering change, or scope the commit
   accordingly) so release-please picks it up.
-- See the `package-publishing` skill for npm publishing conventions once `packages/react`/
-  `packages/element` actually start publishing.
+- See the `package-publishing` skill for npm publishing conventions.
 - **Every release that changes `@svgin/react` or `@svgin/element` must update `apps/tryit` in the same
   PR** (bump its dependency on the released package, and touch whatever demo surface exercises the
   change). The tryit app is meant to always demo current behavior, not a stale prior version. Treat a

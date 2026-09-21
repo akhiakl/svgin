@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SvgIn } from 'svgin-react/client';
+import { SvgIn } from '@svgin/react/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 

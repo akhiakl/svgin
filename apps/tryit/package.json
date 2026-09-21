@@ -28,8 +28,8 @@
     "next-themes": "^0.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "@svgin/element": "workspace:*",
-    "svgin-react": "^1.0.1",
+    "@svgin/element": "^0.0.1",
+    "@svgin/react": "^1.0.1",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {

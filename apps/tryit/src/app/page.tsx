@@ -7,13 +7,13 @@ import { pageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
 import { VersionBadge, VersionBadgeFallback } from '@/components/version-badge';
 
-// Structured data for search engines: identifies svgin-react as the actual
+// Structured data for search engines: identifies @svgin/react as the actual
 // npm package this site demos, separate from the site's own OG/Twitter
 // metadata above (which describes this demo site, not the package).
 const JSON_LD = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareSourceCode',
-    name: 'svgin-react',
+    name: '@svgin/react',
     description:
         'Fetch an SVG from a URL and render it as a real, styleable React element. Sanitized by default with DOMPurify, works in the browser and in React Server Components.',
     programmingLanguage: 'TypeScript',
@@ -23,7 +23,7 @@ const JSON_LD = {
 };
 
 export const metadata = pageMetadata({
-    title: 'Try svgin-react',
+    title: 'Try @svgin/react',
     description:
         'Fetch an SVG from a URL and render it as a real, styleable React element, sanitized by default. Try it live: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG prop forwarding, and SvgInShadow.',
     path: '/',
@@ -37,15 +37,15 @@ export default function Home() {
                 <Suspense fallback={<VersionBadgeFallback />}>
                     <VersionBadge />
                 </Suspense>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Try svgin-react</h1>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Try @svgin/react</h1>
                 <p className="mt-4 text-lg text-muted-foreground">
                     <a
                         className="underline underline-offset-4 hover:text-foreground"
-                        href="https://www.npmjs.com/package/svgin-react"
+                        href="https://www.npmjs.com/package/@svgin/react"
                         target="_blank"
                         rel="noreferrer"
                     >
-                        svgin-react
+                        @svgin/react
                     </a>{' '}
                     fetches an SVG from a URL (or takes raw markup directly) and renders it as a real, styleable
                     React element instead of an <code className="font-mono text-sm">&lt;img&gt;</code>. It sanitizes

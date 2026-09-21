@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// readInstalledVersion() reads node_modules/svgin-react/package.json off disk
+// readInstalledVersion() reads node_modules/@svgin/react/package.json off disk
 // via node:fs - mocked so every branch (found vs missing/corrupt) is under
 // this test's control rather than depending on what's actually installed.
 vi.mock('node:fs', () => ({

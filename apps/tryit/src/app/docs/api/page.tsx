@@ -5,7 +5,7 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
     title: 'API reference',
     description:
-        'Full prop reference for <SvgIn />, <SvgInSuspense />, <SvgInProvider />, <SvgInShadow />, preloadSvg(), clearSvgCache(), and hasCachedSvg() - every prop svgin-react accepts, in one table.',
+        'Full prop reference for <SvgIn />, <SvgInSuspense />, <SvgInProvider />, <SvgInShadow />, preloadSvg(), clearSvgCache(), and hasCachedSvg() - every prop @svgin/react accepts, in one table.',
     path: '/docs/api',
 });
 
@@ -52,8 +52,8 @@ export default function ApiPage() {
                     <code className="font-mono text-base">&lt;SvgIn /&gt;</code>
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    From <code className="font-mono text-xs">svgin-react/client</code> or{' '}
-                    <code className="font-mono text-xs">svgin-react/server</code>. The server version&apos;s{' '}
+                    From <code className="font-mono text-xs">@svgin/react/client</code> or{' '}
+                    <code className="font-mono text-xs">@svgin/react/server</code>. The server version&apos;s{' '}
                     <code className="font-mono text-xs">onMount</code> and <code className="font-mono text-xs">loading</code>{' '}
                     are no-ops (no DOM to hand back, no loading state to defer).
                 </p>
@@ -64,7 +64,7 @@ export default function ApiPage() {
                     <code className="font-mono text-base">&lt;SvgInSuspense /&gt;</code>
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    From <code className="font-mono text-xs">svgin-react/suspense</code>. Suspends via React 19&apos;s{' '}
+                    From <code className="font-mono text-xs">@svgin/react/suspense</code>. Suspends via React 19&apos;s{' '}
                     <code className="font-mono text-xs">use()</code> instead of managing loading/error state itself.
                     Does not accept <code className="font-mono text-xs">fallback</code>, <code className="font-mono text-xs">loadingFallback</code>, or{' '}
                     <code className="font-mono text-xs">loading</code> - pair it with a real{' '}
@@ -78,7 +78,7 @@ export default function ApiPage() {
                     <code className="font-mono text-base">&lt;SvgInProvider /&gt;</code>
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    From <code className="font-mono text-xs">svgin-react/client</code>. Sets shared{' '}
+                    From <code className="font-mono text-xs">@svgin/react/client</code>. Sets shared{' '}
                     <code className="font-mono text-xs">className</code>, <code className="font-mono text-xs">fallback</code>,{' '}
                     <code className="font-mono text-xs">loadingFallback</code>, <code className="font-mono text-xs">onError</code>,{' '}
                     <code className="font-mono text-xs">sanitizeFn</code>, <code className="font-mono text-xs">disableSanitization</code>, and{' '}
@@ -94,7 +94,7 @@ export default function ApiPage() {
                     <code className="font-mono text-base">&lt;SvgInShadow /&gt;</code>
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    From <code className="font-mono text-xs">svgin-react/shadow</code>. Renders into a shadow root
+                    From <code className="font-mono text-xs">@svgin/react/shadow</code>. Renders into a shadow root
                     attached to a host <code className="font-mono text-xs">&lt;span&gt;</code> (or{' '}
                     <code className="font-mono text-xs">&lt;div&gt;</code>) instead of the light DOM, so page CSS can
                     never reach in and its own <code className="font-mono text-xs">styles</code> can never leak out.
@@ -116,13 +116,13 @@ export default function ApiPage() {
                     <code className="font-mono text-base">preloadSvg(url, options?)</code>
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    From <code className="font-mono text-xs">svgin-react/core</code>. Fetches and caches an SVG ahead of
+                    From <code className="font-mono text-xs">@svgin/react/core</code>. Fetches and caches an SVG ahead of
                     render, so the eventual <code className="font-mono text-xs">&lt;SvgIn src={'{url}'} /&gt;</code> resolves
                     instantly from cache. Accepts <code className="font-mono text-xs">sanitizeFn</code>,{' '}
                     <code className="font-mono text-xs">disableSanitization</code>, and{' '}
                     <code className="font-mono text-xs">fetchOptions</code>.
                 </p>
-                <CodeBlock className="mt-3" code={`import { preloadSvg } from 'svgin-react/core';\n\npreloadSvg('/icons/alert.svg');`} />
+                <CodeBlock className="mt-3" code={`import { preloadSvg } from '@svgin/react/core';\n\npreloadSvg('/icons/alert.svg');`} />
             </div>
 
             <div>
@@ -131,7 +131,7 @@ export default function ApiPage() {
                     <code className="font-mono text-base">hasCachedSvg(url)</code>
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    Also from <code className="font-mono text-xs">svgin-react/core</code>.{' '}
+                    Also from <code className="font-mono text-xs">@svgin/react/core</code>.{' '}
                     <code className="font-mono text-xs">clearSvgCache</code> forgets one cached entry, or every entry
                     if <code className="font-mono text-xs">url</code> is omitted.{' '}
                     <code className="font-mono text-xs">hasCachedSvg</code> checks whether a URL is currently cached,
@@ -143,7 +143,7 @@ export default function ApiPage() {
                 </p>
                 <CodeBlock
                     className="mt-3"
-                    code={`import { clearSvgCache, hasCachedSvg } from 'svgin-react/core';\n\nhasCachedSvg('/icons/alert.svg'); // false\nclearSvgCache('/icons/alert.svg'); // or clearSvgCache() for every entry`}
+                    code={`import { clearSvgCache, hasCachedSvg } from '@svgin/react/core';\n\nhasCachedSvg('/icons/alert.svg'); // false\nclearSvgCache('/icons/alert.svg'); // or clearSvgCache() for every entry`}
                 />
             </div>
 

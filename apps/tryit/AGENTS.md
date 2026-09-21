@@ -15,28 +15,29 @@ This file is the shared source of instructions for AI coding tools working in th
 ## What this project is
 
 `apps/tryit` (package name `svgin-tryit`) is a Next.js (App Router) demo site for the
-[`svgin-react`](https://github.com/akhiakl/svgin-react) npm package, living inside the `svgin`
-Turborepo monorepo (see the root `svgin-monorepo` skill for the monorepo's overall conventions). It
-depends on `svgin-react` as a real published dependency, not the workspace's own `packages/react`
-(never imports from that package's source), and has one route per real feature of the library: the
-sanitizer Inspector, a server-component fetch, `<SvgInSuspense />`, `<SvgInProvider />` defaults,
-`loading="lazy"`, native SVG/DOM prop forwarding, `<SvgInShadow />`, and `<svg-in>` (`@svgin/element`'s
-web component).
+[`@svgin/react`](https://www.npmjs.com/package/@svgin/react) npm package (published under the `@svgin`
+scope, migrated from the previously-separate [`akhiakl/svgin-react`](https://github.com/akhiakl/svgin-react)
+repo), living inside the `svgin` Turborepo monorepo (see the root `svgin-monorepo` skill for the
+monorepo's overall conventions). It depends on `@svgin/react` as a real published dependency, not the
+workspace's own `packages/react` (never imports from that package's source), and has one route per
+real feature of the library: the sanitizer Inspector, a server-component fetch, `<SvgInSuspense />`,
+`<SvgInProvider />` defaults, `loading="lazy"`, native SVG/DOM prop forwarding, `<SvgInShadow />`, and
+`<svg-in>` (`@svgin/element`'s web component).
 
-**`@svgin/element` is a deliberate, temporary exception to the "real published dependency" rule
-above**: it's still `workspace:*` (see #21/#19) because `@svgin/element` hasn't had its first npm
-publish yet, unlike `svgin-react`. Swap it to a real published version (same as `svgin-react`) once
-that first publish ships - don't leave it on `workspace:*` past that point.
+`@svgin/element` is also a real published dependency now (`^0.0.1`), matching `@svgin/react`'s
+treatment - it used to be a deliberate, temporary `workspace:*` exception (see #21/#19) while its
+first npm publish was still pending; that publish has since shipped, so the exception no longer
+applies and both packages are installed from the real npm registry.
 
 This app is a demo, not the package. Do not add sanitization or fetch/cache logic here. If a demo
-needs new library behavior, that change belongs in `svgin-react` itself, released, then picked up
+needs new library behavior, that change belongs in `@svgin/react` itself, released, then picked up
 here as a dependency bump.
 
 ## Source layout
 
 - `src/app/` : one route per demo (`inspector/`, `rsc/`, `suspense/`, `provider/`, `lazy/`, `native-props/`, `shadow/`, `element/`) plus the home page linking to all of them. `src/app/rsc/page.tsx` is the only server-only demo; the rest are client components (several wrapped in a small `*-client-loader.tsx` file using `next/dynamic({ ssr: false })`, see the comment in `suspense-client-loader.tsx` for why: `<SvgIn src>`/`<SvgInSuspense src>`/`<SvgInShadow src>`/`<svg-in src>` resolve a relative URL against `window.location`, which doesn't exist during SSR).
 - `src/components/` : demo components and `src/components/ui/` (shadcn/ui primitives, hand-written, see below).
-- `src/lib/diff.ts`, `src/lib/examples.ts` : the Inspector's own logic (a rough tag/attribute diff between pasted and sanitized markup, and the example presets). Everything else about "what gets sanitized" comes from the real `svgin-react` package via its own public API (`onMount` on `<SvgIn svg={...} />`). This repo never reaches into the package's internals.
+- `src/lib/diff.ts`, `src/lib/examples.ts` : the Inspector's own logic (a rough tag/attribute diff between pasted and sanitized markup, and the example presets). Everything else about "what gets sanitized" comes from the real `@svgin/react` package via its own public API (`onMount` on `<SvgIn svg={...} />`). This repo never reaches into the package's internals.
 - `test/` : Vitest unit/component tests.
 - `e2e/` : Playwright end-to-end tests against a real browser build (`next build && next start`), including `e2e/a11y.spec.ts` (axe-core, `@axe-core/playwright`, `wcag2a`/`wcag2aa`/`wcag21a`/`wcag21aa` rules, one scan per route plus the mobile nav sheet open). Add a route to `e2e/a11y.spec.ts`'s `ROUTES` array whenever you add one to `src/app/`.
 
@@ -57,13 +58,13 @@ Only add a `ui/*` primitive when something in `src/components/` actually imports
 
 ## A svgin-react issue this demo used to work around (fixed in 0.9.1)
 
-`<SvgInSuspense />` in svgin-react 0.9.0 entered an infinite retry loop if its `src` fetch failed on every attempt, so `src/components/suspense-client.tsx` used to demonstrate error-boundary recovery only via `<SvgInSuspense />`'s synchronous validation error (neither `src` nor `svg` given), never a failing fetch. Fixed upstream in [svgin-react#47](https://github.com/akhiakl/svgin-react/pull/47) (released as 0.9.1), so the Suspense demo now also has a real "Load broken URL" button. Keep the `svgin-react` dependency at 0.9.1 or later, or this will start looping again.
+`<SvgInSuspense />` in svgin-react 0.9.0 entered an infinite retry loop if its `src` fetch failed on every attempt, so `src/components/suspense-client.tsx` used to demonstrate error-boundary recovery only via `<SvgInSuspense />`'s synchronous validation error (neither `src` nor `svg` given), never a failing fetch. Fixed upstream in [svgin-react#47](https://github.com/akhiakl/svgin-react/pull/47) (released as 0.9.1), so the Suspense demo now also has a real "Load broken URL" button. Keep the `@svgin/react` dependency at 0.9.1 or later, or this will start looping again.
 
 ## Before making a change
 
 - Match the existing code style: no unnecessary abstraction, comments explain *why* a non-obvious choice was made.
-- Every demo route should exercise the real `svgin-react` public API (`SvgIn`, `SvgInSuspense`, `SvgInProvider`, `preloadSvg` from `svgin-react`/`svgin-react/client`/`svgin-react/server`/`svgin-react/core`). Never copy sanitization logic into this repo.
-- Bumping the `svgin-react` dependency is a normal `deps:`/`chore:` change here; it is not gated the way it is in the package's own repo.
+- Every demo route should exercise the real `@svgin/react` public API (`SvgIn`, `SvgInSuspense`, `SvgInProvider`, `preloadSvg` from `@svgin/react`/`@svgin/react/client`/`@svgin/react/server`/`@svgin/react/core`). Never copy sanitization logic into this repo.
+- Bumping the `@svgin/react` dependency is a normal `deps:`/`chore:` change here; it is not gated the way it is in the package's own repo.
 - **RSC first**: every `page.tsx`/`layout.tsx` in `src/app/` is a plain Server Component (no `'use client'`). Interactivity lives in small client "islands" imported by the page (`inspector-client.tsx`, `suspense-client.tsx`, etc.), never the page itself. Before adding `'use client'` to anything, check whether it actually needs a hook, event handler, or browser API - if not, it belongs on the server.
 - **SOLID and YAGNI**: one component, one reason to change - a demo component owns its own demo's UI and state, not a shared one doing double duty (`inspector-client.tsx`, `suspense-client.tsx`, `provider-client.tsx`, and `lazy-client.tsx` are deliberately separate, not a single configurable "DemoCard"). Don't add a prop, an abstraction layer, or a `ui/*` primitive for a need that doesn't exist yet in this repo - add it when a second real usage shows up, not in anticipation of one.
 - **No em dashes**, anywhere: not in code comments, commit messages, PR descriptions, or UI copy. Use a period, comma, colon, or parentheses instead. (The `nextjs-agent-rules` block at the very top of this file is the one exception - it's regenerated by `next dev` itself, not authored here, so don't hand-edit it to fix this.)
@@ -94,7 +95,7 @@ picture. In short:
 - Never commit build output (`.next/`, `coverage/`, `playwright-report/`, `test-results/`) or `node_modules/`.
 - This app is **not** a release-please component (deliberately absent from the root
   `release-please-config.json`) and stays `private: true` permanently, like `packages/core`: it's
-  never published, never gets its own version bump or GitHub release. Bumping the `svgin-react`
+  never published, never gets its own version bump or GitHub release. Bumping the `@svgin/react`
   dependency here is a normal `deps:`/`chore:` change; it is not gated the way it is in that
   package's own repo. Per the root skill's convention: **any change to `@svgin/react` or
   `@svgin/element` that ships should update this app in the same PR** to demo it.

@@ -5,7 +5,7 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
     title: 'Docs',
     description:
-        'How svgin-react fetches an SVG from a URL, or takes raw markup directly, and renders it as a real, styleable React element sanitized with DOMPurify by default.',
+        'How @svgin/react fetches an SVG from a URL, or takes raw markup directly, and renders it as a real, styleable React element sanitized with DOMPurify by default.',
     path: '/docs',
 });
 
@@ -17,11 +17,11 @@ export default function DocsPage() {
                 <p className="mt-2 max-w-2xl text-muted-foreground">
                     <a
                         className="underline underline-offset-4 hover:text-foreground"
-                        href="https://www.npmjs.com/package/svgin-react"
+                        href="https://www.npmjs.com/package/@svgin/react"
                         target="_blank"
                         rel="noreferrer"
                     >
-                        svgin-react
+                        @svgin/react
                     </a>{' '}
                     fetches an SVG from a URL, or takes raw markup directly, and renders it as a real, styleable React
                     element instead of an <code className="font-mono text-sm">&lt;img&gt;</code>. It sanitizes the SVG
@@ -37,7 +37,7 @@ export default function DocsPage() {
                 </p>
                 <CodeBlock
                     className="mt-3"
-                    code={`import { SvgIn } from 'svgin-react/client';\n\n<SvgIn src="/icons/alert.svg" width={24} height={24} className="text-red-500" />;`}
+                    code={`import { SvgIn } from '@svgin/react/client';\n\n<SvgIn src="/icons/alert.svg" width={24} height={24} className="text-red-500" />;`}
                 />
             </div>
 
@@ -48,7 +48,7 @@ export default function DocsPage() {
                 </p>
                 <CodeBlock
                     className="mt-3"
-                    code={`import { SvgIn } from 'svgin-react/server';\n\nexport default async function Icon() {\n  return <SvgIn src="https://example.com/icon.svg" width={24} height={24} />;\n}`}
+                    code={`import { SvgIn } from '@svgin/react/server';\n\nexport default async function Icon() {\n  return <SvgIn src="https://example.com/icon.svg" width={24} height={24} />;\n}`}
                 />
             </div>
 

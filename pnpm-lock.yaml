@@ -135,8 +135,11 @@ importers:
         specifier: ^1.7.0
         version: 1.8.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@svgin/element':
-        specifier: workspace:*
-        version: link:../../packages/element
+        specifier: ^0.0.1
+        version: 0.0.1(dompurify@3.4.15)
+      '@svgin/react':
+        specifier: ^1.0.1
+        version: 1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0)
       bright:
         specifier: 1.0.0
         version: 1.0.0(react@19.3.0)
@@ -167,9 +170,6 @@ importers:
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
-      svgin-react:
-        specifier: ^1.0.1
-        version: 1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0)
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
@@ -1466,6 +1466,26 @@ packages:
   '@simple-libs/stream-utils@2.0.0':
     resolution: {integrity: sha512-fCTuZK4QBa+39Oz9l4OGfJfz+GpwCp3AqO7Zch3to99xHPgstVsRFpeQ8LNd2o1Gv8raL2mCFwiaHh7bFSp5DQ==}
     engines: {node: '>=22'}
+
+  '@svgin/element@0.0.1':
+    resolution: {integrity: sha512-UFRk3utDhgGilEt5WOo1F4Vh3eL05qt91ddeKw1/FB0H2KNqBfYFcoa1iWLPzxtcQEfDnV/81xbZA1Hadnfj3A==}
+    peerDependencies:
+      dompurify: ^3.4.14
+    peerDependenciesMeta:
+      dompurify:
+        optional: true
+
+  '@svgin/react@1.0.1':
+    resolution: {integrity: sha512-VsOtrktAsFgTw/RRPRmuQWS6D/PFkvNEye2YA86pbrwZFMYmTCBbs4p3hT9dVyxLw29PRiCCZByOoVDMsBtnKw==}
+    peerDependencies:
+      dompurify: ^3.4.14
+      jsdom: 30.0.1
+      react: '>=19.1.0'
+    peerDependenciesMeta:
+      dompurify:
+        optional: true
+      jsdom:
+        optional: true
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
@@ -3650,19 +3670,6 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  svgin-react@1.0.1:
-    resolution: {integrity: sha512-JW7IAvbr2E9MjpRaJXKLLBEYM5QyNuWkp4UE3571EKsjwx/0vc3RGaZ5lG0OHdRPxLpxAhSvDGRLmS7f0/nCQw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      dompurify: ^3.4.14
-      jsdom: 30.0.1
-      react: ^19.1.0
-    peerDependenciesMeta:
-      dompurify:
-        optional: true
-      jsdom:
-        optional: true
-
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
@@ -4876,6 +4883,17 @@ snapshots:
       '@simple-libs/stream-utils': 2.0.0
 
   '@simple-libs/stream-utils@2.0.0': {}
+
+  '@svgin/element@0.0.1(dompurify@3.4.15)':
+    optionalDependencies:
+      dompurify: 3.4.15
+
+  '@svgin/react@1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0)':
+    dependencies:
+      react: 19.3.0
+    optionalDependencies:
+      dompurify: 3.4.15
+      jsdom: 30.0.1
 
   '@swc/helpers@0.5.23':
     dependencies:
@@ -7318,13 +7336,6 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
-
-  svgin-react@1.0.1(dompurify@3.4.15)(jsdom@30.0.1)(react@19.3.0):
-    dependencies:
-      react: 19.3.0
-    optionalDependencies:
-      dompurify: 3.4.15
-      jsdom: 30.0.1
 
   symbol-tree@3.2.4: {}
 

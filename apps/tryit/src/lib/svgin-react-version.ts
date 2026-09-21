@@ -3,11 +3,11 @@ import path from 'node:path';
 
 // Fallback only: if the npm registry is unreachable at build/render time,
 // fall back to whatever is actually installed rather than showing nothing.
-// svgin-react's package.json "exports" map does not expose "./package.json",
+// @svgin/react's package.json "exports" map does not expose "./package.json",
 // so this reads the installed copy straight off disk instead of importing it.
 function readInstalledVersion(): string {
     try {
-        const pkgPath = path.join(process.cwd(), 'node_modules', 'svgin-react', 'package.json');
+        const pkgPath = path.join(process.cwd(), 'node_modules', '@svgin', 'react', 'package.json');
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as { version: string };
         return pkg.version;
     } catch {
@@ -23,7 +23,7 @@ const REGISTRY_FETCH_TIMEOUT_MS = 3000;
 
 export async function getSvginReactVersion(): Promise<string> {
     try {
-        const res = await fetch('https://registry.npmjs.org/svgin-react/latest', {
+        const res = await fetch('https://registry.npmjs.org/@svgin/react/latest', {
             next: { revalidate: 3600 },
             headers: { Accept: 'application/json' },
             signal: AbortSignal.timeout(REGISTRY_FETCH_TIMEOUT_MS),

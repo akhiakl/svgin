@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('home page links to every demo', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Try svgin-react' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Try @svgin/react' })).toBeVisible();
 
     for (const path of ['/inspector', '/rsc', '/suspense', '/provider', '/lazy', '/native-props', '/shadow']) {
         await expect(page.locator(`a[href="${path}"]`).first()).toBeVisible();
@@ -20,7 +20,7 @@ test('top nav Try it and Docs links work from any page', async ({ page }) => {
 
     await page.getByRole('link', { name: 'Try it', exact: true }).click();
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { name: 'Try svgin-react' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Try @svgin/react' })).toBeVisible();
 });
 
 test('docs sidebar reaches installation and API reference, and links back out to a live demo', async ({ page }) => {
