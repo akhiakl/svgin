@@ -54,7 +54,7 @@ export function SiteNav() {
         <header className="border-b">
             <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
                 <Link href="/" className="font-semibold tracking-tight">
-                    @svgin/react <span className="text-muted-foreground font-normal">/ try it</span>
+                    svgin <span className="text-muted-foreground font-normal">/ try it</span>
                 </Link>
 
                 <ul className="hidden items-center gap-x-4 text-sm sm:flex">
@@ -78,7 +78,7 @@ export function SiteNav() {
                         />
                         <SheetContent side="left" className="w-64">
                             <SheetHeader>
-                                <SheetTitle>@svgin/react / try it</SheetTitle>
+                                <SheetTitle>svgin / try it</SheetTitle>
                             </SheetHeader>
                             <ul className="flex flex-col gap-4 px-4 text-sm">
                                 {LINKS.map((link) => (

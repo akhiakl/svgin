@@ -5,13 +5,13 @@ import { SiteNav } from '@/components/site-nav';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 
 const DESCRIPTION =
-    'Live demos of @svgin/react: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG/DOM prop forwarding, and SvgInShadow.';
+    'Live demos of svgin: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG/DOM prop forwarding, SvgInShadow, and the <svg-in> web component.';
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
     title: {
         default: SITE_NAME,
-        template: '%s | @svgin/react',
+        template: '%s | svgin',
     },
     description: DESCRIPTION,
     // Per-page metadata (see lib/metadata.ts) overrides title/description

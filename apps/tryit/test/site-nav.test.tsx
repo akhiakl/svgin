@@ -34,7 +34,7 @@ describe('SiteNav', () => {
 
         await user.click(screen.getByRole('button', { name: 'Open navigation menu' }));
         const drawer = await screen.findByRole('dialog');
-        expect(within(drawer).getByText('@svgin/react / try it')).toBeInTheDocument();
+        expect(within(drawer).getByText('svgin / try it')).toBeInTheDocument();
         expect(within(drawer).getByRole('link', { name: DEMOS[0].title })).toHaveAttribute('href', DEMOS[0].href);
 
         await user.click(within(drawer).getByRole('link', { name: DEMOS[0].title }));

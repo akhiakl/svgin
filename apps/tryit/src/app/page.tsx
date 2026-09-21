@@ -7,25 +7,25 @@ import { pageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
 import { VersionBadge, VersionBadgeFallback } from '@/components/version-badge';
 
-// Structured data for search engines: identifies @svgin/react as the actual
-// npm package this site demos, separate from the site's own OG/Twitter
-// metadata above (which describes this demo site, not the package).
+// Structured data for search engines: identifies svgin as the actual project
+// this site demos (two published packages, not one), separate from the
+// site's own OG/Twitter metadata above (which describes this demo site, not
+// the packages themselves).
 const JSON_LD = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareSourceCode',
-    name: '@svgin/react',
+    name: 'svgin',
     description:
-        'Fetch an SVG from a URL and render it as a real, styleable React element. Sanitized by default with DOMPurify, works in the browser and in React Server Components.',
+        'Fetch an SVG from a URL and render it as a real, styleable element, sanitized by default with DOMPurify. Published as @svgin/react (React components, client and server) and @svgin/element (a framework-agnostic <svg-in> custom element).',
     programmingLanguage: 'TypeScript',
-    runtimePlatform: 'React',
-    codeRepository: 'https://github.com/akhiakl/svgin-react',
+    codeRepository: 'https://github.com/akhiakl/svgin',
     url: SITE_URL,
 };
 
 export const metadata = pageMetadata({
-    title: 'Try @svgin/react',
+    title: 'Try svgin',
     description:
-        'Fetch an SVG from a URL and render it as a real, styleable React element, sanitized by default. Try it live: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG prop forwarding, and SvgInShadow.',
+        'Fetch an SVG from a URL and render it as a real, styleable element, sanitized by default - as React components (@svgin/react) or a framework-agnostic custom element (@svgin/element). Try it live: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG prop forwarding, SvgInShadow, and the <svg-in> web component.',
     path: '/',
 });
 
@@ -37,8 +37,12 @@ export default function Home() {
                 <Suspense fallback={<VersionBadgeFallback />}>
                     <VersionBadge />
                 </Suspense>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Try @svgin/react</h1>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Try svgin</h1>
                 <p className="mt-4 text-lg text-muted-foreground">
+                    svgin fetches an SVG from a URL (or takes raw markup directly) and renders it as a real,
+                    styleable element instead of an <code className="font-mono text-sm">&lt;img&gt;</code>. It
+                    sanitizes the SVG by default, so it is safe to use with an SVG you did not create yourself.
+                    Published as{' '}
                     <a
                         className="underline underline-offset-4 hover:text-foreground"
                         href="https://www.npmjs.com/package/@svgin/react"
@@ -47,13 +51,20 @@ export default function Home() {
                     >
                         @svgin/react
                     </a>{' '}
-                    fetches an SVG from a URL (or takes raw markup directly) and renders it as a real, styleable
-                    React element instead of an <code className="font-mono text-sm">&lt;img&gt;</code>. It sanitizes
-                    the SVG by default, so it is safe to use with an SVG you did not create yourself, and it works
-                    both in the browser and in React Server Components.
+                    (client and server React components) and{' '}
+                    <a
+                        className="underline underline-offset-4 hover:text-foreground"
+                        href="https://www.npmjs.com/package/@svgin/element"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        @svgin/element
+                    </a>{' '}
+                    (a framework-agnostic <code className="font-mono text-sm">&lt;svg-in&gt;</code> custom element,
+                    no React required).
                 </p>
                 <p className="mt-3 text-sm text-muted-foreground">
-                    This site is installed as a real dependency from npm, not imported from the library&apos;s
+                    This site is installed as a real dependency from npm, not imported from either library&apos;s
                     source, so every demo below reflects exactly what a real install gives you.
                 </p>
             </div>
