@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('clean example renders with nothing removed', async ({ page }) => {
     await page.goto('/inspector');
     await expect(page.getByText('Nothing removed')).toBeVisible();
-    await expect(page.locator('main svg').first()).toBeVisible();
+    await expect(page.locator('article svg').first()).toBeVisible();
 });
 
 test('malicious example is sanitized and the removed tags/attrs are listed', async ({ page }) => {
@@ -16,7 +16,7 @@ test('malicious example is sanitized and the removed tags/attrs are listed', asy
 
     // The actually-rendered <svg> must not contain the stripped bits, not
     // just the summary badges above it.
-    const svgHtml = await page.locator('main svg').first().evaluate((el) => el.outerHTML);
+    const svgHtml = await page.locator('article svg').first().evaluate((el) => el.outerHTML);
     expect(svgHtml).not.toContain('onclick');
     expect(svgHtml).not.toContain('<script');
 });

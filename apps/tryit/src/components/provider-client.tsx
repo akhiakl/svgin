@@ -1,6 +1,6 @@
 'use client';
 
-import { SvgIn, SvgInProvider } from 'svgin-react/client';
+import { SvgIn, SvgInProvider } from '@svgin/react/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function ProviderClient() {

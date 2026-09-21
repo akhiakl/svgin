@@ -1,6 +1,6 @@
 'use client';
 
-import { SvgIn } from 'svgin-react/client';
+import { SvgIn } from '@svgin/react/client';
 
 export function LazyClient() {
     return (

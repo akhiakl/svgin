@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, type ComponentProps } from 'react';
-import { SvgInSuspense } from 'svgin-react/suspense';
+import { SvgInSuspense } from '@svgin/react/suspense';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorBoundary } from '@/components/error-boundary';

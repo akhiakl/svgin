@@ -7,7 +7,7 @@ import { stubSvgFetch } from './helpers/mockSvgFetch';
 
 // React's use()/Suspense retry-after-resolve doesn't reliably trigger a
 // fresh render pass under RTL + jsdom on its own here (verified with a
-// minimal use()+Suspense repro outside svgin-react entirely - not specific
+// minimal use()+Suspense repro outside @svgin/react entirely - not specific
 // to this component): awaiting the underlying promise resolves it, but the
 // suspended fiber isn't re-rendered until something asks React to render
 // again. rerender() with the same element does that cheaply, since use()

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LazyClient } from '@/components/lazy-client';
 import { stubSvgFetch } from './helpers/mockSvgFetch';
 
-// jsdom has no IntersectionObserver, so svgin-react's own `loading="lazy"`
+// jsdom has no IntersectionObserver, so @svgin/react's own `loading="lazy"`
 // deferral is a documented no-op here (falls back to eager) - this
 // component's real lazy behavior is exercised by Playwright instead
 // (a real browser, see e2e/); this test covers the component's own markup

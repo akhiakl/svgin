@@ -30,8 +30,8 @@ boundaries, or tooling decisions it describes.
   field still reads `1.0.1` (kept for local bookkeeping/continuity, and because that's what was actually
   published under the new scope), but `@svgin/react`'s publish under this scope was its own first-ever
   publish as far as npm's registry is concerned - zero downloads/dependents carried over. See "Release &
-  publishing" below for the actual publish history and what's still pending (trusted-publisher setup,
-  `apps/tryit`'s dependency cutover).
+  publishing" below for the actual publish history: both packages are live, and `apps/tryit` now depends
+  on both real, published packages (no `workspace:*` dependency remains there).
 - Naming is deliberately `svgin-core` (unscoped, permanently private/internal) plus `@svgin/react` /
   `@svgin/element` (scoped, public) under the `@svgin` npm organization, not a bare `svgin` package. The
   bare `svgin` name is the project/repo identity, not any one package. The `<svg-in>` custom element tag
@@ -42,17 +42,16 @@ boundaries, or tooling decisions it describes.
   not the npm package name, which is deliberately changing to `@svgin/react`. Changes on top of that
   behavioral baseline should be improvements, not regressions.
 - `apps/tryit` (npm name `svgin-tryit`) is the real, migrated `akhiakl/svgin-react-tryit` demo app: one
-  route per `svgin-react` feature (Inspector, RSC fetch, Suspense, Provider, lazy loading, native
+  route per `@svgin/react` feature (Inspector, RSC fetch, Suspense, Provider, lazy loading, native
   props, Shadow DOM), with its own Vitest unit tests and Playwright e2e/a11y suite. It installs
-  `svgin-react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
+  `@svgin/react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
   the whole point of the demo is to show what's actually published, not the in-progress workspace
   version. It's **permanently private**, like `packages/core`: `package.json` has a name
   (`svgin-tryit`) for local workspace/tooling purposes, but it's never published to npm and never a
-  release-please component. `@svgin/element`'s `<svg-in>` demo route (`/element`) uses the workspace
-  `@svgin/element` package directly, as `workspace:*` - the one deliberate exception to the "real npm
-  dependency" rule above. `@svgin/element` is now published, but the cutover to depending on that real
-  version is its own separate, explicit step (see `AGENTS.md` in that app) - not automatic just because
-  the package exists on npm. Swap it, matching `svgin-react`'s treatment, once that step happens.
+  release-please component. `@svgin/element`'s `<svg-in>` demos (`/element` and its five focused
+  sub-demos under it) now also depend on the real published `@svgin/element` package (also `^0.0.1`, not
+  `workspace:*`) - the deferred cutover both packages were waiting on (see "Release & publishing" below)
+  has shipped, so `apps/tryit` no longer has a `workspace:*` exception at all.
 
 ## Build & task pipeline
 

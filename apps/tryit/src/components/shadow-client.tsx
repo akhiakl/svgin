@@ -1,7 +1,7 @@
 'use client';
 
-import { SvgIn } from 'svgin-react/client';
-import { SvgInShadow } from 'svgin-react/shadow';
+import { SvgIn } from '@svgin/react/client';
+import { SvgInShadow } from '@svgin/react/shadow';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function ShadowClient() {

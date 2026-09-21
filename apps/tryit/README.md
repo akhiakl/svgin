@@ -2,22 +2,28 @@
 
 Live demos of [`svgin-react`](https://github.com/akhiakl/svgin-react) (installed as a real npm dependency, not imported from its source) and `@svgin/element`'s `<svg-in>` custom element, each route exercising a different real feature. This app lives at `apps/tryit` in the [`svgin`](../../README.md) monorepo; see [AGENTS.md](AGENTS.md) for how it fits alongside `packages/react`/`packages/element` (including why `@svgin/element` is still the one temporary exception to the "real npm dependency" rule above, even though it's now published - the cutover is a separate step).
 
-The live site itself is still titled "svgin-react: Try it" in its own nav/metadata (`src/lib/site.ts`) - that's a separate, deployed branding decision, unrelated to this file's own heading.
+The live site's own nav (`src/components/site-nav.tsx`) and title/metadata (`src/lib/site.ts`) now
+say "@svgin/react", matching this app's real dependency and every other page heading. They used to
+read "svgin-react" (the site's title/nav text is hardcoded independently in each of those two files,
+not derived from one another) - that was left stale from before the `@svgin` scope migration, not a
+deliberate choice, so it was brought in line with the rest of the app as part of the dependency
+cutover. `SITE_URL` (`https://svgin-react-tryit.vercel.app`) is unchanged: it is the site's actual
+deployed domain, a real infrastructure fact unrelated to the npm package's identity.
 
-## What svgin-react is
+## What @svgin/react is
 
-[`svgin-react`](https://www.npmjs.com/package/svgin-react) fetches an SVG from a URL, or takes raw SVG markup directly, and renders it as a real, styleable React element instead of an `<img>`. It sanitizes the SVG with DOMPurify by default, so it is safe to use with SVGs from a source you do not fully control (a CMS field, an API response, user-uploaded content). It works both as a client component and in React Server Components.
+[`@svgin/react`](https://www.npmjs.com/package/@svgin/react) fetches an SVG from a URL, or takes raw SVG markup directly, and renders it as a real, styleable React element instead of an `<img>`. It sanitizes the SVG with DOMPurify by default, so it is safe to use with SVGs from a source you do not fully control (a CMS field, an API response, user-uploaded content). It works both as a client component and in React Server Components.
 
 ```tsx
 // Client component
-import { SvgIn } from 'svgin-react/client';
+import { SvgIn } from '@svgin/react/client';
 
 <SvgIn src="/icons/alert.svg" width={24} height={24} className="text-red-500" />;
 ```
 
 ```tsx
 // React Server Component (no client JS shipped for the fetch/sanitize)
-import { SvgIn } from 'svgin-react/server';
+import { SvgIn } from '@svgin/react/server';
 
 export default async function Icon() {
     return <SvgIn src="https://example.com/icon.svg" width={24} height={24} />;

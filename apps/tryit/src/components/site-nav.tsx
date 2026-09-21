@@ -6,36 +6,29 @@ import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { DEMOS } from '@/lib/demos';
-import { DOCS_LINKS } from '@/lib/docs-nav';
+import { SiteSidebar } from '@/components/site-sidebar';
+import { DEMO_GROUPS } from '@/lib/demos';
 
-// Two top-level destinations rather than one link per demo/doc page: each
-// carries its own page list as children, shown nested one level down in the
-// mobile drawer (desktop only ever shows the two top-level links - the
-// child pages are reachable there via the home page's card grid and the
-// docs sidebar, both driven by the same two lists).
+// Two top-level destinations for the desktop-only horizontal nav (hidden
+// below sm - see the drawer below for mobile). "Try it" and "Docs" are the
+// only entries here on purpose: everything under them is reachable via the
+// react/element landing pages' card grids and the docs sidebar itself,
+// both driven by the same DEMO_GROUPS/DOCS_GROUPS data SiteSidebar renders.
 const LINKS = [
     {
         href: '/',
         label: 'Try it',
-        match: (pathname: string) => pathname === '/' || DEMOS.some((demo) => demo.href === pathname),
-        children: DEMOS.map((demo) => ({ href: demo.href, label: demo.title })),
+        match: (pathname: string) => pathname === '/' || DEMO_GROUPS.some((group) => group.demos.some((demo) => demo.href === pathname)),
     },
-    {
-        href: '/docs',
-        label: 'Docs',
-        match: (pathname: string) => pathname.startsWith('/docs'),
-        children: DOCS_LINKS,
-    },
+    { href: '/docs', label: 'Docs', match: (pathname: string) => pathname.startsWith('/docs') },
 ];
 
-function NavLink({ href, label, match, pathname, onClick }: (typeof LINKS)[number] & { pathname: string; onClick?: () => void }) {
+function NavLink({ href, label, match, pathname }: (typeof LINKS)[number] & { pathname: string }) {
     return (
         <Link
             href={href}
-            onClick={onClick}
             className={cn(
                 'text-muted-foreground transition-colors hover:text-foreground',
                 match(pathname) && 'text-foreground font-medium'
@@ -54,7 +47,7 @@ export function SiteNav() {
         <header className="border-b">
             <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
                 <Link href="/" className="font-semibold tracking-tight">
-                    svgin-react <span className="text-muted-foreground font-normal">/ try it</span>
+                    svgin <span className="text-muted-foreground font-normal">/ try it</span>
                 </Link>
 
                 <ul className="hidden items-center gap-x-4 text-sm sm:flex">
@@ -76,40 +69,25 @@ export function SiteNav() {
                                 </Button>
                             }
                         />
-                        <SheetContent side="left" className="w-64">
+                        {/* Same SiteSidebar used inline on every docs/demo page, reused
+                            here rather than a second, separately-behaved nav tree - same
+                            data, same default-open groups. onNavigate closes the drawer
+                            on link click, the one behavior this context needs that the
+                            inline usage elsewhere doesn't. */}
+                        <SheetContent side="left" className="w-64 overflow-y-auto">
                             <SheetHeader>
-                                <SheetTitle>svgin-react / try it</SheetTitle>
+                                {/* Plain onClick, not SheetClose: SheetClose's
+                                    nativeButton semantics are for a real button
+                                    (see its own comment) - this is a navigational
+                                    link, same as every other link in SiteSidebar
+                                    below, so it stays consistent with those. */}
+                                <Link href="/" onClick={() => setOpen(false)}>
+                                    <SheetTitle>svgin / try it</SheetTitle>
+                                </Link>
                             </SheetHeader>
-                            <ul className="flex flex-col gap-4 px-4 text-sm">
-                                {LINKS.map((link) => (
-                                    <li key={link.href}>
-                                        <SheetClose render={<NavLink {...link} pathname={pathname} onClick={() => setOpen(false)} />} />
-                                        {/* Level 2: the pages under this destination, indented
-                                            beneath it instead of a separate unrelated-looking
-                                            section further down the drawer. */}
-                                        <ul className="mt-2 flex flex-col gap-1.5 border-l pl-3">
-                                            {link.children.map((child) => (
-                                                <li key={child.href}>
-                                                    <SheetClose
-                                                        render={
-                                                            <Link
-                                                                href={child.href}
-                                                                onClick={() => setOpen(false)}
-                                                                className={cn(
-                                                                    'text-muted-foreground transition-colors hover:text-foreground',
-                                                                    pathname === child.href && 'text-foreground font-medium'
-                                                                )}
-                                                            >
-                                                                {child.label}
-                                                            </Link>
-                                                        }
-                                                    />
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </li>
-                                ))}
-                            </ul>
+                            <div className="px-4">
+                                <SiteSidebar onNavigate={() => setOpen(false)} />
+                            </div>
                         </SheetContent>
                     </Sheet>
                 </div>
