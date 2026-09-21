@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.0...svgin-react-v1.1.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **publish:** add repository field, required for npm provenance verification ([f99ef75](https://github.com/akhiakl/svgin/commit/f99ef7553aee74afcf1c769e3c46d641795e4a55))
+* **publish:** add repository field, required for npm provenance verification ([7a33e9c](https://github.com/akhiakl/svgin/commit/7a33e9c61d11a4889f02434b04e3ad302a10cce3))
+
 ## [1.1.0](https://github.com/akhiakl/svgin/compare/svgin-react-v1.0.1...svgin-react-v1.1.0) (2026-09-21)
 
 
