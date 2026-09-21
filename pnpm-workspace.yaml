@@ -7,8 +7,8 @@ allowBuilds:
   unrs-resolver: true
 
 minimumReleaseAgeExclude:
-  - '@svgin/element@0.0.1 || 0.1.1'
-  - '@svgin/react@1.0.1 || 1.1.1'
+  - '@svgin/element@0.0.1 || 0.1.1 || 0.1.2'
+  - '@svgin/react@1.0.1 || 1.1.1 || 1.1.2'
 
 overrides:
   typescript: 5.9.3
