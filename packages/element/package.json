@@ -4,6 +4,11 @@
   "private": false,
   "description": "Framework-agnostic <svg-in> custom element: securely fetch and inline SVGs from URLs, sanitized by default.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akhiakl/svgin.git",
+    "directory": "packages/element"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
