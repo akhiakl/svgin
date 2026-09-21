@@ -29,6 +29,34 @@ more - built on the same [`svgin-core`](../core) internals as this package. Publ
 <svg-in src="/icons/logo.svg" width="24" height="24" fill="currentColor"></svg-in>
 ```
 
+## Using from a CDN, no build tool
+
+`@svgin/element` (and `svg-in` itself) has no framework dependency, but the default sanitizer still
+needs DOMPurify - loaded lazily via a bare `import('dompurify')`, which only resolves in a plain
+browser `<script type="module">` (no bundler, no `npm install`) if an
+[import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/importmap)
+tells the browser where to fetch it from:
+
+```html
+<script type="importmap">
+{
+  "imports": {
+    "dompurify": "https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.es.mjs"
+  }
+}
+</script>
+<script type="module" src="https://unpkg.com/@svgin/element"></script>
+
+<svg-in src="/icons/logo.svg" width="24" height="24" fill="currentColor"></svg-in>
+```
+
+Any npm package is automatically mirrored on [unpkg](https://unpkg.com) and
+[jsDelivr](https://www.jsdelivr.com) - no separate CDN publish step needed. Pin exact versions
+(`@svgin/element@0.1.2`, `dompurify@3.4.15`) for anything beyond a quick demo. If you pass your own
+`sanitizeFn` or use `disable-sanitization`, DOMPurify is never imported at all and the import map can
+be skipped entirely. Verified working end-to-end (real published package, real DOMPurify, zero
+bundler) - see the `svgin-monorepo` skill if this stops working after a `<svg-in>` internals change.
+
 ## Rendering model: light DOM, not shadow DOM
 
 `<svg-in>` inlines the sanitized `<svg>` as a **direct child of the element itself** (light DOM), not
