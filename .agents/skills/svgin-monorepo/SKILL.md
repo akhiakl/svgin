@@ -304,10 +304,15 @@ boundaries, or tooling decisions it describes.
     fetch/sanitize/render cycle through the custom element for `@svgin/element`) - not just unit tests
     in-repo, since a packaging bug like the one above doesn't show up in workspace-local testing at all
     (everything resolves via workspace links there, never through what a real `npm install` would do).
-- **Every release that changes `@svgin/react` or `@svgin/element` must update `apps/tryit` in the same
-  PR** (bump its dependency on the released package, and touch whatever demo surface exercises the
-  change). The tryit app is meant to always demo current behavior, not a stale prior version. Treat a
-  release that doesn't touch `apps/tryit` as a signal to check whether it should.
+- **`apps/tryit` should always demo current behavior, not a stale prior version.** The dependency-bump
+  half of that is automated: `release.yml`'s publish job opens a PR bumping `apps/tryit`'s dependency to
+  the version just published (set to the literal version, not left to `pnpm update`'s semver-range
+  resolution - that's what got `@svgin/element` stuck at `^0.0.1`, since a `0.x` caret only ever matches
+  its own minor). That PR is never auto-merged, and it only covers the version bump - **whether the
+  release also needs new/updated demo content is still a human judgment call**, flagged as a checklist
+  line in the PR body (with that version's `CHANGELOG.md` entry alongside it for context) rather than
+  decided automatically. Treat an unopened bump PR after a release as a signal something's wrong with
+  the workflow, and a bump PR with no demo changes as a signal to check whether it should have some.
 
 ## Reference skills installed in this repo
 
