@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/akhiakl/svgin/compare/svgin-element-v0.1.2...svgin-element-v0.1.3) (2026-09-21)
+
+
+### Documentation
+
+* **element:** document CDN-only usage (no build tool) ([e5f356c](https://github.com/akhiakl/svgin/commit/e5f356c09e4515677ff50f82a174b0318afb8377))
+* **element:** document CDN-only usage (no build tool) ([c468f97](https://github.com/akhiakl/svgin/commit/c468f975da13773999c105f6ba1790e273c4f172))
+
 ## [0.1.2](https://github.com/akhiakl/svgin/compare/svgin-element-v0.1.1...svgin-element-v0.1.2) (2026-09-21)
 
 
