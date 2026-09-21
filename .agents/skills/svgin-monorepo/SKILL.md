@@ -20,18 +20,19 @@ boundaries, or tooling decisions it describes.
   consume over a `workspace:*` dependency. It is not an independent public API.
 - `packages/react` (npm name `@svgin/react`) and `packages/element` (npm name `@svgin/element`) are the
   two public npm packages, both **published** under the `@svgin` npm
-  [organization](https://www.npmjs.com/settings/svgin) scope: `@svgin/react@1.0.1` and
-  `@svgin/element@0.0.1`. This was a deliberate identity change, not a seamless continuation:
-  `svgin-react` (unscoped) is a real, still-live npm package with real history at `1.0.1`, migrated from
-  the previously-separate `akhiakl/svgin-react` repo; `svgin-element` (unscoped) was briefly published,
-  found broken (see "Release & publishing" below), and unpublished before the move to this scope.
-  Neither history carries over to the new scoped names - npm treats a scoped and unscoped name as
-  entirely unrelated packages, even when one succeeds the other. `packages/react/package.json`'s version
-  field still reads `1.0.1` (kept for local bookkeeping/continuity, and because that's what was actually
-  published under the new scope), but `@svgin/react`'s publish under this scope was its own first-ever
-  publish as far as npm's registry is concerned - zero downloads/dependents carried over. See "Release &
-  publishing" below for the actual publish history: both packages are live, and `apps/tryit` now depends
-  on both real, published packages (no `workspace:*` dependency remains there).
+  [organization](https://www.npmjs.com/settings/svgin) scope: `@svgin/react@1.1.1` and
+  `@svgin/element@0.1.1` are the latest published versions (check each package's own `package.json` for
+  the current one - this doc doesn't try to stay in sync with every routine release). The scope move
+  itself was a deliberate identity change, not a seamless continuation: `svgin-react` (unscoped) is a
+  real, still-live npm package with real history at `1.0.1`, migrated from the previously-separate
+  `akhiakl/svgin-react` repo; `svgin-element` (unscoped) was briefly published, found broken (see
+  "Release & publishing" below), and unpublished before the move to this scope. Neither history carries
+  over to the new scoped names - npm treats a scoped and unscoped name as entirely unrelated packages,
+  even when one succeeds the other; `@svgin/react`'s first publish under this scope was its own
+  first-ever publish as far as npm's registry is concerned - zero downloads/dependents carried over. See
+  "Release & publishing" below for the full publish history. The automated release pipeline
+  (release-please -> GitHub Release/tag -> `release.yml` -> npm via trusted publishing) is now verified
+  working end-to-end for both packages - no manual publish step is needed for routine releases.
 - Naming is deliberately `svgin-core` (unscoped, permanently private/internal) plus `@svgin/react` /
   `@svgin/element` (scoped, public) under the `@svgin` npm organization, not a bare `svgin` package. The
   bare `svgin` name is the project/repo identity, not any one package. The `<svg-in>` custom element tag
@@ -49,9 +50,14 @@ boundaries, or tooling decisions it describes.
   version. It's **permanently private**, like `packages/core`: `package.json` has a name
   (`svgin-tryit`) for local workspace/tooling purposes, but it's never published to npm and never a
   release-please component. `@svgin/element`'s `<svg-in>` demos (`/element` and its five focused
-  sub-demos under it) now also depend on the real published `@svgin/element` package (also `^0.0.1`, not
-  `workspace:*`) - the deferred cutover both packages were waiting on (see "Release & publishing" below)
-  has shipped, so `apps/tryit` no longer has a `workspace:*` exception at all.
+  sub-demos under it) now also depend on the real published `@svgin/element` package, not `workspace:*`
+  - `apps/tryit` has no `workspace:*` exception at all. **Its own dependency ranges need bumping by hand
+  after a release**, same as any other npm consumer - `pnpm install`/`pnpm up` don't happen
+  automatically just because a new version was published. Caught once already: `@svgin/element`'s range
+  was left at `^0.0.1` after the `0.1.1` release shipped, which isn't just stale but permanently stuck -
+  a `0.x` caret range only matches its own minor (`^0.0.1` is `0.0.x` only, never `0.1.x`), so `apps/tryit`
+  could never have picked up `0.1.1` without an explicit range bump, no matter how many times `pnpm up`
+  ran.
 
 ## Build & task pipeline
 
@@ -304,6 +310,28 @@ boundaries, or tooling decisions it describes.
     fetch/sanitize/render cycle through the custom element for `@svgin/element`) - not just unit tests
     in-repo, since a packaging bug like the one above doesn't show up in workspace-local testing at all
     (everything resolves via workspace links there, never through what a real `npm install` would do).
+- **The automated pipeline itself needed two more fixes before its first real end-to-end run
+  (`1.1.0`/`0.1.0` -> republished as `1.1.1`/`0.1.1`) actually succeeded:**
+  - `release.yml`'s quality-gate step ran `pnpm turbo run ... <tasks>` with no `--filter`, so publishing
+    either package re-ran the **entire repo's** tasks, including `apps/tryit` - which isn't even in
+    either package's workspace dependency graph (it consumes both as real npm dependencies, not
+    `workspace:*`). A flaky `apps/tryit` unit test (a CI-load timeout, confirmed non-reproducing
+    locally) blocked two real npm publishes for a reason with zero connection to either published
+    package. Fixed by scoping the gate to `--filter="<released package>"`.
+  - `npm publish --provenance` cross-checks the published `package.json`'s `repository.url` against the
+    actual GitHub repo the OIDC attestation came from. Neither `packages/react/package.json` nor
+    `packages/element/package.json` ever had a `repository` field at all (the original bootstrap
+    publishes predate any real `--provenance` verification, so this was never exercised before), so the
+    very first release-triggered publish attempt failed with `E422 Error verifying sigstore provenance
+    bundle`. Fixed by adding a standard `repository` field (`type`, `url`, `directory`) to both.
+  - A related pitfall worth remembering: retrying a **failed** release via GitHub's "Re-run failed jobs"
+    replays the workflow file pinned to that run's tag/commit, not whatever's on `main` now - a fix
+    landed on `main` after the failure never applies to a re-run of the original run.
+    `release.yml` now also accepts `workflow_dispatch` (a `tag` input) specifically so a stuck release
+    can be retried with the current workflow logic while still building/publishing that tag's actual
+    package code - though in practice, once both fixes above landed, the clean path that was actually
+    used was letting release-please cut a fresh patch release off the fixed `main` rather than replaying
+    the broken tags at all.
 - **`apps/tryit` should always demo current behavior, not a stale prior version.** The dependency-bump
   half of that is automated: `release.yml`'s publish job opens a PR bumping `apps/tryit`'s dependency to
   the version just published (set to the literal version, not left to `pnpm update`'s semver-range

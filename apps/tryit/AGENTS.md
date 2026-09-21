@@ -24,10 +24,9 @@ real feature of the library: the sanitizer Inspector, a server-component fetch, 
 `<SvgInProvider />` defaults, `loading="lazy"`, native SVG/DOM prop forwarding, `<SvgInShadow />`, and
 `<svg-in>` (`@svgin/element`'s web component).
 
-`@svgin/element` is also a real published dependency now (`^0.0.1`), matching `@svgin/react`'s
-treatment - it used to be a deliberate, temporary `workspace:*` exception (see #21/#19) while its
-first npm publish was still pending; that publish has since shipped, so the exception no longer
-applies and both packages are installed from the real npm registry.
+`@svgin/element` is a real published dependency too, matching `@svgin/react`'s treatment - both
+packages are installed from the real npm registry, no `workspace:*` exception remains anywhere in
+this app.
 
 This app is a demo, not the package. Do not add sanitization or fetch/cache logic here. If a demo
 needs new library behavior, that change belongs in `@svgin/react` itself, released, then picked up
