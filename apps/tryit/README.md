@@ -1,16 +1,15 @@
 # svgin: try it
 
-Live demos of [`svgin-react`](https://github.com/akhiakl/svgin-react) (installed as a real npm dependency, not imported from its source) and `@svgin/element`'s `<svg-in>` custom element, each route exercising a different real feature. This app lives at `apps/tryit` in the [`svgin`](../../README.md) monorepo; see [AGENTS.md](AGENTS.md) for how it fits alongside `packages/react`/`packages/element` (including why `@svgin/element` is still the one temporary exception to the "real npm dependency" rule above, even though it's now published - the cutover is a separate step).
+Live demos of [`@svgin/react`](https://www.npmjs.com/package/@svgin/react) and
+[`@svgin/element`](https://www.npmjs.com/package/@svgin/element), both installed as real npm
+dependencies (not imported from their workspace source - see [AGENTS.md](AGENTS.md)). This app lives
+at `apps/tryit` in the [`svgin`](../../README.md) monorepo.
 
-The live site's own nav (`src/components/site-nav.tsx`) and title/metadata (`src/lib/site.ts`) now
-say "@svgin/react", matching this app's real dependency and every other page heading. They used to
-read "svgin-react" (the site's title/nav text is hardcoded independently in each of those two files,
-not derived from one another) - that was left stale from before the `@svgin` scope migration, not a
-deliberate choice, so it was brought in line with the rest of the app as part of the dependency
-cutover. `SITE_URL` (`https://svgin-react-tryit.vercel.app`) is unchanged: it is the site's actual
-deployed domain, a real infrastructure fact unrelated to the npm package's identity.
+The site has one landing page per package (`/react`, `/element`), a neutral `/` intro linking to
+both, and docs (`/docs/react/*`, `/docs/element/*`) alongside the live demos - see "What each demo
+shows" below for the full route list.
 
-## What @svgin/react is
+## What each package is
 
 [`@svgin/react`](https://www.npmjs.com/package/@svgin/react) fetches an SVG from a URL, or takes raw SVG markup directly, and renders it as a real, styleable React element instead of an `<img>`. It sanitizes the SVG with DOMPurify by default, so it is safe to use with SVGs from a source you do not fully control (a CMS field, an API response, user-uploaded content). It works both as a client component and in React Server Components.
 
@@ -30,20 +29,43 @@ export default async function Icon() {
 }
 ```
 
-Full API reference (props, `<SvgInSuspense />`, `<SvgInProvider />`, `preloadSvg`, sanitization details) lives in the package's own [README](https://github.com/akhiakl/svgin-react#readme). This repo is a demo, not a copy of those docs.
+[`@svgin/element`](https://www.npmjs.com/package/@svgin/element) is the same sanitize-by-default
+loading as a framework-agnostic Custom Element (`<svg-in>`), built on the same shared internals - no
+React wrapper, plain HTML attributes and `CustomEvent`s.
+
+```html
+<script type="module">
+    import '@svgin/element'; // registers <svg-in> as a side effect
+</script>
+
+<svg-in src="/icons/logo.svg" width="24" height="24" fill="currentColor"></svg-in>
+```
+
+Full API reference for either package lives in its own README
+([`@svgin/react`](../../packages/react/README.md), [`@svgin/element`](../../packages/element/README.md))
+and is mirrored on this site at `/docs/react/api` and `/docs/element/api`. This repo is a demo, not a
+copy of those docs.
 
 ## What each demo shows
 
-| Route        | What it shows                                                                             |
-| ------------ | ------------------------------------------------------------------------------------------ |
-| `/inspector` | Paste SVG markup and see exactly what the default DOMPurify sanitizer strips.              |
-| `/rsc`       | The async server `<SvgIn />` fetching and sanitizing an SVG entirely on the server.         |
-| `/suspense`  | `<SvgInSuspense />`, React 19's `use()`, a real `<Suspense>` boundary and error boundary.   |
-| `/provider`  | `<SvgInProvider />` setting shared `className`/`fallback`/`onError` defaults.               |
-| `/lazy`      | `<SvgIn loading="lazy" />` deferring fetch/sanitize via `IntersectionObserver`.             |
+| Route | What it shows |
+| --- | --- |
+| `/` | Neutral intro linking to both packages' landing pages. |
+| `/react` | `@svgin/react` landing page and demo grid (below). |
+| `/inspector` | Paste SVG markup and see exactly what the default DOMPurify sanitizer strips. |
+| `/rsc` | The async server `<SvgIn />` fetching and sanitizing an SVG entirely on the server. |
+| `/suspense` | `<SvgInSuspense />`, React 19's `use()`, a real `<Suspense>` boundary and error boundary. |
+| `/provider` | `<SvgInProvider />` setting shared `className`/`fallback`/`onError` defaults. |
+| `/lazy` | `<SvgIn loading="lazy" />` deferring fetch/sanitize via `IntersectionObserver`. |
 | `/native-props` | Standard SVG/DOM props (`style`, `onClick`, `role`, `tabIndex`, `data-*`) forwarded onto the rendered `<svg>`. |
-| `/shadow`    | `<SvgInShadow />` encapsulating style in a shadow root, immune to page-wide CSS in either direction. |
-| `/element`   | `<svg-in>`, `@svgin/element`'s framework-agnostic Custom Element - no React wrapper, plain HTML attributes and `CustomEvent`s. |
+| `/shadow` | `<SvgInShadow />` encapsulating style in a shadow root, immune to page-wide CSS in either direction. |
+| `/element` | `@svgin/element` landing page and demo grid (below). |
+| `/element/basic` | `<svg-in src="...">` fetching and rendering a real SVG, no React wrapper. |
+| `/element/raw` | The `svg` attribute rendering markup you already have, sanitized, with no fetch at all. |
+| `/element/lazy` | `loading="lazy"` deferring fetch/sanitize until the element scrolls near the viewport. |
+| `/element/inspector` | Disable-sanitization compared side by side: a malicious payload stripped by default, or rendered raw when opted out. |
+| `/element/events` | A failing `src` dispatching `svg-in-error` instead of throwing - no React error boundary involved. |
+| `/docs`, `/docs/react/*`, `/docs/element/*` | Installation and API reference for each package, mirroring their own READMEs. |
 
 ## Getting started
 
@@ -71,13 +93,14 @@ pnpm run test:a11y       # axe-core accessibility scan, every route
 pnpm run build           # next build
 ```
 
-See [AGENTS.md](AGENTS.md) for the fuller contributor guide: layout, conventions, and notes on keeping demos in sync with the upstream package.
+See [AGENTS.md](AGENTS.md) for the fuller contributor guide: layout, conventions, and notes on keeping demos in sync with the upstream packages.
 
 ## Deploying
 
-Deployed on [Vercel](https://vercel.com), linked directly to this repo's GitHub integration (root
-directory `apps/tryit`): every push builds a deployment automatically, no `VERCEL_TOKEN`/CI secrets
-involved. Not gated on a release, since this app is not a release-please component (see below).
+Deployed on [Vercel](https://vercel.com) at [svgin-tryit.vercel.app](https://svgin-tryit.vercel.app),
+linked directly to this repo's GitHub integration (root directory `apps/tryit`): every push builds a
+deployment automatically, no `VERCEL_TOKEN`/CI secrets involved. Not gated on a release, since this
+app is not a release-please component (see below).
 
 ## Versioning
 

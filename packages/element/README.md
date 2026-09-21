@@ -9,14 +9,8 @@ fetch/sanitize/cache logic - the same internals [`@svgin/react`](../react)'s `<S
 The default sanitizer still needs [DOMPurify](https://github.com/cure53/DOMPurify) (an optional peer
 dependency, same as `@svgin/react`), unless you pass your own `sanitizeFn` or `disableSanitization`.
 
-> **Status:** real implementation (see [#18](https://github.com/akhiakl/svgin/issues/18)), demoed live
-> in `apps/tryit` at [`/element`](https://svgin-tryit.vercel.app/element) (see
-> [#21](https://github.com/akhiakl/svgin/issues/21)) - that demo currently builds from this package's
-> own workspace source (`workspace:*`), not yet the published npm package. Separately, published to npm
-> as [`@svgin/element`](https://npmjs.com/package/@svgin/element); `apps/tryit` will switch to depending
-> on that published version as an explicit follow-up step. **Update this README (and any docs-site page)
-> in the same PR/build whenever `<svg-in>`'s public API or behavior changes**, see the `svgin-monorepo`
-> skill.
+Published to npm as [`@svgin/element`](https://npmjs.com/package/@svgin/element), demoed live in
+`apps/tryit` at [`/element`](https://svgin-tryit.vercel.app/element).
 
 ## Using React?
 

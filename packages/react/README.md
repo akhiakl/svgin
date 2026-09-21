@@ -1,17 +1,8 @@
 # @svgin/react
 
 Securely fetch and inline SVGs from URLs as React components, sanitized by default, with client and
-server support.
-
-> **Status:** real implementation, migrated from [`akhiakl/svgin-react`](https://github.com/akhiakl/svgin-react)
-> (see [#12](https://github.com/akhiakl/svgin/issues/12)/[#14](https://github.com/akhiakl/svgin/issues/14)),
-> feature-for-feature with that package's public API (same export paths: `/client`, `/server`, `/core`,
-> `/suspense`, `/shadow`, `/all`; same sanitization guarantees), built on the shared
-> [`svgin-core`](../core) internals. Published to npm as
-> [`@svgin/react`](https://npmjs.com/package/@svgin/react), continuing the version number of the
-> previously-unscoped `svgin-react` (`1.0.1`) rather than resetting to `0.0.0` - but not its npm
-> history: a scoped and unscoped name are entirely unrelated packages as far as npm is concerned, so
-> this is a fresh registry entry with no carried-over downloads or dependents.
+server support. Built on the shared [`svgin-core`](../core) internals, published to npm as
+[`@svgin/react`](https://npmjs.com/package/@svgin/react).
 
 ```tsx
 import { SvgIn } from '@svgin/react';
