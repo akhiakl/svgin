@@ -24,9 +24,11 @@ sanitizer Inspector, a server-component fetch, `<SvgInSuspense />`, `<SvgInProvi
 web component).
 
 **`@svgin/element` is a deliberate, temporary exception to the "real published dependency" rule
-above**: it's still `workspace:*` (see #21/#19) because `@svgin/element` hasn't had its first npm
-publish yet, unlike `svgin-react`. Swap it to a real published version (same as `svgin-react`) once
-that first publish ships - don't leave it on `workspace:*` past that point.
+above**: it's still `workspace:*` (see #21/#19), even though `@svgin/element` has now had its first npm
+publish (`0.0.1`, under the `@svgin` scope - see the `svgin-monorepo` skill's "Release & publishing"
+section). The cutover to a real published dependency (matching `svgin-react`'s own pattern) is a
+separate, explicit step, not automatic just because the package now exists on npm - don't leave it on
+`workspace:*` past whenever that step happens.
 
 This app is a demo, not the package. Do not add sanitization or fetch/cache logic here. If a demo
 needs new library behavior, that change belongs in `svgin-react` itself, released, then picked up

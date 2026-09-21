@@ -5,26 +5,27 @@ Securely fetch and inline SVGs from URLs, sanitized by default.
 This is the Turborepo-managed pnpm monorepo behind [`@svgin/react`](packages/react) and
 [`@svgin/element`](packages/element): fetch an SVG from a URL (or take raw markup you already have),
 sanitize it with [DOMPurify](https://github.com/cure53/DOMPurify), and render it as a real, styleable
-inline `<svg>` instead of an opaque `<img>`. The React package continues the previously-separate
-[`akhiakl/svgin-react`](https://github.com/akhiakl/svgin-react) repo, currently published on npm as
-unscoped `svgin-react` (real history, at `1.0.1`); it's being migrated to the `@svgin` npm scope as a
-fresh `@svgin/react` package (npm renames don't carry version history, so this is a deliberate identity
-change, not a seamless continuation - see the `svgin-monorepo` skill for the full rationale).
-`@svgin/element` (a framework-agnostic `<svg-in>` custom element) is also implemented and demoed live,
-but neither scoped package has had its first publish yet - see
-[#19](https://github.com/akhiakl/svgin/issues/19) for first-publish readiness. `apps/tryit` is real
-too: the migrated `akhiakl/svgin-react-tryit` demo app, deployed at
-[svgin-tryit.vercel.app](https://svgin-tryit.vercel.app), still demoing the live unscoped
-`svgin-react@1.0.1` dependency until `@svgin/react` ships.
+inline `<svg>` instead of an opaque `<img>`. Both are published to npm under the
+[`@svgin`](https://www.npmjs.com/settings/svgin) organization scope. The React package continues the
+previously-separate [`akhiakl/svgin-react`](https://github.com/akhiakl/svgin-react) repo, which is also
+still live on npm as unscoped `svgin-react@1.0.1` (real history) - `@svgin/react` is a deliberate new
+identity, not a seamless continuation: npm treats a scoped and unscoped name as entirely unrelated
+packages, so `@svgin/react` started as a fresh registry entry (its version number, `1.0.1`, was kept the
+same on purpose; its download/dependent history was not carried over). See the `svgin-monorepo` skill
+for the full rationale. `apps/tryit` is real too: the migrated `akhiakl/svgin-react-tryit` demo app,
+deployed at [svgin-tryit.vercel.app](https://svgin-tryit.vercel.app) - it currently demos the live
+unscoped `svgin-react@1.0.1` npm dependency, and a `workspace:*`-linked build of `@svgin/element`'s own
+source (not yet the published npm package); both are cut over to their real published `@svgin/*`
+versions as separate, explicit follow-up steps, not bundled into the scope migration itself.
 
 ## Packages
 
 | Path | npm name | Publishes? | What it is |
 | --- | --- | --- | --- |
 | [`packages/core`](packages/core) | `svgin-core` | Never (private) | Shared fetch/sanitize/cache internals `@svgin/react` and `@svgin/element` are both built on |
-| [`packages/react`](packages/react) | `@svgin/react` | Not yet from here ([#19](https://github.com/akhiakl/svgin/issues/19)) | React components for inlining SVGs |
-| [`packages/element`](packages/element) | `@svgin/element` | Not yet ([#19](https://github.com/akhiakl/svgin/issues/19)) | Framework-agnostic `<svg-in>` custom element |
-| [`apps/tryit`](apps/tryit) | n/a | Never (private) | Live demo app (Next.js) for both packages, deployed on Vercel |
+| [`packages/react`](packages/react) | `@svgin/react` | Yes, `1.0.1` | React components for inlining SVGs |
+| [`packages/element`](packages/element) | `@svgin/element` | Yes, `0.0.1` | Framework-agnostic `<svg-in>` custom element |
+| [`apps/tryit`](apps/tryit) | n/a | Never (private) | Live demo app (Next.js) for both packages, deployed on Vercel - see below for which dependency each currently resolves to |
 
 Shared tooling config lives in its own workspace packages rather than a root file, per
 [Turborepo's convention](https://turborepo.dev) (a root config isn't tracked by Turborepo's task
@@ -62,25 +63,23 @@ This repo uses [release-please](https://github.com/googleapis/release-please), m
 separate manual release step. See the `svgin-monorepo` skill under [`.agents/skills`](.agents/skills)
 for the full rationale, current release-readiness status, and its one known limitation.
 
-### First npm publish checklist
+### npm publish status
 
-The publish pipeline itself is built and repo-scoped work for it is done (see
-[#19](https://github.com/akhiakl/svgin/issues/19)): `.github/workflows/release.yml` publishes to npm
-via trusted publishing (OIDC) when a GitHub Release is published, `.github/workflows/release-please.yml`
-opens the version-bump PRs, `release-please-config.json`/`.release-please-manifest.json` track both
-`packages/react` and `packages/element` in manifest mode, the `npm-publish` GitHub Environment that
-`release.yml` deploys against exists, and a `npm pack --dry-run` against both packages' built `dist/`
-confirms their tarballs contain exactly `package.json`, `README.md`, and everything under `dist/` (per
-each package's `"files": ["dist"]`) - no surprises, nothing missing.
+Both packages are live: `@svgin/react@1.0.1` and `@svgin/element@0.0.1` (bumped from an initial `0.0.0`
+that had to be unpublished and unpublishing blocks reusing that exact version for 24 hours - see the
+`svgin-monorepo` skill's "Release & publishing" section for what happened there and the
+`svgin-core`-in-`dependencies` packaging bug that caused it). Each was published manually
+(`pnpm publish --access public`) as a one-time bootstrap, since npm requires a package to already exist
+before a trusted publisher can be configured against it - `packages/react/package.json` and
+`packages/element/package.json` both have `"private": false` now.
 
-What's still needed before the very first real publish, and who does it:
+What's still needed before `release-please`'s automated pipeline can take over future releases:
 
-1. **Configure npm trusted publishing (OIDC) on npmjs.com** - this needs actual npmjs.com dashboard
-   access, so it has to be done by whoever administers the npm org/account, not from this repo. For
-   **both** the `@svgin/react` and `@svgin/element` package names (under the `@svgin` npm
-   [organization](https://www.npmjs.com/settings/svgin)):
-   - On npmjs.com, open (or first create as an empty/placeholder package, since trusted publishing is
-     configured on an existing npm package) the package's Settings, then "Trusted Publisher".
+1. **Configure npm trusted publishing (OIDC) on npmjs.com** for both `@svgin/react` and
+   `@svgin/element` (under the `@svgin` npm [organization](https://www.npmjs.com/settings/svgin)) -
+   this needs actual npmjs.com dashboard access, so it has to be done by whoever administers the npm
+   org, not from this repo:
+   - On npmjs.com, open each package's Settings, then "Trusted Publisher".
    - Add a GitHub Actions trusted publisher with:
      - Organization/user: `akhiakl`
      - Repository: `svgin`
@@ -88,45 +87,20 @@ What's still needed before the very first real publish, and who does it:
      - Environment name: `npm-publish` (matching `release.yml`'s `environment: npm-publish`)
    - No `NPM_TOKEN` secret is needed anywhere in this repo once this is set up; `release.yml`'s publish
      step already relies on npm's OIDC auto-detection (see that file's own comments).
-2. **Fix the `RELEASE_PLEASE_TOKEN` secret** - discovered while preparing this checklist, not
-   previously tracked in #19: every run of `release-please.yml` to date has failed outright with
-   `release-please failed: Input required and not supplied: token`, because the
-   `RELEASE_PLEASE_TOKEN` secret it passes to `googleapis/release-please-action@v5` is not set in this
-   repo's Actions secrets. Until this is fixed, release-please can never open a version-bump PR for
-   either package, independent of the `private` flag. Add a repo secret named `RELEASE_PLEASE_TOKEN`
-   (a PAT - classic with `repo` scope, or a fine-grained token with contents/pull-requests/issues write
-   access - is the usual choice, so PRs it opens can trigger other workflows the way a PR from the
-   default `GITHUB_TOKEN` cannot).
-3. **Decide on protection rules for the `npm-publish` GitHub Environment.** It exists (created via the
-   GitHub API as prep for this checklist) but currently has no protection rules configured - a safe
-   default that lets `release.yml` deploy against it immediately once everything else is ready.
-   Consider adding required reviewers (Settings -> Environments -> `npm-publish`) if a manual
-   approval gate before every npm publish is wanted; this is a judgment call, not a hard requirement.
-4. **Flip `"private": true` to `false`** in `packages/react/package.json` and `packages/element/package.json`,
-   independently, whenever each package's code is actually ready to ship. This is a deliberate,
-   separate step - not bundled into any prep work - since it's what actually arms the real release
-   pipeline. `@svgin/react` can flip once its parity/migration work (#12/#14/#15) is done; `@svgin/element`
-   once its `<svg-in>` implementation is considered release-ready.
-
-First published version for each scoped package, once unprivated:
-
-- **`@svgin/react`** is a brand-new npm package as far as the registry is concerned: a scoped name and
-  its unscoped predecessor share no version history, so publishing it is not a "continuation" of the
-  existing `svgin-react@1.0.1` package, even though `packages/react/package.json` is still numerically
-  pinned at `1.0.1` (carried over locally from the previously-separate `akhiakl/svgin-react` repo). This
-  is a deliberate identity change - see the `svgin-monorepo` skill's updated migration-fidelity note.
-  Decide, before that first publish, whether `@svgin/react` should keep numbering from `1.0.1` or reset
-  to a fresh `0.x`/`1.0.0`; either way, `release-please`'s manifest (`.release-please-manifest.json`)
-  should be kept in sync with whatever `packages/react/package.json` actually says.
-- **`@svgin/element`**'s manifest tracks its own version independently of `@svgin/react`'s; check
-  `.release-please-manifest.json`/`packages/element/package.json` for the current value rather than
-  assuming a specific number here - it moves as `release-please` proposes bumps from Conventional
-  Commits.
-
-`apps/tryit`'s `svgin-react` dependency (`^1.0.1`) deliberately stays on the old unscoped package for
-now - it's a real, currently-published npm dependency, decoupled from `packages/react`'s own identity
-in this monorepo. Swap it to a published `@svgin/react` version only as a separate, explicit step once
-that first scoped publish actually ships; do not change it as part of the rename itself.
+2. **Confirm the `RELEASE_PLEASE_TOKEN` secret is actually set and working** - a prior run of
+   `release-please.yml` failed with `release-please failed: Input required and not supplied: token`
+   because this secret was missing from the repo's Actions secrets. Verify it's set (a PAT - classic
+   with `repo` scope, or a fine-grained token with contents/pull-requests/issues write access) and that
+   the next `release-please.yml` run actually opens a version-bump PR, rather than assuming this is
+   fixed.
+3. **Decide on protection rules for the `npm-publish` GitHub Environment**, if a manual approval gate
+   before every automated npm publish is wanted (Settings -> Environments -> `npm-publish`) - a judgment
+   call, not a hard requirement; it currently has none configured.
+4. **Cut `apps/tryit` over from the unscoped `svgin-react` dependency to `@svgin/react`**, as a separate,
+   explicit step (not bundled into the scope migration itself, since the demo app must keep resolving a
+   real, working npm package throughout). Once that lands, `apps/tryit`'s own `AGENTS.md` no longer needs
+   its `svgin-element`/`@svgin/element` `workspace:*` exception note either, if `@svgin/element` has also
+   been swapped to a real published dependency by then.
 
 ## License
 

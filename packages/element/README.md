@@ -5,23 +5,25 @@ default.
 
 Built on **vanilla native Custom Elements** (`class SvgIn extends HTMLElement`), no Lit, no Stencil,
 for zero *framework* dependency and the smallest possible bundle, wrapping [`svgin-core`](../core)'s
-fetch/sanitize/cache logic - the same internals [`svgin-react`](../react)'s `<SvgIn />` is built on.
+fetch/sanitize/cache logic - the same internals [`@svgin/react`](../react)'s `<SvgIn />` is built on.
 The default sanitizer still needs [DOMPurify](https://github.com/cure53/DOMPurify) (an optional peer
-dependency, same as `svgin-react`), unless you pass your own `sanitizeFn` or `disableSanitization`.
+dependency, same as `@svgin/react`), unless you pass your own `sanitizeFn` or `disableSanitization`.
 
 > **Status:** real implementation (see [#18](https://github.com/akhiakl/svgin/issues/18)), demoed live
 > in `apps/tryit` at [`/element`](https://svgin-tryit.vercel.app/element) (see
-> [#21](https://github.com/akhiakl/svgin/issues/21)). Published to npm as
-> [`@svgin/element`](https://npmjs.com/package/@svgin/element). **Update this README (and any docs-site
-> page) in the same PR/build whenever `<svg-in>`'s public API or behavior changes**, see the
-> `svgin-monorepo` skill.
+> [#21](https://github.com/akhiakl/svgin/issues/21)) - that demo currently builds from this package's
+> own workspace source (`workspace:*`), not yet the published npm package. Separately, published to npm
+> as [`@svgin/element`](https://npmjs.com/package/@svgin/element); `apps/tryit` will switch to depending
+> on that published version as an explicit follow-up step. **Update this README (and any docs-site page)
+> in the same PR/build whenever `<svg-in>`'s public API or behavior changes**, see the `svgin-monorepo`
+> skill.
 
 ## Using React?
 
-[`svgin-react`](../react)'s `<SvgIn />` is the same sanitize-by-default SVG loading as a React
+[`@svgin/react`](../react)'s `<SvgIn />` is the same sanitize-by-default SVG loading as a React
 component, with client and server variants, `<SvgInProvider>` shared defaults, Suspense support, and
-more - built on the same [`svgin-core`](../core) internals as this package. Already published to npm
-as [`svgin-react`](https://npmjs.com/package/svgin-react) (continuing that existing package).
+more - built on the same [`svgin-core`](../core) internals as this package. Published to npm as
+[`@svgin/react`](https://npmjs.com/package/@svgin/react).
 
 ## Usage
 
@@ -37,7 +39,7 @@ as [`svgin-react`](https://npmjs.com/package/svgin-react) (continuing that exist
 
 `<svg-in>` inlines the sanitized `<svg>` as a **direct child of the element itself** (light DOM), not
 inside a shadow root. This is a deliberate choice, not an oversight - it mirrors `<SvgIn />`'s own
-default in `svgin-react` (`<SvgInShadow />` is the separate, shadow-DOM opt-in component over there).
+default in `@svgin/react` (`<SvgInShadow />` is the separate, shadow-DOM opt-in component over there).
 Rendering into light DOM means ordinary page CSS can style the icon directly (`svg-in svg { fill: ... }`,
 or via the `class`/`fill`/`width`/`height` attributes forwarded straight onto the rendered `<svg>` - see
 below). A shadow-DOM rendering mode (e.g. a `shadow` attribute) is left for a follow-up once there's a
