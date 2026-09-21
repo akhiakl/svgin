@@ -13,9 +13,13 @@ test.use({ viewport: { width: 390, height: 844 } });
 
 const ROUTES = [
     '/',
+    '/react',
+    '/element',
     '/docs',
-    '/docs/installation',
-    '/docs/api',
+    '/docs/react/installation',
+    '/docs/react/api',
+    '/docs/element/installation',
+    '/docs/element/api',
     '/inspector',
     '/rsc',
     '/suspense',
@@ -23,7 +27,11 @@ const ROUTES = [
     '/lazy',
     '/native-props',
     '/shadow',
-    '/element',
+    '/element/basic',
+    '/element/raw',
+    '/element/lazy',
+    '/element/inspector',
+    '/element/events',
 ];
 
 for (const route of ROUTES) {
@@ -61,7 +69,7 @@ test('inspector sanitized markup does not overflow the viewport once expanded', 
     expect(overflow).toBe(0);
 });
 
-test('mobile nav sheet opens, lists every route, and navigates on link click', async ({ page }) => {
+test('mobile nav sheet reuses the same SiteSidebar (groups open by default) and navigates on link click', async ({ page }) => {
     await page.goto('/');
     // The horizontal link list is desktop-only (hidden below sm); the
     // trigger button is the only way to reach navigation on this viewport.
@@ -69,28 +77,28 @@ test('mobile nav sheet opens, lists every route, and navigates on link click', a
     await page.getByLabel('Open navigation menu').click();
 
     const sheet = page.getByRole('dialog');
-    for (const label of [
-        // Level 1
-        'Try it',
-        'Docs',
-        // Level 2, nested under "Try it"
-        'Inspector',
-        'Server component',
-        'Suspense',
-        'Provider defaults',
-        'Lazy loading',
-        'Native SVG props',
-        'Shadow DOM',
-        // Level 2, nested under "Docs"
-        'Introduction',
-        'Installation',
-        'API reference',
-    ]) {
-        await expect(sheet.getByRole('link', { name: label, exact: true })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'svgin / try it' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Introduction' })).toBeVisible();
+
+    // Same SiteSidebar as the (now lg-only) inline usage - groups start
+    // open, not collapsed, so every demo link is reachable without an
+    // extra tap.
+    for (const path of ['/inspector', '/rsc', '/suspense', '/provider', '/lazy', '/native-props', '/shadow']) {
+        await expect(sheet.locator(`a[href="${path}"]`)).toBeVisible();
+    }
+    for (const path of ['/element/basic', '/element/raw', '/element/lazy', '/element/inspector', '/element/events']) {
+        await expect(sheet.locator(`a[href="${path}"]`)).toBeVisible();
     }
 
-    await sheet.getByRole('link', { name: 'Inspector', exact: true }).click();
+    await sheet.locator('a[href="/inspector"]').click();
     await expect(page).toHaveURL('/inspector');
-    // Clicking a link closes the sheet (SheetClose), not just navigates.
+    // Clicking a link closes the sheet, not just navigates.
     await expect(page.getByRole('dialog')).toBeHidden();
+});
+
+test('the inline SiteSidebar is hidden below lg, since the mobile drawer already has it', async ({ page }) => {
+    await page.goto('/suspense');
+    // The mobile drawer's own copy isn't rendered until opened, so this
+    // targets the always-in-the-DOM inline one via its aria-label.
+    await expect(page.getByLabel('Site navigation')).toBeHidden();
 });

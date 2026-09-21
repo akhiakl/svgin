@@ -8,9 +8,13 @@ import AxeBuilder from '@axe-core/playwright';
 // why, rather than lowering the bar for every route.
 const ROUTES = [
     '/',
+    '/react',
+    '/element',
     '/docs',
-    '/docs/installation',
-    '/docs/api',
+    '/docs/react/installation',
+    '/docs/react/api',
+    '/docs/element/installation',
+    '/docs/element/api',
     '/inspector',
     '/rsc',
     '/suspense',
@@ -18,7 +22,11 @@ const ROUTES = [
     '/lazy',
     '/native-props',
     '/shadow',
-    '/element',
+    '/element/basic',
+    '/element/raw',
+    '/element/lazy',
+    '/element/inspector',
+    '/element/events',
 ];
 
 // Every violation found, regardless of route/test, gets attached to that

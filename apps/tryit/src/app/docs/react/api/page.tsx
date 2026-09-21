@@ -3,10 +3,10 @@ import { CodeBlock } from '@/components/code-block';
 import { pageMetadata } from '@/lib/metadata';
 
 export const metadata = pageMetadata({
-    title: 'API reference',
+    title: '@svgin/react: API reference',
     description:
         'Full prop reference for <SvgIn />, <SvgInSuspense />, <SvgInProvider />, <SvgInShadow />, preloadSvg(), clearSvgCache(), and hasCachedSvg() - every prop @svgin/react accepts, in one table.',
-    path: '/docs/api',
+    path: '/docs/react/api',
 });
 
 const PROPS: Array<{ name: string; type: string; note: string }> = [
@@ -39,7 +39,7 @@ export default function ApiPage() {
     return (
         <article className="space-y-8">
             <div>
-                <h1 className="text-2xl font-semibold tracking-tight">API reference</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">@svgin/react: API reference</h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                     <code className="font-mono text-xs">&lt;SvgIn /&gt;</code>, <code className="font-mono text-xs">&lt;SvgInSuspense /&gt;</code>,{' '}
                     <code className="font-mono text-xs">&lt;SvgInProvider&gt;</code>, and <code className="font-mono text-xs">&lt;SvgInShadow /&gt;</code>{' '}

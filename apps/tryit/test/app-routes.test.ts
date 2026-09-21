@@ -15,19 +15,21 @@ describe('robots()', () => {
 });
 
 describe('sitemap()', () => {
-    it('includes the home page plus every docs and demo route, each with a fully-qualified URL', () => {
+    it('includes the home page, both package landing pages, plus every docs and demo route, each with a fully-qualified URL', () => {
         const entries = sitemap();
         const urls = entries.map((entry) => entry.url);
         expect(urls).toContain(`${SITE_URL}/`);
+        expect(urls).toContain(`${SITE_URL}/react`);
+        expect(urls).toContain(`${SITE_URL}/element`);
         for (const doc of DOCS_LINKS) {
             expect(urls).toContain(`${SITE_URL}${doc.href}`);
         }
         for (const demo of DEMOS) {
             expect(urls).toContain(`${SITE_URL}${demo.href}`);
         }
-        // Every entry is one of these two lists (or home) - no stray/duplicate
-        // route, and every entry actually has a well-formed changeFrequency.
-        expect(entries.length).toBe(1 + DOCS_LINKS.length + DEMOS.length);
+        // Every entry is one of these lists (or home/react/element) - no
+        // stray/duplicate route, and every entry has a well-formed changeFrequency.
+        expect(entries.length).toBe(1 + 2 + DOCS_LINKS.length + DEMOS.length);
         for (const entry of entries) {
             expect(entry.changeFrequency).toBe('monthly');
             expect(typeof entry.priority).toBe('number');

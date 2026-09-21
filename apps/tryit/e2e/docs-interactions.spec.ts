@@ -12,7 +12,7 @@ test('code block copy button copies the shown code to the clipboard', async ({ p
     if (browserName === 'chromium') {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     }
-    await page.goto('/docs/installation');
+    await page.goto('/docs/react/installation');
 
     await page.getByRole('button', { name: 'Copy code' }).first().click();
     await expect(page.getByRole('button', { name: 'Copied' }).first()).toBeVisible();
@@ -24,7 +24,7 @@ test('code block copy button copies the shown code to the clipboard', async ({ p
 });
 
 test('the installation page switches package manager commands via tabs', async ({ page }) => {
-    await page.goto('/docs/installation');
+    await page.goto('/docs/react/installation');
 
     // CodeBlock (Bright) renders one <pre> per color scheme and toggles
     // which is shown with CSS, so each command's text exists twice in the

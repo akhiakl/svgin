@@ -14,10 +14,6 @@ function SheetTrigger(props: React.ComponentProps<typeof Dialog.Trigger>) {
     return <Dialog.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
-function SheetClose(props: React.ComponentProps<typeof Dialog.Close>) {
-    return <Dialog.Close data-slot="sheet-close" {...props} />;
-}
-
 function SheetContent({
     className,
     children,
@@ -66,4 +62,4 @@ function SheetTitle({ className, ...props }: React.ComponentProps<typeof Dialog.
     );
 }
 
-export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetTitle };
+export { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle };

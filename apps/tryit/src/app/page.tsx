@@ -1,11 +1,7 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { DEMOS } from '@/lib/demos';
 import { pageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
-import { VersionBadge, VersionBadgeFallback } from '@/components/version-badge';
 
 // Structured data for search engines: identifies svgin as the actual project
 // this site demos (two published packages, not one), separate from the
@@ -25,43 +21,35 @@ const JSON_LD = {
 export const metadata = pageMetadata({
     title: 'Try svgin',
     description:
-        'Fetch an SVG from a URL and render it as a real, styleable element, sanitized by default - as React components (@svgin/react) or a framework-agnostic custom element (@svgin/element). Try it live: the sanitizer Inspector, a server-component fetch, Suspense, SvgInProvider defaults, lazy loading, native SVG prop forwarding, SvgInShadow, and the <svg-in> web component.',
+        'Fetch an SVG from a URL and render it as a real, styleable element, sanitized by default - as React components (@svgin/react) or a framework-agnostic custom element (@svgin/element).',
     path: '/',
 });
+
+const PACKAGES = [
+    {
+        href: '/react',
+        name: '@svgin/react',
+        tagline: 'Client and server React components',
+        description: '<SvgIn />, <SvgInSuspense />, <SvgInProvider>, and <SvgInShadow /> - sanitize-by-default SVG loading for React.',
+    },
+    {
+        href: '/element',
+        name: '@svgin/element',
+        tagline: 'A framework-agnostic custom element',
+        description: '<svg-in>, a real vanilla Custom Element - works in any framework, or none, no React required.',
+    },
+] as const;
 
 export default function Home() {
     return (
         <div className="mx-auto max-w-5xl px-6 py-16">
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
             <div className="max-w-2xl">
-                <Suspense fallback={<VersionBadgeFallback />}>
-                    <VersionBadge />
-                </Suspense>
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Try svgin</h1>
                 <p className="mt-4 text-lg text-muted-foreground">
                     svgin fetches an SVG from a URL (or takes raw markup directly) and renders it as a real,
                     styleable element instead of an <code className="font-mono text-sm">&lt;img&gt;</code>. It
                     sanitizes the SVG by default, so it is safe to use with an SVG you did not create yourself.
-                    Published as{' '}
-                    <a
-                        className="underline underline-offset-4 hover:text-foreground"
-                        href="https://www.npmjs.com/package/@svgin/react"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        @svgin/react
-                    </a>{' '}
-                    (client and server React components) and{' '}
-                    <a
-                        className="underline underline-offset-4 hover:text-foreground"
-                        href="https://www.npmjs.com/package/@svgin/element"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        @svgin/element
-                    </a>{' '}
-                    (a framework-agnostic <code className="font-mono text-sm">&lt;svg-in&gt;</code> custom element,
-                    no React required).
                 </p>
                 <p className="mt-3 text-sm text-muted-foreground">
                     This site is installed as a real dependency from npm, not imported from either library&apos;s
@@ -69,24 +57,19 @@ export default function Home() {
                 </p>
             </div>
 
-            <h2 className="mt-14 text-lg font-semibold tracking-tight">Try it live</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {DEMOS.map((demo) => (
-                    <Link key={demo.href} href={demo.href} className="group">
+            <h2 className="mt-14 text-lg font-semibold tracking-tight">Pick a package</h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {PACKAGES.map((pkg) => (
+                    <Link key={pkg.href} href={pkg.href} className="group">
                         <Card className="h-full transition-colors group-hover:border-foreground/30">
                             <CardHeader>
-                                <div className="flex items-center justify-between gap-2">
-                                    <CardTitle>{demo.title}</CardTitle>
-                                    {/* RSC gets the primary accent rather than another neutral badge -
-                                        it is the one demo that ships zero client JS, worth distinguishing
-                                        at a glance rather than blending in with every "Client" badge. */}
-                                    <Badge variant={demo.badge === 'RSC' ? 'default' : 'secondary'}>{demo.badge}</Badge>
-                                </div>
-                                <CardDescription>{demo.description}</CardDescription>
+                                <CardTitle className="font-mono">{pkg.name}</CardTitle>
+                                <CardDescription className="text-foreground/80 font-medium">{pkg.tagline}</CardDescription>
+                                <CardDescription>{pkg.description}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <span className="text-sm font-medium text-foreground/80 group-hover:underline underline-offset-4">
-                                    Open demo →
+                                    Try it →
                                 </span>
                             </CardContent>
                         </Card>
