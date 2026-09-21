@@ -141,6 +141,30 @@ jobs:
       # fail), but nothing here can tell whether a new feature in the release
       # deserves a new demo route - that's still a human call, flagged in the
       # PR body's checklist line rather than silently skipped.
+      - name: Wait for the published version to actually be installable
+        # A successful `npm publish --provenance` doesn't mean the version is
+        # queryable yet - npm processes the provenance attestation
+        # asynchronously ("Your package is being processed and may take a
+        # few minutes to become available" in the step above), and a
+        # `pnpm install` run seconds later can 404/ERR_PNPM_NO_MATCHING_VERSION
+        # on a version that just published successfully. Confirmed by
+        # watching @svgin/react@1.1.2 take ~45s to become visible to `npm
+        # view` after a run where this polling step didn't exist yet, which
+        # failed the bump step below for exactly this reason.
+        env:
+          PKG_NAME: ${{ steps.pkg.outputs.name }}
+          VERSION: ${{ steps.verify.outputs.version }}
+        run: |
+          for i in $(seq 1 30); do
+            if npm view "${PKG_NAME}@${VERSION}" version >/dev/null 2>&1; then
+              echo "${PKG_NAME}@${VERSION} is installable (attempt $i)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::${PKG_NAME}@${VERSION} did not become installable within 5 minutes"
+          exit 1
+
       - name: Checkout main for the apps/tryit bump
         uses: actions/checkout@v7
         with:
