@@ -2,20 +2,20 @@ import { test, expect } from '@playwright/test';
 
 test('RSC demo renders the server-fetched icon', async ({ page }) => {
     await page.goto('/rsc');
-    await expect(page.locator('main svg').first()).toBeVisible();
+    await expect(page.locator('article svg').first()).toBeVisible();
 });
 
 test('Suspense demo suspends then renders, and recovers from a broken URL', async ({ page }) => {
     await page.goto('/suspense');
     await page.getByRole('button', { name: 'Load valid SVG' }).click();
-    await expect(page.locator('main svg').first()).toBeVisible();
+    await expect(page.locator('article svg').first()).toBeVisible();
 
     await page.getByRole('button', { name: 'Load broken URL' }).click();
     await expect(page.getByText(/Caught by error boundary/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Reset' }).click();
     await page.getByRole('button', { name: 'Load valid SVG' }).click();
-    await expect(page.locator('main svg').first()).toBeVisible();
+    await expect(page.locator('article svg').first()).toBeVisible();
 });
 
 test('Suspense demo error boundary also catches neither src nor svg being given', async ({ page }) => {
@@ -32,13 +32,13 @@ test('Provider demo shows the custom fallback only inside SvgInProvider', async 
 test('Lazy loading demo eventually renders the icon after scrolling to it', async ({ page }) => {
     await page.goto('/lazy');
     await page.getByText(/Scroll down/).scrollIntoViewIfNeeded();
-    await page.locator('main svg').first().scrollIntoViewIfNeeded();
-    await expect(page.locator('main svg').first()).toBeVisible();
+    await page.locator('article svg').first().scrollIntoViewIfNeeded();
+    await expect(page.locator('article svg').first()).toBeVisible();
 });
 
 test('Native props demo counts clicks on the rendered svg and cycles its style.color', async ({ page }) => {
     await page.goto('/native-props');
-    const icon = page.locator('main svg').first();
+    const icon = page.locator('article svg').first();
     await expect(icon).toBeVisible();
 
     await icon.click();
@@ -60,7 +60,7 @@ test('Native props demo forwards data-* attributes onto the rendered svg', async
 
 test('Shadow demo keeps SvgInShadow immune to a page rule that recolors the plain SvgIn beside it', async ({ page }) => {
     await page.goto('/shadow');
-    const lightPath = page.locator('main svg path').first();
+    const lightPath = page.locator('article svg path').first();
     await expect(lightPath).toHaveCSS('stroke', 'rgb(236, 72, 153)'); // #ec4899, the leaking page rule
 
     // The shadow-rendered <svg>/<path> live inside a shadow root, unreachable
