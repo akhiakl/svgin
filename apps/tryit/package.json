@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
-    "@svgin/element": "^0.1.1",
-    "@svgin/react": "^1.1.1",
+    "@svgin/element": "^0.1.2",
+    "@svgin/react": "^1.1.2",
     "bright": "1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
