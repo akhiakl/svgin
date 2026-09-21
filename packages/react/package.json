@@ -1,5 +1,5 @@
 {
-  "name": "svgin-react",
+  "name": "@svgin/react",
   "version": "1.0.1",
   "private": true,
   "description": "Securely fetch and inline SVGs from URLs as React components, sanitized by default, with client and server support.",

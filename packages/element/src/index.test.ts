@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-describe('svgin-element entry point', () => {
+describe('@svgin/element entry point', () => {
     it('registers <svg-in> as a custom element backed by the SvgIn class', async () => {
         const { SvgIn } = await import('./index.js');
         expect(customElements.get('svg-in')).toBe(SvgIn);

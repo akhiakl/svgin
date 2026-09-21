@@ -20,11 +20,11 @@ Turborepo monorepo (see the root `svgin-monorepo` skill for the monorepo's overa
 depends on `svgin-react` as a real published dependency, not the workspace's own `packages/react`
 (never imports from that package's source), and has one route per real feature of the library: the
 sanitizer Inspector, a server-component fetch, `<SvgInSuspense />`, `<SvgInProvider />` defaults,
-`loading="lazy"`, native SVG/DOM prop forwarding, `<SvgInShadow />`, and `<svg-in>` (`svgin-element`'s
+`loading="lazy"`, native SVG/DOM prop forwarding, `<SvgInShadow />`, and `<svg-in>` (`@svgin/element`'s
 web component).
 
-**`svgin-element` is a deliberate, temporary exception to the "real published dependency" rule
-above**: it's still `workspace:*` (see #21/#19) because `svgin-element` hasn't had its first npm
+**`@svgin/element` is a deliberate, temporary exception to the "real published dependency" rule
+above**: it's still `workspace:*` (see #21/#19) because `@svgin/element` hasn't had its first npm
 publish yet, unlike `svgin-react`. Swap it to a real published version (same as `svgin-react`) once
 that first publish ships - don't leave it on `workspace:*` past that point.
 
@@ -96,5 +96,5 @@ picture. In short:
   `release-please-config.json`) and stays `private: true` permanently, like `packages/core`: it's
   never published, never gets its own version bump or GitHub release. Bumping the `svgin-react`
   dependency here is a normal `deps:`/`chore:` change; it is not gated the way it is in that
-  package's own repo. Per the root skill's convention: **any change to `svgin-react` or
-  `svgin-element` that ships should update this app in the same PR** to demo it.
+  package's own repo. Per the root skill's convention: **any change to `@svgin/react` or
+  `@svgin/element` that ships should update this app in the same PR** to demo it.

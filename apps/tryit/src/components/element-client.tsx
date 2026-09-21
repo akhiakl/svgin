@@ -2,11 +2,11 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 // Side-effect import: registers the <svg-in> custom element (see
-// svgin-element/src/index.ts's customElements.define call). Nothing is
+// @svgin/element/src/index.ts's customElements.define call). Nothing is
 // destructured from it - the event/type imports below are types only, so
 // they don't pull in a second copy of the registration side effect.
-import 'svgin-element';
-import type { SvgInErrorEvent, SvgInLoadEvent } from 'svgin-element';
+import '@svgin/element';
+import type { SvgInErrorEvent, SvgInLoadEvent } from '@svgin/element';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 function StatusLine({ status }: { status: string }) {

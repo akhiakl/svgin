@@ -24,7 +24,7 @@
 - [ ] Commit type/scope accurately reflects the change (`fix`, `feat`, etc.):
       release-please derives the version bump and changelog straight from
       conventional commits, no separate release step to remember
-- [ ] If this changes `svgin-react` or `svgin-element` behavior, `apps/tryit`
+- [ ] If this changes `@svgin/react` or `@svgin/element` behavior, `apps/tryit`
       is updated to demo it
 
 ## Notes for reviewers

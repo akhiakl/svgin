@@ -50,6 +50,6 @@ export const DEMOS = [
         href: '/element',
         title: 'Web Component',
         badge: 'Vanilla JS',
-        description: '<svg-in>, a framework-agnostic native Custom Element from svgin-element, usable without React at all.',
+        description: '<svg-in>, a framework-agnostic native Custom Element from @svgin/element, usable without React at all.',
     },
 ] as const;
