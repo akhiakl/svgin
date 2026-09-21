@@ -1,6 +1,6 @@
 {
   "name": "@svgin/element",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": false,
   "description": "Framework-agnostic <svg-in> custom element: securely fetch and inline SVGs from URLs, sanitized by default.",
   "license": "MIT",
