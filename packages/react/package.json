@@ -3,7 +3,7 @@
   "version": "1.1.2",
   "private": false,
   "description": "Securely fetch and inline SVGs from URLs as React components, sanitized by default, with client and server support.",
-  "keywords": ["svg", "svgin", "sanitize", "dompurify", "react", "rsc", "url", "icon"],
+  "keywords": ["svg", "svgin", "sanitize", "dompurify", "react", "rsc", "server-components", "nextjs", "react-component", "svg-loader", "xss", "url", "icon"],
   "license": "MIT",
   "author": "Akhil K",
   "homepage": "https://github.com/akhiakl/svgin/tree/main/packages/react#readme",

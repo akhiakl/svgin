@@ -3,7 +3,7 @@
   "version": "0.1.3",
   "private": false,
   "description": "Framework-agnostic <svg-in> custom element: securely fetch and inline SVGs from URLs, sanitized by default.",
-  "keywords": ["svg", "svgin", "sanitize", "dompurify", "web-components", "custom-elements", "url", "icon"],
+  "keywords": ["svg", "svgin", "sanitize", "dompurify", "web-components", "custom-elements", "custom-element", "vanilla-js", "svg-loader", "xss", "url", "icon"],
   "license": "MIT",
   "author": "Akhil K",
   "homepage": "https://github.com/akhiakl/svgin/tree/main/packages/element#readme",
