@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.2...svgin-react-v1.1.3) (2026-09-23)
+
+
+### Code Refactoring
+
+* dedupe shared fetch/sanitize/markup logic across core and react ([56c5e2b](https://github.com/akhiakl/svgin/commit/56c5e2b561b58922412b9330090929e24ed5697f))
+* dedupe shared fetch/sanitize/markup logic across core and react ([9b60e8a](https://github.com/akhiakl/svgin/commit/9b60e8af09afc75d3195b9fab9ae9204eff582a8))
+
 ## [1.1.2](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.1...svgin-react-v1.1.2) (2026-09-21)
 
 
