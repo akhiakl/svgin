@@ -1,22 +1,4 @@
-import { escapeHtml, extractSvgAttrs, extractSvgInner, uniquifyIds } from './svgUtils';
-
-/**
- * Parses the source `<svg>` opening tag into name -> value pairs. Kept
- * separate from SvgInComponent's own copy of this same parser: that one
- * produces React props for a React-rendered element, while this one feeds a
- * plain HTML string destined for direct assignment to a shadow root's
- * `innerHTML` (SvgInShadow) - different consumers, same small regex, not
- * worth coupling the two together over.
- */
-function parseSvgAttrs(attrString: string): Record<string, string> {
-    const result: Record<string, string> = {};
-    const re = /([a-zA-Z_:][a-zA-Z0-9_:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(attrString)) !== null) {
-        result[m[1]] = m[2] ?? m[3] ?? m[4] ?? '';
-    }
-    return result;
-}
+import { escapeHtml, extractSvgAttrs, extractSvgInner, hasContent, injectTitleDesc, parseSvgAttrs, uniquifyIds } from './svgUtils';
 
 export interface BuildSvgMarkupOptions {
     title?: string;
@@ -38,25 +20,14 @@ export interface BuildSvgMarkupOptions {
  * Returns `null` for anything that isn't a well-formed `<svg>...</svg>`
  * string (mirrors extractSvgInner).
  */
-// An optional string field being absent (undefined) or present-but-empty
-// ('') are both "nothing to render" here - a plain truthy check already
-// treats them the same way, but strict-boolean-expressions requires that to
-// be spelled out explicitly rather than relying on '' and undefined both
-// being falsy.
-function hasContent(s: string | undefined): s is string {
-    return s !== undefined && s !== '';
-}
-
 export function buildSvgMarkup(svg: string, options: BuildSvgMarkupOptions = {}): string | null {
     let inner = extractSvgInner(svg);
     if (inner === null) return null;
     const { title, description, idSuffix, attrs = {} } = options;
     if (hasContent(idSuffix)) inner = uniquifyIds(inner, idSuffix);
 
-    const titleId = hasContent(title) ? `svgin-title-${idSuffix ?? ''}` : undefined;
-    const descId = hasContent(description) ? `svgin-desc-${idSuffix ?? ''}` : undefined;
-    if (hasContent(description)) inner = `<desc id="${descId}">${escapeHtml(description)}</desc>${inner}`;
-    if (hasContent(title)) inner = `<title id="${titleId}">${escapeHtml(title)}</title>${inner}`;
+    const { inner: withTitleDesc, titleId, descId } = injectTitleDesc(inner, { title, description, idSuffix });
+    inner = withTitleDesc;
 
     const merged = parseSvgAttrs(extractSvgAttrs(svg));
     for (const [key, value] of Object.entries(attrs)) {

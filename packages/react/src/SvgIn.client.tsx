@@ -1,12 +1,11 @@
 import type React from 'react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import type { SvgInProps } from './types';
-import { releaseFetchAndSanitizeSvg } from 'svgin-core/fetchAndSanitizeSvgClient';
-import { resolveSvgPromiseClient } from 'svgin-core/resolveSvgPromiseClient';
 import { SvgInComponent } from './SvgInComponent';
 import { nextInstanceId } from 'svgin-core/instanceId';
 import { SvgInContext } from './SvgInContext';
 import { useLatestRef } from './useLatestRef';
+import { useResolvedSvg } from './useResolvedSvg';
 
 export const SvgIn: React.FC<SvgInProps> = (props) => {
     const defaults = useContext(SvgInContext);
@@ -31,8 +30,6 @@ export const SvgIn: React.FC<SvgInProps> = (props) => {
         className = defaults.className,
         ...rest
     } = props;
-    const [svg, setSvg] = useState<string | null>(null);
-    const [error, setError] = useState<Error | null>(null);
     // Stable for the lifetime of this mounted component, so ids inside the
     // rendered SVG don't change (and force a needless DOM update) on every
     // re-render - only a fresh mount gets a new suffix, same as a real DOM
@@ -41,44 +38,15 @@ export const SvgIn: React.FC<SvgInProps> = (props) => {
     if (idSuffix.current === undefined) idSuffix.current = nextInstanceId();
     const svgRef = useRef<SVGSVGElement>(null);
 
-    // Read from refs rather than depended on directly, same reasoning as
-    // sanitizeFnRef below: consumers commonly pass fresh inline closures,
-    // and depending on their identity would re-run effects unnecessarily.
-    const onErrorRef = useLatestRef(onError);
     const onMountRef = useLatestRef(onMount);
 
-    // sanitizeFn is read from a ref rather than depended on directly:
-    // consumers commonly pass an inline arrow function, whose identity
-    // changes every render, and depending on that identity would re-fetch
-    // and re-sanitize the same SVG on every re-render. The effect still
-    // depends on hasSanitizeFn (whether a custom sanitizer is present at
-    // all), so switching between the default sanitizer and a custom one -
-    // an actual change in sanitization behavior, not just a new closure -
-    // still triggers a refetch.
-    //
-    // Limitation: replacing sanitizeFn with a *different* function while
-    // keeping hasSanitizeFn === true does not trigger a re-fetch (see the
+    // Limitation, inherited from useResolvedSvg (sanitizeFn/fetchOptions are
+    // both read from a ref there, not depended on by identity): replacing
+    // sanitizeFn with a *different* function, or changing the *contents* of
+    // an already-present fetchOptions, does not trigger a re-fetch (see the
     // README's "sanitizeFn identity note"). If the sanitizer's behavior
     // needs to change at runtime, change the src prop or remount the
     // component to force a refresh - there is no dedicated prop for this.
-    const sanitizeFnRef = useLatestRef(sanitizeFn);
-    const hasSanitizeFn = sanitizeFn !== undefined;
-
-    // Same reasoning and the same tradeoff as sanitizeFnRef above: a fresh
-    // object literal passed as fetchOptions on every render would otherwise
-    // refetch on every render if depended on directly. hasFetchOptions is
-    // tracked as its own effect dependency because its presence changes
-    // whether the shared cache participates at all (see
-    // fetchAndSanitizeSvgBase.ts) - going from no fetchOptions to some (or
-    // back) is a real change in what this request can safely reuse, even
-    // though changing the *contents* of an already-present fetchOptions is
-    // not (same limitation as sanitizeFn: change src, or remount, to force
-    // a refetch with new header values).
-    const fetchOptionsRef = useLatestRef(fetchOptions);
-    // fetchOptions only affects anything on the `src` (fetch) path - when
-    // `svg` is given instead, resolveSvgPromise never reaches fetchOptions
-    // at all, so its presence toggling must not trigger a re-sanitize there.
-    const hasFetchOptions = svgProp === undefined && fetchOptions !== undefined;
 
     // Lazy loading: don't start the fetch until the placeholder scrolls near
     // the viewport. Only applies when the *default* placeholder actually
@@ -125,50 +93,25 @@ export const SvgIn: React.FC<SvgInProps> = (props) => {
         return () => observer.disconnect();
     }, [canDefer, shouldLoad]);
 
-    useEffect(() => {
-        if (!shouldLoad) return;
-        let mounted = true;
-        setSvg(null);
-        setError(null);
-        const currentSanitizeFn = sanitizeFnRef.current;
-        const currentFetchOptions = fetchOptionsRef.current;
-        resolveSvgPromiseClient('<SvgIn />', src, svgProp, currentSanitizeFn, disableSanitization, currentFetchOptions)
-            .then((sanitized) => { if (mounted) setSvg(sanitized); })
-            .catch((e: unknown) => {
-                // A rejection value isn't guaranteed to be a real Error
-                // (anything can be thrown/rejected with) - wrapped here so
-                // `error` state and onError's own contract (Error | null,
-                // (error: Error) => void) actually hold, same protection
-                // SvgIn.suspense.client.tsx and @svgin/element's SvgIn.ts
-                // already give this same class of rejection.
-                if (!mounted) return;
-                const err = e instanceof Error ? e : new Error(String(e));
-                setError(err);
-                onErrorRef.current?.(err);
-            });
-        return () => {
-            mounted = false;
-            // Release this caller's share of the in-flight fetch - but only
-            // when resolveSvgPromise actually acquired one. `svg` takes
-            // precedence over `src` (see resolveSvgPromise/SvgInProps), so
-            // when both are given this instance never called
-            // fetchAndSanitizeSvg for `src` at all; releasing it anyway
-            // would decrement (and potentially abort) an unrelated in-flight
-            // fetch some other mounted instance is still relying on. The
-            // underlying fetch is only actually aborted once every other
-            // mounted <SvgIn /> instance sharing the same in-flight request
-            // (same src/sanitizeFn/disableSanitization/fetchOptions) has
-            // also unmounted or moved on to different props - see
-            // releaseFetchAndSanitizeSvg.
-            if (svgProp === undefined && src !== undefined) {
-                releaseFetchAndSanitizeSvg(src, {
-                    sanitizeFn: currentSanitizeFn,
-                    disableSanitization,
-                    fetchOptions: currentFetchOptions,
-                });
-            }
-        };
-    }, [shouldLoad, src, svgProp, disableSanitization, hasSanitizeFn, hasFetchOptions]);
+    // Fetch/sanitize + cleanup - see useResolvedSvg's own comment. `svg`
+    // takes precedence over `src` (see resolveSvgPromiseClient/SvgInProps),
+    // so when both are given this instance never acquires a share of an
+    // in-flight `src` fetch at all - releasing it on unmount anyway would
+    // decrement (and potentially abort) an unrelated in-flight fetch some
+    // other mounted <SvgIn /> instance is still relying on. The underlying
+    // fetch is only actually aborted once every other mounted <SvgIn />
+    // instance sharing the same in-flight request (same
+    // src/sanitizeFn/disableSanitization/fetchOptions) has also unmounted or
+    // moved on to different props - see releaseFetchAndSanitizeSvg.
+    const { svg, error } = useResolvedSvg('<SvgIn />', {
+        src,
+        svg: svgProp,
+        sanitizeFn,
+        disableSanitization,
+        fetchOptions,
+        onError,
+        enabled: shouldLoad,
+    });
 
     // Fires after the rendered <svg> DOM node is available (or updated) -
     // this is the closest client-side equivalent to react-svg's

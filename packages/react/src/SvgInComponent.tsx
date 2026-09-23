@@ -1,38 +1,6 @@
 import type React from 'react';
 import type { SvgInProps } from './types';
-import { escapeHtml, extractSvgAttrs, extractSvgInner, uniquifyIds } from 'svgin-core/svgUtils';
-
-/**
- * Parses the attribute string from the source `<svg>` opening tag and returns
- * an object of attribute name → value pairs, so that attributes like
- * `viewBox`, `xmlns`, `preserveAspectRatio`, and `version` written by the
- * SVG author are forwarded to the rendered element.
- *
- * Explicit props passed by the consumer (`width`, `height`, `fill`,
- * `className`, `ariaLabel`) always take precedence over the source
- * attributes.
- */
-// An optional string prop being absent (undefined) or present-but-empty
-// ('') are both "nothing to apply" here - matches buildSvgMarkup.ts's own
-// identically-named helper (not shared between the two: svgin-core doesn't
-// depend on this package, and it's a one-line function not worth a shared
-// module over).
-function hasContent(s: string | undefined): s is string {
-    return s !== undefined && s !== '';
-}
-
-function parseSvgAttrs(attrString: string): Record<string, string> {
-    const result: Record<string, string> = {};
-    // Match name="value", name='value', or bare name (boolean attrs)
-    const re = /([a-zA-Z_:][a-zA-Z0-9_:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(attrString)) !== null) {
-        const name = m[1];
-        const value = m[2] ?? m[3] ?? m[4] ?? '';
-        result[name] = value;
-    }
-    return result;
-}
+import { extractSvgAttrs, extractSvgInner, hasContent, injectTitleDesc, parseSvgAttrs, uniquifyIds } from 'svgin-core/svgUtils';
 
 /**
  * Pure SVG rendering component. Pass sanitized SVG string as `svg` prop.
@@ -87,10 +55,8 @@ export const SvgInComponent: React.FC<
         // broadly-compatible way to wire an accessible name/description than
         // relying on assistive tech to treat a bare <title>/<desc> as implicit
         // labelling, which not every screen reader does consistently.
-        const titleId = hasContent(title) ? `svgin-title-${idSuffix ?? ''}` : undefined;
-        const descId = hasContent(description) ? `svgin-desc-${idSuffix ?? ''}` : undefined;
-        if (hasContent(description)) inner = `<desc id="${descId}">${escapeHtml(description)}</desc>${inner}`;
-        if (hasContent(title)) inner = `<title id="${titleId}">${escapeHtml(title)}</title>${inner}`;
+        const { inner: withTitleDesc, titleId, descId } = injectTitleDesc(inner, { title, description, idSuffix });
+        inner = withTitleDesc;
         const sourceAttrs = parseSvgAttrs(extractSvgAttrs(svg));
         // Explicit ariaLabel always wins over the auto-wired title id, same
         // precedence as every other explicit prop in this component.

@@ -1,4 +1,5 @@
 import type { DOMPurify } from 'dompurify';
+import { lazySingleton } from './lazySingleton';
 
 // jsdom + DOMPurify are loaded lazily and the JSDOM window + DOMPurify instance
 // are created once and reused across calls, instead of on every sanitize call:
@@ -8,20 +9,12 @@ import type { DOMPurify } from 'dompurify';
 //   - Spinning up a new JSDOM window per call was pure overhead; the window
 //     is never mutated by DOMPurify.sanitize beyond what it cleans up itself,
 //     so one shared instance is safe to reuse.
-let purifyPromise: Promise<DOMPurify> | undefined;
-
-async function getPurify(): Promise<DOMPurify> {
-    if (!purifyPromise) {
-        purifyPromise = Promise.all([
-            import('jsdom'),
-            import('dompurify'),
-        ]).then(([{ JSDOM }, { default: createDOMPurify }]) => {
-            const window = new JSDOM('').window;
-            return createDOMPurify(window);
-        });
-    }
-    return purifyPromise;
-}
+const getPurify = lazySingleton((): Promise<DOMPurify> =>
+    Promise.all([import('jsdom'), import('dompurify')]).then(([{ JSDOM }, { default: createDOMPurify }]) => {
+        const window = new JSDOM('').window;
+        return createDOMPurify(window);
+    })
+);
 
 export async function sanitizeSvg(svg: string): Promise<string> {
     const purify = await getPurify();

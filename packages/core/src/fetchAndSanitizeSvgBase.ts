@@ -1,3 +1,4 @@
+import { fetchSvgText } from './fetchSvgText';
 import { getCachedSvg, setCachedSvg } from './svgCache';
 import { setUniversalCache, stableKey } from './universalCache';
 
@@ -80,26 +81,13 @@ export function createFetchAndSanitizeSvg(sanitizeSvg: (svg: string) => string |
         // caller releasing their share - same effect as an unmount - so the
         // underlying fetch still only ever aborts once every sharer is gone,
         // regardless of which of them supplied a signal or in what order.
-        // Only pass a second argument to fetch at all when there is
-        // actually something to pass (an init object or a signal): an
-        // explicit `fetch(url, undefined)` changes call arity vs
-        // `fetch(url)`, which can break a fetch wrapper/mock that branches
-        // on arguments.length instead of checking the second argument's value.
         // fetchAndSanitizeSvg below always supplies options.signal (the
-        // reference-counted cancellation signal), so this always attaches
-        // one to the actual fetch - there's no "no signal at all" case to
-        // guard for arity purposes (unlike fetchOptions itself, which really
-        // can be absent).
+        // reference-counted cancellation signal), so an init object is
+        // always passed to fetchSvgText here - see its own comment for why
+        // that matters for call arity (unlike fetchOptions itself, which
+        // really can be absent).
         const signal = options?.signal;
-        const res = options?.fetchOptions
-            ? await fetch(url, { ...options.fetchOptions, signal })
-            : await fetch(url, { signal });
-        if (!res.ok) throw new Error(`Failed to fetch SVG: ${url}`);
-        const contentType = res.headers?.get('content-type') ?? '';
-        if (contentType !== '' && !contentType.includes('svg') && !contentType.includes('xml') && !contentType.includes('octet-stream') && !contentType.includes('text/plain')) {
-            throw new Error(`Unexpected content-type for SVG: ${contentType}`);
-        }
-        const raw = await res.text();
+        const raw = await fetchSvgText(url, options?.fetchOptions ? { ...options.fetchOptions, signal } : { signal });
         let sanitized: string;
         if (options?.disableSanitization) {
             sanitized = raw;
