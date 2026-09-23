@@ -384,29 +384,39 @@ export class SvgIn extends HTMLElement {
         this.replaceChildren(svg);
     }
 
+    /**
+     * Reads the presentational attributes this element forwards to whatever
+     * it currently renders - the loading placeholder
+     * (#forwardPresentationalAttrs) and the resolved `<svg>`
+     * (#renderResolved, via buildSvgMarkup's `attrs`) both need the exact
+     * same reads, just applied through different mechanisms (direct
+     * `setAttribute` calls vs buildSvgMarkup's attrs object).
+     */
+    #presentationalAttrs(): { width?: string; height?: string; fill?: string; class?: string; ariaLabel?: string } {
+        return {
+            width: this.getAttribute('width') ?? undefined,
+            height: this.getAttribute('height') ?? undefined,
+            fill: this.getAttribute('fill') ?? undefined,
+            class: this.getAttribute('class') ?? undefined,
+            ariaLabel: this.getAttribute('aria-label') ?? undefined,
+        };
+    }
+
     #forwardPresentationalAttrs(svg: SVGElement): void {
-        const width = this.getAttribute('width');
-        const height = this.getAttribute('height');
-        const fill = this.getAttribute('fill');
-        const className = this.getAttribute('class');
-        if (width !== null) svg.setAttribute('width', width);
-        if (height !== null) svg.setAttribute('height', height);
-        if (fill !== null) svg.setAttribute('fill', fill);
-        if (className !== null) svg.setAttribute('class', className);
+        const { width, height, fill, class: className } = this.#presentationalAttrs();
+        if (width !== undefined) svg.setAttribute('width', width);
+        if (height !== undefined) svg.setAttribute('height', height);
+        if (fill !== undefined) svg.setAttribute('fill', fill);
+        if (className !== undefined) svg.setAttribute('class', className);
     }
 
     #renderResolved(sanitized: string): void {
+        const { width, height, fill, class: className, ariaLabel } = this.#presentationalAttrs();
         const markup = buildSvgMarkup(sanitized, {
             title: this.getAttribute('svg-title') ?? undefined,
             description: this.getAttribute('svg-description') ?? undefined,
             idSuffix: this.#idSuffix,
-            attrs: {
-                width: this.getAttribute('width') ?? undefined,
-                height: this.getAttribute('height') ?? undefined,
-                fill: this.getAttribute('fill') ?? undefined,
-                class: this.getAttribute('class') ?? undefined,
-                'aria-label': this.getAttribute('aria-label') ?? undefined,
-            },
+            attrs: { width, height, fill, class: className, 'aria-label': ariaLabel },
         });
         if (markup === null) {
             // Not a well-formed `<svg>...</svg>` string (e.g. `disable-
