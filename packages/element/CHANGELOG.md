@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/akhiakl/svgin/compare/svgin-element-v0.1.3...svgin-element-v0.1.4) (2026-09-23)
+
+
+### Code Refactoring
+
+* **element:** dedupe repeated presentational-attribute reads in SvgIn ([ca5378f](https://github.com/akhiakl/svgin/commit/ca5378ff63be113fb16e2a0626a7a6970de79d41))
+* **element:** dedupe repeated presentational-attribute reads in SvgIn ([2d382a8](https://github.com/akhiakl/svgin/commit/2d382a80487663e298db52cb224e227a12eda5ce))
+
 ## [0.1.3](https://github.com/akhiakl/svgin/compare/svgin-element-v0.1.2...svgin-element-v0.1.3) (2026-09-21)
 
 
