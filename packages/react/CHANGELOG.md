@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.3...svgin-react-v1.1.4) (2026-09-23)
+
+
+### Documentation
+
+* trim contributor-facing content from published package READMEs ([5e1f5d4](https://github.com/akhiakl/svgin/commit/5e1f5d4e09dfa296bf7204ef2312fb5cae55b2af))
+* trim contributor-facing content from published package READMEs ([bfe6473](https://github.com/akhiakl/svgin/commit/bfe64733391be43aae8ae7139d9a18f45f371926))
+
 ## [1.1.3](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.2...svgin-react-v1.1.3) (2026-09-23)
 
 
