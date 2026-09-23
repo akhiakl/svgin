@@ -51,11 +51,10 @@ tells the browser where to fetch it from:
 ```
 
 Any npm package is automatically mirrored on [unpkg](https://unpkg.com) and
-[jsDelivr](https://www.jsdelivr.com) - no separate CDN publish step needed. Pin exact versions
-(`@svgin/element@0.1.2`, `dompurify@3.4.15`) for anything beyond a quick demo. If you pass your own
+[jsDelivr](https://www.jsdelivr.com) - no separate CDN publish step needed. Pin exact versions (e.g.
+`@svgin/element@0.1.4`, `dompurify@3.4.15`) for anything beyond a quick demo. If you pass your own
 `sanitizeFn` or use `disable-sanitization`, DOMPurify is never imported at all and the import map can
-be skipped entirely. Verified working end-to-end (real published package, real DOMPurify, zero
-bundler) - see the `svgin-monorepo` skill if this stops working after a `<svg-in>` internals change.
+be skipped entirely.
 
 ## Rendering model: light DOM, not shadow DOM
 
@@ -130,12 +129,10 @@ el.addEventListener('svg-in-error', (e) => console.error('failed', e.detail.erro
 
 ## Bundle size
 
-`size-budget.json` sets a gzip budget for the built `dist/index.cjs` output, checked via
-`pnpm run size`, with headroom over what's actually built today:
+Small on purpose: a few KB gzipped, with zero runtime dependencies beyond the optional DOMPurify
+sanitizer.
 
-| Entry point | Budget (gzip) |
-| --- | --- |
-| `index.cjs` (default export) | 4.25 KB |
+## Contributing
 
-Bump this only with a comment (in the PR, since `size-budget.json` itself can't hold one) explaining why
-the change legitimately needs the extra size.
+This package lives inside the [`svgin`](https://github.com/akhiakl/svgin) monorepo - see that repo for
+the build/test/release setup.
