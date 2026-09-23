@@ -151,8 +151,8 @@ clearSvgCache('/icons/alert.svg');    // forget one entry (or clearSvgCache() fo
 
 A later `<SvgIn src={url} />` for the same URL resolves from the cache instead of fetching again -
 only for the default sanitizer with no `fetchOptions`; a custom `sanitizeFn`, `disableSanitization`, or
-`fetchOptions` all opt that call out of the shared cache (see `packages/core`'s own
-`fetchAndSanitizeSvgBase.ts` for why).
+`fetchOptions` all opt that call out of the shared cache (their result can differ per call, so it isn't
+safe to share).
 
 </details>
 
@@ -169,7 +169,7 @@ only for the default sanitizer with no `fetchOptions`; a custom `sanitizeFn`, `d
 | `@svgin/react/all` | Every client + core export behind one import. |
 
 `<SvgInSuspense />` and `<SvgInShadow />` each get their own entry point so they cost nothing to
-consumers who don't use them - see each entry point's own bundle-size budget below.
+consumers who don't use them.
 
 ## Not using React?
 
@@ -185,32 +185,11 @@ SVGs are sanitized with DOMPurify by default. Use your own `sanitizeFn`, or set
 
 ## Bundle size
 
-Each entry point has its own gzip budget in `size-budget.json`, checked against the built `dist/*.cjs`
-output (the worst case for size - ESM is what bundlers tree-shake most aggressively) via
-`pnpm run size`. Current budgets, with headroom over what's actually built today:
+Each entry point stays small on purpose: `/client` and `/server` are each a few KB gzipped, and
+`<SvgInSuspense />`/`<SvgInShadow />` cost nothing unless you actually import them (see "Choosing an
+entry point" above).
 
-| Entry point | Budget (gzip) |
-| --- | --- |
-| `/client` | 3.5 KB |
-| `/server` | 3.0 KB |
-| `/core` | 1.75 KB |
-| `/suspense` | 3.0 KB |
-| `/shadow` | 3.25 KB |
-| `/all` | 5.0 KB |
+## Contributing
 
-Bump a budget only with a comment (in the PR, since `size-budget.json` itself can't hold one) explaining
-why the change legitimately needs the extra size - this is meant to catch accidental bloat, not to
-block every change. These specific numbers jumped once (see [#15](https://github.com/akhiakl/svgin/issues/15)'s
-parity check): the original budgets in #20 were measured against a build that silently never bundled
-`svgin-core` at all (tsup/esbuild auto-externalizes anything listed in this package's own
-`dependencies`, `svgin-core` included, unless told `noExternal` - see `tsup.config.ts`'s own comment).
-That build would have been broken for every real consumer (`svgin-core` is never published to npm) -
-these are the real, honest numbers for a build that actually works.
-
-## Development
-
-This package lives inside the [`svgin`](../..) Turborepo monorepo - see the root README and the
-`svgin-monorepo` skill for the shared build/test/release setup. Fuller usage documentation
-(props reference, caching/identity semantics, Suspense retry behavior) currently lives in the
-published [`akhiakl/svgin-react`](https://github.com/akhiakl/svgin-react) repo's own `docs/`; that
-content is expected to move here once this package takes over publishing (see #19).
+This package lives inside the [`svgin`](https://github.com/akhiakl/svgin) monorepo - see that repo for
+the build/test/release setup.
