@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { SvgInShadowProps } from './types';
-import { releaseFetchAndSanitizeSvg } from 'svgin-core/fetchAndSanitizeSvgClient';
-import { resolveSvgPromiseClient } from 'svgin-core/resolveSvgPromiseClient';
 import { buildSvgMarkup } from 'svgin-core/buildSvgMarkup';
 import { nextInstanceId } from 'svgin-core/instanceId';
+import { useResolvedSvg } from './useResolvedSvg';
 
 /**
  * Renders the sanitized SVG inside a shadow root attached to a host element,
@@ -90,61 +89,27 @@ export function SvgInShadow({
     // effect below resets this ref when its `host` no longer matches
     // `hostRef.current`, rather than reusing a stale root.
     const shadowRootRef = useRef<{ host: HTMLElement; root: ShadowRoot } | null>(null);
-    const [svg, setSvg] = useState<string | null>(null);
-    const [error, setError] = useState<Error | null>(null);
     const idSuffix = useRef<string | undefined>(undefined);
     if (idSuffix.current === undefined) idSuffix.current = nextInstanceId();
 
-    // Same reasoning as the matching refs in SvgIn.client.tsx: read from a
-    // ref rather than depend on the value directly, so a consumer's inline
-    // closure/object literal doesn't cause an unnecessary re-fetch.
-    const onErrorRef = useRef(onError);
-    onErrorRef.current = onError;
     const onMountRef = useRef(onMount);
     onMountRef.current = onMount;
-    const sanitizeFnRef = useRef(sanitizeFn);
-    sanitizeFnRef.current = sanitizeFn;
-    const hasSanitizeFn = sanitizeFn !== undefined;
-    const fetchOptionsRef = useRef(fetchOptions);
-    fetchOptionsRef.current = fetchOptions;
-    const hasFetchOptions = svgProp === undefined && fetchOptions !== undefined;
 
-    // Fetch/sanitize effect - deliberately separate from the DOM-writing
-    // effect below, so that changing a purely presentational prop (title,
-    // width, styles, ...) updates the shadow root's content without
-    // re-fetching, the same split SvgIn.client.tsx/SvgInComponent get for
-    // free from React re-rendering with new props.
-    useEffect(() => {
-        let mounted = true;
-        setSvg(null);
-        setError(null);
-        const currentSanitizeFn = sanitizeFnRef.current;
-        const currentFetchOptions = fetchOptionsRef.current;
-        resolveSvgPromiseClient('<SvgInShadow />', src, svgProp, currentSanitizeFn, disableSanitization, currentFetchOptions)
-            .then((sanitized) => { if (mounted) setSvg(sanitized); })
-            .catch((e: unknown) => {
-                // See the matching comment in SvgIn.client.tsx: a rejection
-                // value isn't guaranteed to be a real Error.
-                if (!mounted) return;
-                const err = e instanceof Error ? e : new Error(String(e));
-                setError(err);
-                onErrorRef.current?.(err);
-            });
-        return () => {
-            mounted = false;
-            // See the matching comment in SvgIn.client.tsx: only release
-            // when this instance actually acquired a share (svg takes
-            // precedence over src, so it never called fetchAndSanitizeSvg
-            // when svg is given).
-            if (svgProp === undefined && src !== undefined) {
-                releaseFetchAndSanitizeSvg(src, {
-                    sanitizeFn: currentSanitizeFn,
-                    disableSanitization,
-                    fetchOptions: currentFetchOptions,
-                });
-            }
-        };
-    }, [src, svgProp, disableSanitization, hasSanitizeFn, hasFetchOptions]);
+    // Fetch/sanitize - see useResolvedSvg's own comment. Deliberately
+    // separate from the DOM-writing effect below, so that changing a purely
+    // presentational prop (title, width, styles, ...) updates the shadow
+    // root's content without re-fetching, the same split
+    // SvgIn.client.tsx/SvgInComponent get for free from React re-rendering
+    // with new props. No `enabled` passed: unlike <SvgIn />, this component
+    // has no lazy-loading gate (see this file's own doc comment).
+    const { svg, error } = useResolvedSvg('<SvgInShadow />', {
+        src,
+        svg: svgProp,
+        sanitizeFn,
+        disableSanitization,
+        fetchOptions,
+        onError,
+    });
 
     // Writes the resolved markup into the shadow root. Imperative rather
     // than JSX/dangerouslySetInnerHTML: a shadow root's content isn't part

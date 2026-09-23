@@ -13,9 +13,7 @@ describe('resolveSvgPromiseClient', () => {
             '<Test />',
             'https://example.com/ignored.svg',
             '<svg><circle/></svg>',
-            undefined,
-            undefined,
-            undefined
+            { sanitizeFn: undefined, disableSanitization: undefined, fetchOptions: undefined }
         );
         expect(result).toContain('<circle');
     });
@@ -32,16 +30,18 @@ describe('resolveSvgPromiseClient', () => {
             '<Test />',
             'https://example.com/resolve.svg',
             undefined,
-            undefined,
-            undefined,
-            undefined
+            { sanitizeFn: undefined, disableSanitization: undefined, fetchOptions: undefined }
         );
         expect(result).toContain('<rect');
     });
 
     it('rejects naming the component when neither src nor svg is given', async () => {
         await expect(
-            resolveSvgPromiseClient('<Test />', undefined, undefined, undefined, undefined, undefined)
+            resolveSvgPromiseClient('<Test />', undefined, undefined, {
+                sanitizeFn: undefined,
+                disableSanitization: undefined,
+                fetchOptions: undefined,
+            })
         ).rejects.toThrow('<Test /> requires either `src` or `svg`.');
     });
 });

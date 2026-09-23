@@ -85,3 +85,64 @@ export function uniquifyIds(svg: string, suffix: string): string {
             ids.has(id) ? `${attr}="#${id}-${suffix}"` : full
         );
 }
+
+// An optional string field being absent (undefined) or present-but-empty
+// ('') are both "nothing to render" here - a plain truthy check already
+// treats them the same way, but strict-boolean-expressions requires that to
+// be spelled out explicitly rather than relying on '' and undefined both
+// being falsy. Shared by buildSvgMarkup and SvgInComponent (each used to
+// keep its own copy of this one-liner) - see injectTitleDesc below for the
+// same consolidation applied to the larger title/desc id-computation logic.
+export function hasContent(s: string | undefined): s is string {
+    return s !== undefined && s !== '';
+}
+
+/**
+ * Parses an SVG opening tag's attribute string into name -> value pairs.
+ * Shared by buildSvgMarkup (feeds a plain HTML string for SvgInShadow's
+ * innerHTML) and SvgInComponent (feeds React props for a JSX-rendered
+ * element) - same small regex, two different consumers of its output.
+ */
+export function parseSvgAttrs(attrString: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    // Match name="value", name='value', or bare name (boolean attrs)
+    const re = /([a-zA-Z_:][a-zA-Z0-9_:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(attrString)) !== null) {
+        result[m[1]] = m[2] ?? m[3] ?? m[4] ?? '';
+    }
+    return result;
+}
+
+export interface InjectTitleDescOptions {
+    title?: string;
+    description?: string;
+    idSuffix?: string;
+}
+
+export interface InjectTitleDescResult {
+    /** `inner` with `<title>`/`<desc>` prepended, when given. */
+    inner: string;
+    titleId: string | undefined;
+    descId: string | undefined;
+}
+
+/**
+ * Prepends escaped `<title>`/`<desc>` elements (with ids derived from
+ * `idSuffix`) to `inner` when `title`/`description` are given, and returns
+ * those ids so the caller can wire `aria-labelledby`/`aria-describedby` to
+ * them. Shared by buildSvgMarkup (string output, for SvgInShadow) and
+ * SvgInComponent (JSX output) - both need the exact same id computation and
+ * precedence, but render the result through entirely different mechanisms
+ * (one can't reuse the other's JSX/dangerouslySetInnerHTML path), so only
+ * this non-JSX-specific piece is shared, not the surrounding rendering.
+ */
+export function injectTitleDesc(inner: string, options: InjectTitleDescOptions): InjectTitleDescResult {
+    const { title, description, idSuffix } = options;
+    const titleId = hasContent(title) ? `svgin-title-${idSuffix ?? ''}` : undefined;
+    const descId = hasContent(description) ? `svgin-desc-${idSuffix ?? ''}` : undefined;
+    let result = inner;
+    if (hasContent(description)) result = `<desc id="${descId}">${escapeHtml(description)}</desc>${result}`;
+    if (hasContent(title)) result = `<title id="${titleId}">${escapeHtml(title)}</title>${result}`;
+    return { inner: result, titleId, descId };
+}
