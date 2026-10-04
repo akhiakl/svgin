@@ -71,7 +71,16 @@ function countTouchedFiles(log) {
     return files.size;
 }
 
+// Reads every log artifact for `check`, not just the first non-empty one:
+// for the `test` check specifically, logArtifacts lists one artifact per
+// matrix leg (Node 22, Node 24), and a failure on only one leg must not be
+// masked by the other leg's passing log - concatenating both, each under
+// its own artifact-name header, is what actually shows *why* the check
+// failed rather than a misleadingly clean log from the other leg (caught in
+// review of this exact code: a single-artifact "return the first non-empty
+// one" silently showed Node 22's green log for a Node-24-only failure).
 function readLogFor(check) {
+    const found = [];
     for (const artifact of check.logArtifacts) {
         const dir = join(logsDir, artifact);
         let entries;
@@ -86,7 +95,7 @@ function readLogFor(check) {
         for (const entry of entries) {
             try {
                 const content = readFileSync(join(dir, entry), 'utf8').trim();
-                if (content !== '') return { artifact, content };
+                if (content !== '') found.push({ artifact, content });
             } catch {
                 // Skip unreadable entries (shouldn't happen for a plain
                 // text log, but this report degrading to "no log found"
@@ -94,7 +103,12 @@ function readLogFor(check) {
             }
         }
     }
-    return null;
+    if (found.length === 0) return null;
+    // A single artifact (every check except `test`) needs no header - only
+    // label sections once there's more than one log to tell apart.
+    if (found.length === 1) return { content: found[0].content };
+    const content = found.map(({ artifact, content }) => `=== ${artifact} ===\n${content}`).join('\n\n');
+    return { content };
 }
 
 function icon(result) {
