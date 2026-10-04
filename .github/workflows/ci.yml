@@ -17,6 +17,18 @@ name: CI
 # scoped to apps/tryit via `pnpm --filter svgin-tryit` since it's the only
 # workspace member with Playwright e2e tests.
 #
+# quality-summary (scripts/quality-summary.mjs) is a second, separate sticky
+# PR comment from pr-report: pr-report re-runs vitest itself to compute
+# pass/fail counts and coverage/size deltas, but never shows *why* lint,
+# typecheck, or a real CI gate job failed - that still meant opening the
+# Actions run. The lint/typecheck/test/coverage/build jobs above each tee
+# their own command output to a log file and upload it (quality-log-<job>,
+# always(), win or lose); quality-summary downloads every one of those,
+# reads each job's real needs.*.result, and posts a markdown summary -
+# small failures shown inline, a failure touching many files or many lines
+# collapsed behind <details> so one noisy check doesn't bury the rest of the
+# comment.
+#
 # --affected on pull_request: only runs a task for packages that actually
 # changed since the PR's base branch (plus anything that depends on them, via
 # Turborepo's own package graph - correctly picks up e.g. a packages/core
@@ -78,7 +90,22 @@ jobs:
             apps/*/.turbo
           key: turbo-lint-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-lint-
-      - run: pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      # Teed to a log file (set -o pipefail so the tee doesn't swallow a
+      # real failure's exit code) and uploaded below regardless of outcome -
+      # feeds the quality-summary job's PR comment, so a reviewer sees the
+      # actual lint output without opening this run. Purely additive: this
+      # step's own exit code (and therefore this job's pass/fail) is
+      # unaffected by the tee.
+      - run: |
+          set -o pipefail
+          pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee lint-output.log
+      - name: Upload lint log
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-log-lint
+          path: lint-output.log
+          retention-days: 7
 
   commitlint:
     name: Commit messages
@@ -117,8 +144,22 @@ jobs:
             apps/*/.turbo
           key: turbo-typecheck-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-typecheck-
-      - run: pnpm turbo run typecheck ${{ github.event_name == 'pull_request' && '--affected' || '' }}
-      - run: pnpm turbo run typecheck:test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      # See the matching comment in the lint job above - same tee/upload
+      # pattern, feeding the quality-summary job. Both typecheck steps
+      # append to the same log (tee -a) so a failure in either shows up.
+      - run: |
+          set -o pipefail
+          pnpm turbo run typecheck ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee typecheck-output.log
+      - run: |
+          set -o pipefail
+          pnpm turbo run typecheck:test ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee -a typecheck-output.log
+      - name: Upload typecheck log
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-log-typecheck
+          path: typecheck-output.log
+          retention-days: 7
 
   test:
     name: Test (Node ${{ matrix.node-version }})
@@ -145,7 +186,20 @@ jobs:
             apps/*/.turbo
           key: turbo-test-node${{ matrix.node-version }}-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-test-node${{ matrix.node-version }}-
-      - run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      # See the matching comment in the lint job above. Artifact name
+      # includes the Node version since this job is a matrix - the
+      # quality-summary job reads both quality-log-test-node22 and
+      # quality-log-test-node24.
+      - run: |
+          set -o pipefail
+          pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee test-output.log
+      - name: Upload test log
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-log-test-node${{ matrix.node-version }}
+          path: test-output.log
+          retention-days: 7
 
   coverage:
     name: Coverage thresholds
@@ -175,7 +229,17 @@ jobs:
       # here would silently never enforce them. Node 22 only - coverage
       # correctness doesn't vary by Node version, and running it twice
       # would just double the cost for no signal.
-      - run: pnpm turbo run test:coverage ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      # See the matching comment in the lint job above.
+      - run: |
+          set -o pipefail
+          pnpm turbo run test:coverage ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee coverage-output.log
+      - name: Upload coverage log
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-log-coverage
+          path: coverage-output.log
+          retention-days: 7
 
   build:
     name: Build
@@ -198,9 +262,105 @@ jobs:
             apps/*/.turbo
           key: turbo-build-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-build-
-      - run: pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      # See the matching comment in the lint job above - build + size share
+      # one log since a consumer debugging a red "Build" job wants both.
+      - run: |
+          set -o pipefail
+          pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee build-output.log
       - name: Check bundle size budget
-        run: pnpm turbo run size ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+        run: |
+          set -o pipefail
+          pnpm turbo run size ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee -a build-output.log
+      - name: Upload build log
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-log-build
+          path: build-output.log
+          retention-days: 7
+
+  quality-summary:
+    name: Quality checks summary
+    # Doesn't gate on these jobs succeeding (if: always()) - the whole
+    # point is to report on a *failure*, which would otherwise make this
+    # job skip by default (needs' implicit condition is success()). Not
+    # listed in test's/lint's/etc. own `if:` the other way around either:
+    # this job reads their already-computed needs.*.result and each job's
+    # own uploaded log, it never re-runs anything itself.
+    needs: [lint, typecheck, test, coverage, build]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Same two permissions, same reason, as the pr-report job below.
+      issues: write
+      pull-requests: write
+    steps:
+      # Only scripts/quality-summary.mjs is needed, not the whole tree -
+      # this job has no pnpm install/build step of its own.
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            scripts/quality-summary.mjs
+          sparse-checkout-cone-mode: false
+      - name: Download quality logs
+        # Best-effort: a check that never reached its own upload step
+        # (crashed before tee ran at all) just means no artifact for it -
+        # quality-summary.mjs already treats a missing log as "no data",
+        # not a crash.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: quality-log-*
+          path: logs
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Build quality summary
+        env:
+          RESULT_LINT: ${{ needs.lint.result }}
+          RESULT_TYPECHECK: ${{ needs.typecheck.result }}
+          # needs.test.result is already the correct aggregate across both
+          # matrix instances (node 22 and 24) - 'failure' if either failed,
+          # 'success' only if both did - no manual AND/OR needed here.
+          RESULT_TEST: ${{ needs.test.result }}
+          RESULT_COVERAGE: ${{ needs.coverage.result }}
+          RESULT_BUILD: ${{ needs.build.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/quality-summary.mjs logs > quality-report.md
+      - name: Post or update PR comment
+        # Same fork/permissions reasoning as the pr-report job's matching
+        # step below - GITHUB_TOKEN is read-only on a fork PR.
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('quality-report.md', 'utf8');
+            const marker = '<!-- svgin-quality-summary -->';
+            const fullBody = `${marker}\n${body}`;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: fullBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fullBody,
+              });
+            }
 
   audit:
     name: Dependency audit
