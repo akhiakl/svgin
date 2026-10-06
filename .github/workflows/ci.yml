@@ -2,10 +2,11 @@ name: CI
 
 # Adapted from akhiakl/svgin-react's ci.yml for this Turborepo monorepo: every
 # `pnpm run <task>` becomes `pnpm turbo run <task>` so Turborepo's caching and
-# package graph apply. `scripts/check-bundle-size.mjs` (see the build job's
-# "Check bundle size budget" step) is a generalized port of svgin-react's own
-# script, reading each package's own size-budget.json instead of a hard-coded
-# object - see #20. The pr-report job (scripts/pr-report.mjs, a sticky PR
+# package graph apply. `scripts/check-bundle-size.mjs` (see the verify job's
+# `build` check step, which runs both `pnpm turbo run build` and `size`) is a
+# generalized port of svgin-react's own script, reading each package's own
+# size-budget.json instead of a hard-coded object - see #20. The pr-report
+# job (scripts/pr-report.mjs, a sticky PR
 # comment comparing head vs base) is likewise a generalized port of
 # svgin-react's own job - one section per package instead of one, a unit
 # test pass/fail summary the original didn't have, and (see #22) a
@@ -17,17 +18,22 @@ name: CI
 # scoped to apps/tryit via `pnpm --filter svgin-tryit` since it's the only
 # workspace member with Playwright e2e tests.
 #
-# quality-summary (scripts/quality-summary.mjs) is a second, separate sticky
-# PR comment from pr-report: pr-report re-runs vitest itself to compute
-# pass/fail counts and coverage/size deltas, but never shows *why* lint,
-# typecheck, or a real CI gate job failed - that still meant opening the
-# Actions run. The lint/typecheck/test/coverage/build jobs above each tee
-# their own command output to a log file and upload it (quality-log-<job>,
-# always(), win or lose); quality-summary downloads every one of those,
-# reads each job's real needs.*.result, and posts a markdown summary -
-# small failures shown inline, a failure touching many files or many lines
-# collapsed behind <details> so one noisy check doesn't bury the rest of the
-# comment.
+# quality-gate posts a second, separate sticky PR comment from pr-report:
+# pr-report re-runs vitest itself to compute pass/fail counts and
+# coverage/size deltas, but never shows *why* lint, typecheck, or a real CI
+# gate check failed - that still meant opening the Actions run. The verify
+# job below runs lint/typecheck/test/coverage/build as sequential,
+# continue-on-error steps via akhiakl/ci-workflows@v1 (see that repo's
+# README), each teeing its own command output to a log and recording its
+# outcome - quality-gate (akhiakl/ci-workflows/gate@v1) downloads those
+# artifacts and posts a markdown summary: small failures shown inline, a
+# failure touching many files or many lines collapsed behind <details> so
+# one noisy check doesn't bury the rest of the comment. This replaced an
+# earlier, per-job version of this same idea (5 separate lint/typecheck/
+# test/coverage/build jobs, each uploading its own quality-log-* artifact)
+# once that logic + shopify-store-bridge's equivalent were converged into
+# the shared ci-workflows repo - see its README for why a composite action
+# over a reusable workflow.
 #
 # --affected on pull_request: only runs a task for packages that actually
 # changed since the PR's base branch (plus anything that depends on them, via
@@ -39,21 +45,21 @@ name: CI
 # a safety net. fetch-depth: 0 on every checkout here is required for
 # --affected to find the merge base at all.
 #
-# Turbo cache: every task-running job restores/saves each workspace's local
-# `.turbo` directory via actions/cache, keyed per job (lint/typecheck/test/
-# build each cache different task outputs) and per commit SHA, falling back
-# to the closest previous cache for that job when the exact SHA isn't cached
-# (a PR's first run, or a new commit on top of one already built). Turbo's
-# own content hashing still decides real cache hits/misses inside that
-# restored directory - this only avoids starting from a cold, empty `.turbo`
-# on every single CI run. Deliberately the GitHub Actions cache API, not
-# Vercel Remote Caching (no TURBO_TOKEN/TURBO_TEAM secret to provision) -
-# see #24 if cross-fork or cross-repo sharing is ever needed, which this
-# repo-scoped cache doesn't provide. Keys use the PR head SHA on
-# pull_request events (`github.sha` there is the synthetic, ephemeral merge
-# commit, which changes whenever the base branch moves - keying on it would
-# throw away a cache on every base-branch update for no reason) and fall
-# back to `github.sha` itself on push, where it already is the real commit.
+# Turbo cache: the verify job restores/saves its workspace's local `.turbo`
+# directories via actions/cache, keyed per Node version and per commit SHA,
+# falling back to the closest previous cache for that Node version when the
+# exact SHA isn't cached (a PR's first run, or a new commit on top of one
+# already built). Turbo's own content hashing (per task) still decides real
+# cache hits/misses inside that restored directory - this only avoids
+# starting from a cold, empty `.turbo` on every single CI run. Deliberately
+# the GitHub Actions cache API, not Vercel Remote Caching (no TURBO_TOKEN/
+# TURBO_TEAM secret to provision) - see #24 if cross-fork or cross-repo
+# sharing is ever needed, which this repo-scoped cache doesn't provide. Keys
+# use the PR head SHA on pull_request events (`github.sha` there is the
+# synthetic, ephemeral merge commit, which changes whenever the base branch
+# moves - keying on it would throw away a cache on every base-branch update
+# for no reason) and fall back to `github.sha` itself on push, where it
+# already is the real commit.
 
 on:
   pull_request:
@@ -69,100 +75,8 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - uses: actions/cache@v6
-        with:
-          path: |
-            .turbo
-            packages/*/.turbo
-            apps/*/.turbo
-          key: turbo-lint-${{ github.event.pull_request.head.sha || github.sha }}
-          restore-keys: turbo-lint-
-      # Teed to a log file (set -o pipefail so the tee doesn't swallow a
-      # real failure's exit code) and uploaded below regardless of outcome -
-      # feeds the quality-summary job's PR comment, so a reviewer sees the
-      # actual lint output without opening this run. Purely additive: this
-      # step's own exit code (and therefore this job's pass/fail) is
-      # unaffected by the tee.
-      - run: |
-          set -o pipefail
-          pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee lint-output.log
-      - name: Upload lint log
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-log-lint
-          path: lint-output.log
-          retention-days: 7
-
-  commitlint:
-    name: Commit messages
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
-
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - uses: actions/cache@v6
-        with:
-          path: |
-            .turbo
-            packages/*/.turbo
-            apps/*/.turbo
-          key: turbo-typecheck-${{ github.event.pull_request.head.sha || github.sha }}
-          restore-keys: turbo-typecheck-
-      # See the matching comment in the lint job above - same tee/upload
-      # pattern, feeding the quality-summary job. Both typecheck steps
-      # append to the same log (tee -a) so a failure in either shows up.
-      - run: |
-          set -o pipefail
-          pnpm turbo run typecheck ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee typecheck-output.log
-      - run: |
-          set -o pipefail
-          pnpm turbo run typecheck:test ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee -a typecheck-output.log
-      - name: Upload typecheck log
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-log-typecheck
-          path: typecheck-output.log
-          retention-days: 7
-
-  test:
-    name: Test (Node ${{ matrix.node-version }})
+  verify:
+    name: Lint, Typecheck, Test & Build (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -184,25 +98,73 @@ jobs:
             .turbo
             packages/*/.turbo
             apps/*/.turbo
-          key: turbo-test-node${{ matrix.node-version }}-${{ github.event.pull_request.head.sha || github.sha }}
-          restore-keys: turbo-test-node${{ matrix.node-version }}-
-      # See the matching comment in the lint job above. Artifact name
-      # includes the Node version since this job is a matrix - the
-      # quality-summary job reads both quality-log-test-node22 and
-      # quality-log-test-node24.
-      - run: |
-          set -o pipefail
-          pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee test-output.log
-      - name: Upload test log
+          key: turbo-verify-node${{ matrix.node-version }}-${{ github.event.pull_request.head.sha || github.sha }}
+          restore-keys: turbo-verify-node${{ matrix.node-version }}-
+
+      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+        id: lint
+        continue-on-error: true
+        with:
+          name: lint
+          run: pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+        id: typecheck
+        continue-on-error: true
+        with:
+          name: typecheck
+          run: >-
+            pnpm turbo run typecheck typecheck:test
+            ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+        id: test
+        continue-on-error: true
+        with:
+          name: test
+          run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+      # Only Node 22 additionally collects coverage - package
+      # coverage.thresholds (see svgin-vitest-config) are only evaluated when
+      # coverage is actually collected; coverage correctness doesn't vary by
+      # Node version, so running it on both legs would just double the cost
+      # for no signal.
+      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+        if: matrix.node-version == 22
+        id: coverage
+        continue-on-error: true
+        with:
+          name: coverage
+          run: pnpm turbo run test:coverage ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+        id: build
+        continue-on-error: true
+        with:
+          name: build
+          run: >-
+            pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }} &&
+            pnpm turbo run size ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+      - name: Upload check results
         if: always() && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v7
         with:
-          name: quality-log-test-node${{ matrix.node-version }}
-          path: test-output.log
+          name: ci-results-node-${{ matrix.node-version }}
+          path: ci-results/
           retention-days: 7
+          if-no-files-found: warn
 
-  coverage:
-    name: Coverage thresholds
+      - name: Fail if any check failed
+        if: >-
+          steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' ||
+          steps.coverage.outcome == 'failure' || steps.test.outcome == 'failure' ||
+          steps.build.outcome == 'failure'
+        run: exit 1
+
+  commitlint:
+    name: Commit messages
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -214,153 +176,36 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/cache@v6
-        with:
-          path: |
-            .turbo
-            packages/*/.turbo
-            apps/*/.turbo
-          key: turbo-coverage-${{ github.event.pull_request.head.sha || github.sha }}
-          restore-keys: turbo-coverage-
-      # Separate from the `test` job above (which runs plain `vitest run`,
-      # no coverage collection, on both Node versions): each package's own
-      # coverage.thresholds (see svgin-vitest-config) are only evaluated
-      # when coverage is actually collected, so a plain `turbo run test`
-      # here would silently never enforce them. Node 22 only - coverage
-      # correctness doesn't vary by Node version, and running it twice
-      # would just double the cost for no signal.
-      # See the matching comment in the lint job above.
-      - run: |
-          set -o pipefail
-          pnpm turbo run test:coverage ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee coverage-output.log
-      - name: Upload coverage log
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-log-coverage
-          path: coverage-output.log
-          retention-days: 7
+      - run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - uses: actions/cache@v6
-        with:
-          path: |
-            .turbo
-            packages/*/.turbo
-            apps/*/.turbo
-          key: turbo-build-${{ github.event.pull_request.head.sha || github.sha }}
-          restore-keys: turbo-build-
-      # See the matching comment in the lint job above - build + size share
-      # one log since a consumer debugging a red "Build" job wants both.
-      - run: |
-          set -o pipefail
-          pnpm turbo run build ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee build-output.log
-      - name: Check bundle size budget
-        run: |
-          set -o pipefail
-          pnpm turbo run size ${{ github.event_name == 'pull_request' && '--affected' || '' }} 2>&1 | tee -a build-output.log
-      - name: Upload build log
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-log-build
-          path: build-output.log
-          retention-days: 7
-
-  quality-summary:
-    name: Quality checks summary
-    # Doesn't gate on these jobs succeeding (if: always()) - the whole
-    # point is to report on a *failure*, which would otherwise make this
-    # job skip by default (needs' implicit condition is success()). Not
-    # listed in test's/lint's/etc. own `if:` the other way around either:
-    # this job reads their already-computed needs.*.result and each job's
-    # own uploaded log, it never re-runs anything itself.
-    needs: [lint, typecheck, test, coverage, build]
+  quality-gate:
+    name: Quality Gate
+    # Doesn't gate on verify succeeding (if: always()) - the whole point is
+    # to report on a *failure*, which would otherwise make this job skip by
+    # default (needs' implicit condition is success()). It never re-runs
+    # anything itself, just reads verify's already-computed result and its
+    # uploaded logs.
+    needs: [verify]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Same two permissions, same reason, as the pr-report job below.
+      # Both needed simultaneously to post/update the sticky comment - see
+      # the pr-report job's own permissions block below for how that was
+      # confirmed (GitHub's 403 response header named both as required).
       issues: write
       pull-requests: write
     steps:
-      # Only scripts/quality-summary.mjs is needed, not the whole tree -
-      # this job has no pnpm install/build step of its own.
-      - uses: actions/checkout@v7
+      - uses: akhiakl/ci-workflows/gate@e0badeea75937a3fe62095d27fc697d71570d216 # v1
         with:
-          sparse-checkout: |
-            scripts/quality-summary.mjs
-          sparse-checkout-cone-mode: false
-      - name: Download quality logs
-        # Best-effort: a check that never reached its own upload step
-        # (crashed before tee ran at all) just means no artifact for it -
-        # quality-summary.mjs already treats a missing log as "no data",
-        # not a crash.
-        continue-on-error: true
-        uses: actions/download-artifact@v8
-        with:
-          pattern: quality-log-*
-          path: logs
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - name: Build quality summary
-        env:
-          RESULT_LINT: ${{ needs.lint.result }}
-          RESULT_TYPECHECK: ${{ needs.typecheck.result }}
-          # needs.test.result is already the correct aggregate across both
-          # matrix instances (node 22 and 24) - 'failure' if either failed,
-          # 'success' only if both did - no manual AND/OR needed here.
-          RESULT_TEST: ${{ needs.test.result }}
-          RESULT_COVERAGE: ${{ needs.coverage.result }}
-          RESULT_BUILD: ${{ needs.build.result }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: node scripts/quality-summary.mjs logs > quality-report.md
-      - name: Post or update PR comment
-        # Same fork/permissions reasoning as the pr-report job's matching
-        # step below - GITHUB_TOKEN is read-only on a fork PR.
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        continue-on-error: true
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('quality-report.md', 'utf8');
-            const marker = '<!-- svgin-quality-summary -->';
-            const fullBody = `${marker}\n${body}`;
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find((c) => c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: fullBody,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: fullBody,
-              });
-            }
+          marker: '<!-- svgin-quality-gate -->'
+          title: Quality Gate
+          status: |
+            Lint, Typecheck, Test & Build (Node 22 & 24)=${{ needs.verify.result }}
+
+      - name: Fail if verify failed
+        if: needs.verify.result != 'success'
+        run: exit 1
 
   audit:
     name: Dependency audit
