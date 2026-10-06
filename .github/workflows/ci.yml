@@ -3,9 +3,10 @@ name: CI
 # Adapted from akhiakl/svgin-react's ci.yml for this Turborepo monorepo: every
 # `pnpm run <task>` becomes `pnpm turbo run <task>` so Turborepo's caching and
 # package graph apply. `scripts/check-bundle-size.mjs` (see the verify job's
-# "Check bundle size budget" step) is a generalized port of svgin-react's own
-# script, reading each package's own size-budget.json instead of a hard-coded
-# object - see #20. The pr-report job (scripts/pr-report.mjs, a sticky PR
+# `build` check step, which runs both `pnpm turbo run build` and `size`) is a
+# generalized port of svgin-react's own script, reading each package's own
+# size-budget.json instead of a hard-coded object - see #20. The pr-report
+# job (scripts/pr-report.mjs, a sticky PR
 # comment comparing head vs base) is likewise a generalized port of
 # svgin-react's own job - one section per package instead of one, a unit
 # test pass/fail summary the original didn't have, and (see #22) a
@@ -189,6 +190,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Both needed simultaneously to post/update the sticky comment - see
+      # the pr-report job's own permissions block below for how that was
+      # confirmed (GitHub's 403 response header named both as required).
+      issues: write
       pull-requests: write
     steps:
       - uses: akhiakl/ci-workflows/gate@e0badeea75937a3fe62095d27fc697d71570d216 # v1
