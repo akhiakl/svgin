@@ -101,14 +101,14 @@ jobs:
           key: turbo-verify-node${{ matrix.node-version }}-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: turbo-verify-node${{ matrix.node-version }}-
 
-      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+      - uses: akhiakl/ci-workflows@v1
         id: lint
         continue-on-error: true
         with:
           name: lint
           run: pnpm turbo run lint ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
-      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+      - uses: akhiakl/ci-workflows@v1
         id: typecheck
         continue-on-error: true
         with:
@@ -117,7 +117,7 @@ jobs:
             pnpm turbo run typecheck typecheck:test
             ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
-      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+      - uses: akhiakl/ci-workflows@v1
         id: test
         continue-on-error: true
         with:
@@ -129,7 +129,7 @@ jobs:
       # coverage is actually collected; coverage correctness doesn't vary by
       # Node version, so running it on both legs would just double the cost
       # for no signal.
-      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+      - uses: akhiakl/ci-workflows@v1
         if: matrix.node-version == 22
         id: coverage
         continue-on-error: true
@@ -137,7 +137,7 @@ jobs:
           name: coverage
           run: pnpm turbo run test:coverage ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
-      - uses: akhiakl/ci-workflows@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+      - uses: akhiakl/ci-workflows@v1
         id: build
         continue-on-error: true
         with:
@@ -196,7 +196,7 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: akhiakl/ci-workflows/gate@e0badeea75937a3fe62095d27fc697d71570d216 # v1
+      - uses: akhiakl/ci-workflows/gate@v1
         with:
           marker: '<!-- svgin-quality-gate -->'
           title: Quality Gate
