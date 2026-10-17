@@ -4,6 +4,8 @@ Securely fetch and inline SVGs from URLs as React components, sanitized by defau
 server support. Built on the shared [`svgin-core`](../core) internals, published to npm as
 [`@svgin/react`](https://npmjs.com/package/@svgin/react).
 
+Demoed live in `apps/tryit` at [`/react`](https://svgin-tryit.vercel.app/react).
+
 ```tsx
 import { SvgIn } from '@svgin/react';
 
