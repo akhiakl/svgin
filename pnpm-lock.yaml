@@ -135,8 +135,8 @@ importers:
         specifier: ^1.9.0
         version: 1.9.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@svgin/element':
-        specifier: ^0.1.2
-        version: 0.1.2(dompurify@3.4.17)
+        specifier: ^0.1.5
+        version: 0.1.5(dompurify@3.4.17)
       '@svgin/react':
         specifier: ^1.1.2
         version: 1.1.2(dompurify@3.4.17)(jsdom@30.0.1)(react@19.3.0)
@@ -1767,8 +1767,8 @@ packages:
     resolution: {integrity: sha512-fCTuZK4QBa+39Oz9l4OGfJfz+GpwCp3AqO7Zch3to99xHPgstVsRFpeQ8LNd2o1Gv8raL2mCFwiaHh7bFSp5DQ==}
     engines: {node: '>=22'}
 
-  '@svgin/element@0.1.2':
-    resolution: {integrity: sha512-EA79S/VIilyn/zQjYpWvbj5jJ6vNTSLqMyLdRaoXjYc2XW+BKRizINfnHmip0W6W1b9xBpUFi71jGF9lxPoPng==}
+  '@svgin/element@0.1.5':
+    resolution: {integrity: sha512-1n73G1PSqDzoz5VaSnvWyi+KM5ZrT4XBVxjjopxM22GYnFrar+5YljvzC9HQ6cb5QE+yobPRB5rAq3OD7PZTFA==}
     peerDependencies:
       dompurify: ^3.4.14
     peerDependenciesMeta:
@@ -5382,7 +5382,7 @@ snapshots:
 
   '@simple-libs/stream-utils@2.0.0': {}
 
-  '@svgin/element@0.1.2(dompurify@3.4.17)':
+  '@svgin/element@0.1.5(dompurify@3.4.17)':
     optionalDependencies:
       dompurify: 3.4.17
 
