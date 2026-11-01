@@ -138,8 +138,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2(dompurify@3.4.17)
       '@svgin/react':
-        specifier: ^1.1.2
-        version: 1.1.2(dompurify@3.4.17)(jsdom@30.0.1)(react@19.3.0)
+        specifier: ^1.1.4
+        version: 1.1.5(dompurify@3.4.17)(jsdom@30.0.1)(react@19.3.0)
       bright:
         specifier: 1.0.0
         version: 1.0.0(react@19.3.0)
@@ -1775,8 +1775,8 @@ packages:
       dompurify:
         optional: true
 
-  '@svgin/react@1.1.2':
-    resolution: {integrity: sha512-m19TwRgIYiDJIUdVMIRspCDvt1OmroUpMYw61U4AABgtyorE9XQExCUgSKW4rK16J14f3xOzLQJuf1TdLTBIcA==}
+  '@svgin/react@1.1.5':
+    resolution: {integrity: sha512-1Vn2W17Xlc9UNvvNpuOpggTLWlFR1nag2+P9pQIyMss2vmWRi42hhBhl1vMmkC723nVst5kZbjt/IPqoqWU71Q==}
     peerDependencies:
       dompurify: ^3.4.14
       jsdom: 30.0.1
@@ -5386,7 +5386,7 @@ snapshots:
     optionalDependencies:
       dompurify: 3.4.17
 
-  '@svgin/react@1.1.2(dompurify@3.4.17)(jsdom@30.0.1)(react@19.3.0)':
+  '@svgin/react@1.1.5(dompurify@3.4.17)(jsdom@30.0.1)(react@19.3.0)':
     dependencies:
       react: 19.3.0
     optionalDependencies:
