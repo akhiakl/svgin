@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.6](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.5...svgin-react-v1.1.6) (2026-11-01)
+
+
+### Bug Fixes
+
+* **react:** mark @svgin/react side-effect free ([#167](https://github.com/akhiakl/svgin/issues/167)) ([5af494b](https://github.com/akhiakl/svgin/commit/5af494bda400df83fca1d21d555ca5fb2b54d156))
+
 ## [1.1.5](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.4...svgin-react-v1.1.5) (2026-10-17)
 
 
