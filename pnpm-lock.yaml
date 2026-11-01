@@ -232,7 +232,7 @@ importers:
   packages/core:
     dependencies:
       dompurify:
-        specifier: ^3.4.16
+        specifier: ^3.4.17
         version: 3.4.17
       jsdom:
         specifier: 30.0.1
