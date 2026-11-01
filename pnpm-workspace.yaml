@@ -16,3 +16,4 @@ overrides:
   "@vitest/coverage-v8": 5.0.0
   "@types/node": 26.6.2
   jsdom: 30.0.1
+  esbuild: 0.28.2
