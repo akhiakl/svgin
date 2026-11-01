@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.4...svgin-react-v1.1.5) (2026-10-17)
+
+
+### Documentation
+
+* **react:** link to the live try-it demo, matching @svgin/element ([#144](https://github.com/akhiakl/svgin/issues/144)) ([696c2e6](https://github.com/akhiakl/svgin/commit/696c2e62a5a045c3a0f091fca21af29e235363b7))
+
 ## [1.1.4](https://github.com/akhiakl/svgin/compare/svgin-react-v1.1.3...svgin-react-v1.1.4) (2026-09-23)
 
 
