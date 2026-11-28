@@ -190,7 +190,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @svgin/element build
       - run: pnpm --filter svgin-tryit exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm --filter svgin-tryit exec playwright test --project=${{ matrix.browser }}
         env:
