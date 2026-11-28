@@ -39,14 +39,7 @@ describe('sanitizeSvg (server, real DOMPurify + jsdom)', () => {
     });
 
     it('creates the JSDOM window only once across multiple sanitize calls', async () => {
-        // Unlike the tests above, this one actually asserts instance reuse
-        // (rather than just that sanitization keeps working). ESM module
-        // namespaces aren't configurable, so vi.spyOn can't patch the real
-        // "jsdom" export in place - instead, mock the module with a wrapper
-        // that counts JSDOM constructions but otherwise behaves identically.
-        // Needs a fresh module registry so this test's own call count isn't
-        // polluted by sanitizeServer's module-level cache already having been
-        // populated by the tests above.
+        // ESM namespaces can't be spied on, so mock jsdom with a counting wrapper on a fresh registry.
         vi.resetModules();
         let constructCount = 0;
         vi.doMock('jsdom', async () => {

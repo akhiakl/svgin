@@ -281,11 +281,7 @@ describe('SvgIn (custom element)', () => {
         });
 
         it('never starts (or releases) a fetch for an attempt disconnected before it could begin', async () => {
-            // Regression guard: disconnecting during the microtask gap
-            // #beginLoad always yields before doing anything else (see its
-            // own comment) must bail out before ever calling
-            // fetchAndSanitizeSvg - otherwise it would acquire a share of an
-            // in-flight fetch nothing would ever release.
+            // Otherwise it would take a fetch share nothing ever releases.
             mockFetch.mockReturnValue(new Promise(() => {}));
             const el = mount({ src: '/a.svg' });
             el.remove();

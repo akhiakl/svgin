@@ -17,11 +17,7 @@ const mockFetch = vi.mocked(fetchAndSanitizeSvg);
 const mockRelease = vi.mocked(releaseFetchAndSanitizeSvg);
 const mockSanitizeString = vi.mocked(sanitizeSvgString);
 
-// Throws (rather than returning null/undefined via optional chaining) so
-// waitFor's own retry-until-no-throw semantics correctly keep polling until
-// attachShadow has actually happened, instead of an `undefined` from
-// `host.shadowRoot?.querySelector(...)` satisfying a `.not.toBeNull()`
-// assertion before the shadow root even exists.
+// Throws, so waitFor keeps polling until attachShadow has run.
 function shadowRoot(host: Element): ShadowRoot {
     if (!host.shadowRoot) throw new Error('expected a shadow root to be attached by now');
     return host.shadowRoot;
@@ -79,13 +75,6 @@ describe('SvgInShadow (client component)', () => {
     });
 
     it('treats a value in styles containing "</style>" as plain text, not markup (regression: HTML injection via textContent)', async () => {
-        // Regression test: styles used to be concatenated into the shadow
-        // root's innerHTML as a raw string (`<style>${styles}</style>`),
-        // so a value containing "</style>" could close the tag early and
-        // inject arbitrary markup (e.g. a <script>, harmless here since
-        // scripts don't execute via innerHTML, but still real injection).
-        // Building a real <style> element and assigning textContent treats
-        // the whole value as text unconditionally.
         mockFetch.mockResolvedValue('<svg><circle/></svg>');
         const malicious = '</style><img id="injected">';
         const { container } = render(<SvgInShadow src="/test.svg" styles={malicious} />);
@@ -199,11 +188,6 @@ describe('SvgInShadow (client component)', () => {
     });
 
     it('attaches a fresh shadow root to the new host when as changes on a later render (regression)', async () => {
-        // Regression test: the host element is replaced (React unmounts the
-        // old <span>, mounts a new <div>) whenever `as` changes - reusing
-        // the ShadowRoot created for the *old*, now-detached host (keyed
-        // only by ShadowRoot, not by which host it belonged to) would write
-        // into a detached tree while the new host stayed empty forever.
         mockFetch.mockResolvedValue('<svg><circle/></svg>');
         const { container, rerender } = render(<SvgInShadow src="/test.svg" as="span" />);
         const spanHost = container.querySelector('span')!;
@@ -216,11 +200,6 @@ describe('SvgInShadow (client component)', () => {
     });
 
     it('reattaches to a fresh host after recovering from an error (regression)', async () => {
-        // Regression test: on error this component renders `fallback`
-        // instead of the host element at all - the host unmounts. If the
-        // next render recovers (a later src succeeds), a brand new host
-        // element commits, and the stale ShadowRoot reference from before
-        // the error must not be reused for it.
         mockFetch.mockRejectedValueOnce(new Error('boom'));
         const { container, rerender } = render(<SvgInShadow src="/broken.svg" fallback={<span>oops</span>} />);
         await waitFor(() => expect(container.textContent).toBe('oops'));
@@ -266,21 +245,13 @@ describe('SvgInShadow (client component)', () => {
         const { container } = render(<SvgInShadow src="/test.svg" mode="closed" onMount={onMount} />);
         const host = container.querySelector('span')!;
 
-        // onMount still fires with the real (rendered) svg element - proving
-        // attachShadow actually ran with mode: 'closed' - even though
-        // host.shadowRoot itself stays null from the outside, exactly as a
-        // closed shadow root should behave.
+        // onMount firing proves the closed root attached even though host.shadowRoot is null.
         await waitFor(() => expect(onMount).toHaveBeenCalledWith(expect.objectContaining({ tagName: 'svg' })));
         expect(host.shadowRoot).toBeNull();
     });
 
     it('updates a closed-mode shadow root on a later prop change without throwing (regression)', async () => {
-        // Regression test: host.shadowRoot is always null for a closed
-        // shadow root, even from the *inside* component that created it -
-        // relying on it (rather than a ref to the created ShadowRoot) to
-        // decide whether attachShadow has already run meant every update
-        // after the first tried to attachShadow() again, which throws
-        // ("already has a ShadowRoot") since a host can only have one.
+        // host.shadowRoot is null for closed roots, so a second attachShadow would throw.
         mockFetch.mockResolvedValue('<svg><path/></svg>');
         const onMount = vi.fn();
         const { rerender } = render(<SvgInShadow src="/test.svg" mode="closed" title="first" onMount={onMount} />);

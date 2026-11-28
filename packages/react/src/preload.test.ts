@@ -64,11 +64,7 @@ describe('preloadSvg', () => {
     });
 
     it('skips the fetch entirely when the URL is already cached in default mode', async () => {
-        // Pre-populates the shared cache directly (as a prior fetchAndSanitizeSvg
-        // call, or an earlier preloadSvg for a *different* set of options, would
-        // have) rather than via preloadSvg itself - preloadSvg's own outer
-        // memoization would otherwise short-circuit a second identical call
-        // before ever reaching this cache check again.
+        // Seeded directly: a second preloadSvg call would hit its own memoization first.
         setCachedSvg('https://example.com/already-cached.svg', '<svg>already-cached</svg>');
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);

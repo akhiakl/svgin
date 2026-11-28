@@ -5,15 +5,7 @@ import { SvgInComponent } from './SvgInComponent';
 import { nextInstanceId } from 'svgin-core/instanceId';
 
 export async function SvgIn(props: SvgInProps) {
-    // onMount/loadingFallback/loading/suspense are intentionally destructured
-    // but otherwise unused here: there is no DOM to hand back on the server
-    // (onMount), no "loading" state to defer (this function itself only
-    // resolves once the SVG is ready), and this async server component is
-    // already Suspense-friendly on its own - a parent can wrap its usage in
-    // <Suspense> for free. All three are client-only, documented on their
-    // own prop in types.ts. They're pulled out of `rest` (rather than left
-    // in it) so they never get forwarded to SvgInComponent, which spreads
-    // `rest` onto the rendered <svg> - none of them are valid DOM attributes.
+    // Client-only props, pulled out so they are not spread onto the <svg>.
     const { src, svg: svgProp, sanitizeFn, disableSanitization, fetchOptions, onError, onMount, loadingFallback, loading, ...rest } = props;
     void onMount;
     void loadingFallback;

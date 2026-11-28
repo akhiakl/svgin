@@ -9,13 +9,7 @@ describe('SvgInComponent', () => {
     });
 
     it('renders nothing (not the provided fallback) when svg is an empty string, not null', () => {
-        // Regression test: `svg === null` means "no result yet / no result
-        // at all" (the fallback case), while `svg === ''` is a valid,
-        // already-resolved result that sanitization stripped to nothing -
-        // a falsy check on `svg` used to conflate the two and render
-        // `fallback` for both. An empty string has no <svg> tag to extract,
-        // so it falls through to the malformed-markup branch (renders
-        // nothing), same as Shadow/Suspense's handling of an empty result.
+        // null means no result (fallback); "" is a result sanitized to nothing.
         const { container } = render(<SvgInComponent svg={''} fallback={<span>loading</span>} />);
         expect(container.textContent).toBe('');
     });

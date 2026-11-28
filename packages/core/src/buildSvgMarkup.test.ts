@@ -51,12 +51,6 @@ describe('buildSvgMarkup', () => {
     });
 
     it('still auto-wires aria-labelledby when the source SVG (not an explicit attrs override) already has its own aria-label', () => {
-        // Regression test: checking the *merged* attrs (source + overrides)
-        // for an existing aria-label - rather than only an explicit
-        // `attrs['aria-label']` override - would incorrectly skip wiring
-        // aria-labelledby here, diverging from SvgInComponent's own
-        // behavior (which always wires aria-labelledby to the injected
-        // title unless the *consumer* passes an explicit aria-label).
         const markup = buildSvgMarkup('<svg aria-label="from source"><path/></svg>', {
             title: 'Alert',
             idSuffix: 'x',
@@ -103,10 +97,6 @@ describe('buildSvgMarkup', () => {
     });
 
     it('escapes a double quote in an attrs value so it cannot break out of the attribute', () => {
-        // Regression test: an unescaped `"` in a value written into
-        // `key="${value}"` would close the attribute early and let the rest
-        // of the string inject further markup/attributes into the shadow
-        // root's innerHTML.
         const markup = buildSvgMarkup('<svg><path/></svg>', {
             attrs: { 'aria-label': '"><script>alert(1)</script>' },
         });
