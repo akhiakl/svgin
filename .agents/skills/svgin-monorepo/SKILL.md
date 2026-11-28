@@ -9,353 +9,95 @@ description: >
 
 # svgin monorepo conventions
 
-This is a living document. Update it in the same PR as any change to the pipeline, package
-boundaries, or tooling decisions it describes.
+Update this file in the same PR as any change to the pipeline, package boundaries, or tooling it
+describes.
 
 ## Package boundaries
 
-- `packages/core` (npm name `svgin-core`) is **permanently private**: never published, never a
-  release-please component (deliberately absent from `release-please-config.json`'s `packages` map).
-  It holds the shared fetch/sanitize/cache internals that `packages/react` and `packages/element` both
-  consume over a `workspace:*` dependency. It is not an independent public API.
-- `packages/react` (npm name `@svgin/react`) and `packages/element` (npm name `@svgin/element`) are the
-  two public npm packages, both **published** under the `@svgin` npm
-  [organization](https://www.npmjs.com/settings/svgin) scope: `@svgin/react@1.1.1` and
-  `@svgin/element@0.1.1` are the latest published versions (check each package's own `package.json` for
-  the current one - this doc doesn't try to stay in sync with every routine release). The scope move
-  itself was a deliberate identity change, not a seamless continuation: `svgin-react` (unscoped) is a
-  real, still-live npm package with real history at `1.0.1`, migrated from the previously-separate
-  `akhiakl/svgin-react` repo; `svgin-element` (unscoped) was briefly published, found broken (see
-  "Release & publishing" below), and unpublished before the move to this scope. Neither history carries
-  over to the new scoped names - npm treats a scoped and unscoped name as entirely unrelated packages,
-  even when one succeeds the other; `@svgin/react`'s first publish under this scope was its own
-  first-ever publish as far as npm's registry is concerned - zero downloads/dependents carried over. See
-  "Release & publishing" below for the full publish history. The automated release pipeline
-  (release-please -> GitHub Release/tag -> `release.yml` -> npm via trusted publishing) is now verified
-  working end-to-end for both packages - no manual publish step is needed for routine releases.
-- Naming is deliberately `svgin-core` (unscoped, permanently private/internal) plus `@svgin/react` /
-  `@svgin/element` (scoped, public) under the `@svgin` npm organization, not a bare `svgin` package. The
-  bare `svgin` name is the project/repo identity, not any one package. The `<svg-in>` custom element tag
-  name is unrelated to the npm package name.
-- Migration fidelity: `packages/react`'s code must match the previously-separate, currently-published
-  `akhiakl/svgin-react` feature-for-feature at minimum (same export paths: `/client`, `/server`, `/core`,
-  `/suspense`, `/shadow`, `/all`; same sanitization guarantees) - that fidelity bar is about behavior,
-  not the npm package name, which is deliberately changing to `@svgin/react`. Changes on top of that
-  behavioral baseline should be improvements, not regressions.
-- `apps/tryit` (npm name `svgin-tryit`) is the real, migrated `akhiakl/svgin-react-tryit` demo app: one
-  route per `@svgin/react` feature (Inspector, RSC fetch, Suspense, Provider, lazy loading, native
-  props, Shadow DOM), with its own Vitest unit tests and Playwright e2e/a11y suite. It installs
-  `@svgin/react` **as a real npm dependency, not `workspace:*`** (see `AGENTS.md` in that app):
-  the whole point of the demo is to show what's actually published, not the in-progress workspace
-  version. It's **permanently private**, like `packages/core`: `package.json` has a name
-  (`svgin-tryit`) for local workspace/tooling purposes, but it's never published to npm and never a
-  release-please component. `@svgin/element`'s `<svg-in>` demos (`/element` and its five focused
-  sub-demos under it) now also depend on the real published `@svgin/element` package, not `workspace:*`
-  - `apps/tryit` has no `workspace:*` exception at all. **Its own dependency ranges need bumping by hand
-  after a release**, same as any other npm consumer - `pnpm install`/`pnpm up` don't happen
-  automatically just because a new version was published. Caught once already: `@svgin/element`'s range
-  was left at `^0.0.1` after the `0.1.1` release shipped, which isn't just stale but permanently stuck -
-  a `0.x` caret range only matches its own minor (`^0.0.1` is `0.0.x` only, never `0.1.x`), so `apps/tryit`
-  could never have picked up `0.1.1` without an explicit range bump, no matter how many times `pnpm up`
-  ran.
+- `packages/core` (`svgin-core`) is permanently private and never released. It holds the shared
+  fetch/sanitize/cache internals. `packages/react` and `packages/element` list it in
+  `devDependencies` (`workspace:*`) and bundle its source via tsup `noExternal`, because it is never
+  published.
+- `packages/react` (`@svgin/react`) and `packages/element` (`@svgin/element`) are the two public npm
+  packages under the `@svgin` scope. Check each `package.json` for the current version.
+- `@svgin/react` keeps its export paths stable: `/client`, `/server`, `/core`, `/suspense`, `/shadow`,
+  `/all`.
+- `packages/element` is a vanilla Custom Element (`class SvgIn extends HTMLElement`), no Lit or
+  Stencil. Update its README in the same PR as any public API or behavior change.
+- `apps/tryit` (`svgin-tryit`) is the private demo site, one route per feature. It installs
+  `@svgin/react` and `@svgin/element` from npm, never `workspace:*`, so it shows what is published.
+  See its `AGENTS.md`.
 
-## Build & task pipeline
+## Build and tasks
 
-- **CI caches each workspace's local `.turbo` directory via `actions/cache`**, keyed per job
-  (`turbo-lint-<sha>`, `turbo-typecheck-<sha>`, `turbo-test-node<version>-<sha>`,
-  `turbo-build-<sha>`) with a job-prefix `restore-keys` fallback, so a run only needs a cold `.turbo`
-  the very first time that job's key namespace is ever populated - every run after restores the
-  closest previous cache and lets Turborepo's own content hashing decide real hits/misses inside it.
-  `<sha>` is the PR head SHA on `pull_request` events, not `github.sha` (that's the ephemeral merge
-  commit there, which changes whenever the base branch moves) - falls back to `github.sha` itself on
-  `push`, where it already is the real commit. This is the GitHub Actions cache API, not Vercel Remote
-  Caching: no `TURBO_TOKEN`/`TURBO_TEAM`
-  secret to provision, at the cost of being scoped to this repo only (no cross-fork sharing) - see
-  [#24](https://github.com/akhiakl/svgin/issues/24) if that's ever needed. `release.yml` reuses the
-  same `turbo-build-<sha>` key namespace as `ci.yml`'s `build` job, since a release always fires off a
-  commit that already went through push-to-main CI - usually a real hit, not a cold rebuild.
-- Root `package.json` only delegates to `turbo run <task>`; task logic lives in each package's own
-  `package.json` (see the `turborepo` skill).
-- `packages/react` and `packages/element` build with `tsup`. `packages/core` does **not** build at
-  all - see "Why svgin-core has no build step" below.
-- **Shared tooling config lives in its own workspace packages, not root files**
-  (`svgin-eslint-config`, `svgin-typescript-config`, `svgin-tsup-config`, `svgin-vitest-config`, all
-  under `packages/`). This follows the `turborepo` skill's own guidance: a root
-  `eslint.config.mjs`/`tsconfig.base.json` isn't tracked by Turborepo's task graph (only real
-  `workspace:*` dependencies are), so a change to it can't correctly invalidate just the packages that
-  depend on it, and it also means every package's cache gets busted by any tweak to a file that most
-  of them don't actually use differently. **Every one of these is a factory function
-  (`defineTsupConfig(overrides)`, `defineVitestConfig(overrides)`, `defineNextVitestConfig(overrides)`),
-  not a static object or a single fixed entry** - every consumer extends the same shared defaults and
-  overrides only what actually differs for it (typically `entry`/`external` for tsup, `setupFiles`/
-  `coverage` for vitest), instead of duplicating the whole config or writing one from scratch per
-  package. **Never add `vitest` (or `vitest/config`) as one of these config packages' own dependencies**
-  - see the pnpm gotcha below for why that specific one broke `@testing-library/jest-dom`'s type
-    augmentation for every consumer; `defineConfig`/`mergeConfig` are the only things that import would
-    buy, and both are just identity/merge helpers easily replaced with a plain object literal and a
-    few lines of manual merging.
-  **`apps/tryit` is the one exception to reusing the library packages' presets** (not to the factory
-  pattern itself, and not to the coverage bar either since [#16](https://github.com/akhiakl/svgin/issues/16) -
-  it gets its own factory, `svgin-vitest-config/next`): it uses its own `eslint-config-next`-based
-  ESLint config and `svgin-typescript-config/nextjs.json`, not `svgin-eslint-config`, since a Next.js
-  app needs framework-specific lint rules (`react-hooks`/`core-web-vitals`/`next/link`) that the
-  library preset doesn't provide, and its vitest setup needs the Vite React plugin (see
-  `svgin-vitest-config`'s own README).
-- **Coverage: 100% across every metric, in every package/app that has it enforced** (`packages/core`,
-  `packages/react`, `packages/element`, and `apps/tryit` as of [#16](https://github.com/akhiakl/svgin/issues/16),
-  via `svgin-vitest-config`'s default thresholds on both the base and `/next` presets) - matching
-  `akhiakl/svgin-react`'s own bar for this exact code. `apps/tryit`'s 100% is unit-tests-only, not
-  combined with its separate Playwright e2e/a11y suite (a deliberate choice - see #16's discussion):
-  logic worth unit testing gets a real unit test, the handful of files with no logic of their own
-  (e.g. the `*-client-loader.tsx` `next/dynamic` wrappers) get a narrow, documented
-  `coverage.exclude` entry instead of a low-value smoke test, and demo components that call the real
-  `svgin-react` get real integration-style tests against a stubbed `fetch` (see
-  `apps/tryit/test/helpers/mockSvgFetch.ts`) rather than mocking `svgin-react` itself away.
-  **Actually enforced in CI**, not just locally: a real gap Copilot's review of PR #29 caught -
-  `coverage.thresholds` is only evaluated when coverage is actually collected, and every package's
-  `test` script is plain `vitest run` (no `--coverage`) for a fast default dev/CI loop, so the
-  thresholds were silently never checked anywhere before this. Fixed with a separate `test:coverage`
-  script per package (`vitest run --coverage`) and turbo task, run by its own `Coverage thresholds`
-  CI job (Node 22 only - coverage correctness doesn't vary by Node version) and by `release.yml`'s
-  quality gate, both via `turbo run test:coverage`. `pnpm --filter <pkg> exec vitest run --coverage`
-  (or `test:coverage`) still works the same way locally.
-- **React 19's `use()` + `Suspense` doesn't reliably re-render after the awaited promise resolves,
-  under `@testing-library/react` + jsdom, without help.** Reproduced with a minimal `use()`/`Suspense`
-  case with no svgin-react involved at all, so it's an environment quirk, not a library bug: awaiting
-  the thrown promise (even wrapped in `act()`) resolves it, but the previously-suspended fiber isn't
-  re-rendered until something asks React to render again. Call the test's own `rerender()` with the
-  same element after awaiting - `use()` on an already-settled promise returns synchronously instead of
-  re-suspending, so this is cheap and doesn't need touching product code. See
-  `apps/tryit/test/suspense-client.test.tsx`'s `flushSuspense` helper.
-- **Bundle size budgets**: `packages/react` and `packages/element` (the two packages that actually
-  ship a `dist/`; `packages/core` never builds, see below, so has nothing to budget) each have a
-  `size` script (`node ../../scripts/check-bundle-size.mjs`) and their own `size-budget.json` -
-  per-entry-point gzip KB budgets checked against the built `dist/*.cjs` output (CJS, not ESM: the
-  worst case for size, since ESM is what bundlers tree-shake most aggressively). The checker script
-  itself lives at the repo root (`scripts/check-bundle-size.mjs`, a generalized port of
-  `akhiakl/svgin-react`'s own script) and is declared in `turbo.json`'s `globalDependencies` so a
-  change to it correctly invalidates every package's `size` task cache - a relative `inputs` path
-  reaching outside a package's own directory (e.g. `../../scripts/...`) does **not** get tracked by
-  Turborepo's hashing, silently. Bump a budget only with a PR comment explaining why (the JSON file
-  itself can't hold one) - see each package's own README for its current budget table.
-- **`noExternal` is required to actually bundle `svgin-core` into `packages/react`/`packages/element`'s
-  built output, not just omitting it from `external`.** tsup/esbuild auto-externalizes anything listed
-  in a package's own `dependencies` by default, regardless of what `external` itself lists -
-  `svgin-core` is a real `dependencies` entry (`workspace:*`) in both packages, so without
-  `noExternal: ['svgin-core']` in `tsup.config.ts`, the built `dist/*.cjs` silently kept a runtime
-  `require("svgin-core/...")` that would break for any real npm consumer (`svgin-core` is never
-  published). Caught during #15's parity check by actually grepping the built output for a lingering
-  `require("svgin-core`, not by trusting a comment's stated intent - worth that same direct check
-  again if this ever regresses.
-- **PR report**: `ci.yml`'s `pr-report` job posts/updates one sticky PR comment (marker
-  `<!-- svgin-pr-report -->`) with a per-package unit test pass/fail summary, bundle size table (head
-  vs base, `packages/react`/`packages/element` only), and coverage table (head vs base, all four
-  packages) - `scripts/pr-report.mjs`, a generalized port of `akhiakl/svgin-react`'s own script.
-  Checks out the PR's base ref into a sibling `base/` directory and rebuilds/retests it the same way
-  as `head/`, entirely best-effort (`continue-on-error`, every data source treated as "n/a" rather
-  than a failure) - a base branch that predates this tooling, or whose build fails outright, still
-  gets a report. E2E and axe-core a11y summaries are a deliberately separate, later phase - see #22.
-- **A real pnpm gotcha to know about: two physically different installs of the "same" version can
-  silently break ambient type augmentation.** `@testing-library/jest-dom`'s `import
-  '@testing-library/jest-dom/vitest'` augments a *specific resolved* `vitest` module's `Assertion`
-  interface. When pnpm resolves more than one physically distinct `vitest@5.0.0` (different
-  peer-hash variants, driven by differing `@vitest/coverage-v8`/`jsdom`/`@types/node` versions across
-  packages), a package whose own `vitest` differs from the copy `jest-dom` happened to peer-resolve
-  against gets `error TS2339: Property 'toHaveAttribute' does not exist` on every `expect(...)` call
-  - the augmentation is real, it's just attached to a different physical module than the one that
-  package's tests actually import. Fixed here by: pinning `vitest` to an exact version via
-  `pnpm-workspace.yaml`'s `overrides` (same mechanism as the `typescript` pin below), keeping
-  `@types/node` at the same version across every package (`apps/tryit` had drifted to an older pin
-  inherited from the source repo), and never adding `vitest` as a shared config package's own
-  dependency (see above). The same class of problem, for the same reason, is exactly why `typescript`
-  needs the `pnpm.overrides` pin below, not just a per-package exact version.
-- **`svgin-typescript-config`'s `rootDir` gotcha**: always set `rootDir` in the *consuming* package's
-  own `tsconfig.json` `compilerOptions`, never inside `svgin-typescript-config/base.json` itself -
-  relative path options in a base config resolve relative to *that base file's own location* when
-  inherited via `extends`, not the extending package's, so `rootDir` there resolves to a nonexistent
-  `packages/typescript-config/src` for every consumer and breaks `tsc` outright (`TS6059`) for all of
-  them at once. See that package's own README for the fuller version of this note.
-- **Dependency policy: keep everything on latest, with pinned exceptions where something else lacks
-  support.** Every package in this repo tracks the newest published version of its dependencies by
-  default; pin only when a real incompatibility forces it, and drop the pin once that's fixed
-  upstream. Two exceptions exist today:
-  - `typescript`, pinned to exactly `5.9.3` (not the current `7.0.x`) everywhere: TypeScript 7's new
-    API isn't yet supported by `tsup`'s DTS bundler (`rollup-plugin-dts` throws) or by
-    `typescript-eslint`. Enforced two ways: every package that declares `typescript` pins it to the
-    exact version (no `^`), **and** `pnpm-workspace.yaml`'s `overrides` forces `typescript: 5.9.3`
-    repo-wide, so peer-dependency-driven installs (from `tsup`, `commitlint`, `typescript-eslint`)
-    can't sneak in a second copy at a different version.
-  - `apps/tryit`'s `eslint`, pinned to `^9.9.1` (not the monorepo's usual `^10.x`): `eslint-plugin-react`
-    7.37.5 (pulled in transitively by `eslint-config-next`) throws
-    (`contextOrFilename.getFilename is not a function`) under ESLint 10's flat-config context when
-    linting non-component files like `e2e/*.spec.ts`. Only `apps/tryit` is affected; the library
-    packages' own `svgin-eslint-config` stays on ESLint 10 since it doesn't hit this code path.
-  Re-run `pnpm up --latest -r` periodically and try bumping each pinned dependency back to latest.
-- **Why `svgin-core` has no build step:** its `package.json` `exports` map points directly at raw
-  `.ts` source (`"./*": "./src/*.ts"`), not a `tsup`-built `dist/`. It's internal-only and never
-  published, so there's nothing a build buys it - and a build actively broke things: `tsup`'s
-  per-file bundling hoists code shared between entries into internal chunks (e.g.
-  `resolveSvgPromiseClient.ts`'s dependency on `sanitizeSvgStringClient.ts` got inlined via a shared
-  chunk rather than a real import of `svgin-core/sanitizeSvgStringClient`), so `vi.mock` on that
-  public subpath from `packages/react`'s tests had zero effect on the actual code path - the mocked
-  function and the one actually called were physically different bundled artifacts. Exporting raw
-  source instead restores the single-module-identity property `vi.mock` (and `@testing-library/
-  jest-dom`'s augmentation, see the pnpm gotcha above) depends on: `svgin-core/sanitizeSvgStringClient`
-  and `resolveSvgPromiseClient.ts`'s own `./sanitizeSvgStringClient` now resolve to the exact same
-  file. `packages/react`'s own `tsup` build is what actually bundles `svgin-core`'s source into its
-  output (not marked `external`, unlike `react`/`dompurify`/`jsdom`) - exactly like the original
-  monolithic `akhiakl/svgin-react`, where this was all one package's own source to begin with.
-- `packages/element` builds `<svg-in>` on **vanilla native Custom Elements**
-  (`class SvgIn extends HTMLElement`), not Lit, not Stencil. Zero runtime dependency, smallest bundle,
-  same tsup pipeline as the other two packages. See the `web-component-design` skill when implementing
-  it for real.
-- **Whenever `packages/element` changes its public API or behavior, update its documentation (README
-  and any docs-site page) in the same PR/build.** Don't let `<svg-in>`'s docs drift behind its
-  implementation the way a fast-moving new component easily can.
+- The root `package.json` only delegates to `turbo run <task>`. Task logic lives in each package.
+- Shared tooling config lives in workspace packages (`svgin-eslint-config`,
+  `svgin-typescript-config`, `svgin-tsup-config`, `svgin-vitest-config`), not root files, so
+  Turborepo tracks it. Each exports a factory (`defineTsupConfig(overrides)` and so on).
+  `apps/tryit` uses `eslint-config-next` and `svgin-vitest-config/next` instead of the library presets.
+- `packages/core` has no build: its `exports` map points at raw `.ts` source. A tsup build split
+  shared code into chunks, so `vi.mock('svgin-core/...')` no longer hit the code actually called.
+- Coverage is held at 100% on every metric in core, react, element and tryit. Thresholds only apply
+  when coverage runs (`test:coverage`, run by CI on Node 22 and by `release.yml`). Files with no logic
+  (the tryit `*-client-loader.tsx` wrappers, `.d.ts` files) are excluded explicitly.
+- Bundle budgets: `packages/react` and `packages/element` have a `size` script
+  (`scripts/check-bundle-size.mjs`) and a `size-budget.json` of gzip KB per `dist/*.cjs` entry.
+  The script is in `turbo.json` `globalDependencies`, because Turborepo ignores `inputs` outside a
+  package. Explain any budget bump in the PR.
+- `ci.yml`'s `pr-report` job posts one sticky comment (`<!-- svgin-pr-report -->`) with tests,
+  coverage and size, head vs a rebuilt base, plus E2E/a11y results. Every data source is best-effort.
+- CI caches `.turbo` through `actions/cache`, keyed on the PR head SHA (not the ephemeral merge
+  commit). No Vercel Remote Cache.
 
-## Correctness gotchas caught by review, worth watching for again
+## Dependency pins
 
-- **A `null`-vs-empty-string sentinel needs an explicit `=== null`/`!== null` check, never a truthy
-  check.** Several places track "no result yet" with `state: string | null` where `null` means
-  "loading/absent" and `''` is a real, valid, already-resolved value (sanitization stripping an SVG
-  down to nothing is expected and tested, not an error). A plain `if (!value)` treats both the same,
-  which either gets a component stuck on its loading placeholder forever or wrongly renders the
-  `fallback` prop for a legitimate empty result. Copilot's review of PR #17 caught exactly this twice
-  in the same PR (`SvgIn.client.tsx`'s loading-state check and `SvgInComponent.tsx`'s `fallback` gate)
-  before either was fixed with `=== null`. **Enforced automatically as of #23**:
-  `@typescript-eslint/strict-boolean-expressions` (`allowNullableBoolean: true`, everything else
-  disallowed) is on in `svgin-eslint-config/base.js`, type-checked via each consuming package's own
-  `languageOptions.parserOptions.projectService` + `tsconfigRootDir` (see that package's own README
-  for the exact snippet - same rootDir-per-consumer pattern as `svgin-typescript-config`'s own
-  gotcha). `apps/tryit` is the one exception, still out of scope (its own `eslint-config-next` setup,
-  not this package) - Playwright e2e/a11y coverage is judged to de-risk it enough there for now.
-- **Code exported from an environment-agnostic entry point (`svgin-react/core`, anything documented as
-  "works in either environment") must pick its environment-specific dependency at call time, never hard-
-  code one.** `preload.ts`'s `preloadSvg` hard-coded a dynamic `import('svgin-core/sanitizeServer')`
-  (jsdom-based) regardless of caller environment, which would fail or needlessly bundle jsdom when
-  called from a real browser. Fixed by branching on `typeof window !== 'undefined' && typeof
-  window.document !== 'undefined'` at call time and importing `sanitizeClient`/`sanitizeServer`
-  accordingly (mirrors how `client.ts`/`server.ts` each wire a fixed sanitizer for their own,
-  non-agnostic entry points - only a genuinely environment-agnostic entry point needs the runtime
-  branch). When adding new code to `core.ts`, ask whether it's really environment-agnostic or secretly
-  assumes one side.
-- **`import type` for type-only imports is enforced by lint, not just style**: `svgin-eslint-config`'s
-  base config sets `@typescript-eslint/consistent-type-imports: 'error'`, added after Copilot's review
-  of PR #17 caught a value import of a type-only binding (`import { SvgInProps } from './types'` where
-  `SvgInProps` was only ever used as a type) - a real bug, not a nitpick: it forces an unnecessary
-  runtime import of the module, which can pull in side effects or defeat tree-shaking. This rule is
-  purely syntactic (no `parserOptions.project` needed), so it runs in every package automatically.
-- **A later, unscoped flat-config object always wins over an earlier one for the same file - order
-  matters when disabling type-checked linting for config files.** `svgin-eslint-config/base.js` turns
-  type-checked rules back off for `**/*.mjs`/`**/*.config.*` (via `tseslint.configs.disableTypeChecked`,
-  which sets `parserOptions.projectService: false` for those files) so `eslint.config.mjs`/
-  `tsup.config.ts`/`vitest.config.mts` don't error with "not found by the project service" - but each
-  consuming package's own `parserOptions.projectService: true` overlay (see the README) must scope
-  itself to `files: ['src/**/*.ts', 'src/**/*.tsx']`, not a bare `**/*.ts`, or it re-enables
-  `projectService` for those same config files by simply appearing later in the array and breaks
-  parsing again. Same reasoning applies to stacking `/* v8 ignore */` and
-  `// eslint-disable-next-line` comments on the same line: use `/* v8 ignore start */`/`stop` around
-  both, not `next`/`next N`, once more than one directive-comment line sits between the marker and its
-  target - `next N` counts physical lines from the marker, not "the next N lines that aren't
-  comments," so an interposed comment line throws off the count.
-- **React's `act()` needs `await act(async () => { ... })` even when the callback has no `await` of
-  its own** - confirmed by breaking real tests trying to "fix" this per `require-await`'s advice.
-  `@typescript-eslint/require-await` is turned off for `**/*.test.{ts,tsx}` files in
-  `svgin-eslint-config/base.js` specifically because of this: it's a testing-library idiom, not
-  unnecessary async, and the rule can't tell the difference. A genuinely async-for-no-reason test body
-  (no `act()`/`waitFor()` involved at all) is still worth simplifying by hand - the rule just no longer
-  flags it automatically in test files.
+Track latest by default. Pin only for a real incompatibility, and drop the pin once it is fixed.
 
-## Release & publishing
+- `typescript` is exactly `5.9.3` everywhere, also forced by `pnpm-workspace.yaml` `overrides`.
+  TypeScript 7 breaks tsup's DTS bundler and typescript-eslint.
+- `vitest` is pinned through `overrides` too. Two physical copies break jest-dom's type augmentation
+  (`Property 'toHaveAttribute' does not exist`). Never make `vitest` a dependency of a config
+  package, and keep `@types/node` aligned across packages.
+- `apps/tryit` stays on ESLint 9: `eslint-plugin-react` 7.37.5 crashes under ESLint 10 on
+  non-component files.
 
-- Versioning/publishing uses **release-please** (manifest mode), matching `svgin-react`, the
-  single-package sibling repo. This was a deliberate choice over Changesets: this repo already
-  enforces Conventional Commits via commitlint, and release-please derives the version bump and
-  changelog entirely from commit messages, with no separate manual step. Changesets requires someone
-  to run `pnpm changeset` and pick a bump type on every PR that should ship; skipping that silently
-  means "no release," not "wrong version." Given "no manual version bumping" as the hard requirement,
-  that makes release-please the better fit here, even though Changesets is the more commonly
-  recommended default for monorepos in general.
-- `release-please-config.json`'s `packages` map lists only `packages/react` and `packages/element`.
-  `packages/core` and `apps/tryit` are deliberately absent, so they're never versioned or released. No
-  `"private"` flag check needed; simply not being in the map is the exclusion.
-- **Known limitation, by design, not yet worked around:** release-please determines which package(s) a
-  commit affects by which package directory the commit's changed files touch. A commit that touches
-  only `packages/core/**` won't by itself trigger a release for `packages/react` or `packages/element`,
-  even though both depend on it. Until this is automated, a PR that changes shared `svgin-core` logic
-  in a way that should ship should also touch something under `packages/react/**` or
-  `packages/element/**` (even a trivial version-bump-triggering change, or scope the commit
-  accordingly) so release-please picks it up.
-- See the `package-publishing` skill for npm publishing conventions.
-- **Actual first-publish history, for context on why things look the way they do:** both packages were
-  bootstrapped with a one-time manual `pnpm publish --access public` (not the automated OIDC pipeline -
-  npm requires a package to already exist before a trusted publisher can be configured against it).
-  - `svgin-element` (unscoped) was published first, at `0.0.0`, then found to be broken for every real
-    consumer: `svgin-core` was listed under `"dependencies"` in both `packages/element/package.json` and
-    `packages/react/package.json` as `"workspace:*"`, which pnpm/npm converts to a real version number
-    on publish - but `svgin-core` is never published, so `npm install` 404s trying to fetch it. Both
-    packages actually bundle `svgin-core`'s source straight into their built `dist/` via tsup's
-    `noExternal` (see each `tsup.config.ts`'s own comment), so it was never a real runtime dependency in
-    the first place - fixed by moving it to `devDependencies` in both (workspace-resolved for local
-    builds, simply not installed by a real consumer, like any other devDependency).
-  - The broken `svgin-element@0.0.0` was unpublished. npm blocks republishing the exact same
-    name+version for 24 hours after an unpublish (regardless of version bump - the block is on the
-    package name as a whole, confirmed by a `0.0.1` republish attempt hitting the same 403), so the plan
-    shifted mid-flight to the `@svgin` scope migration described above rather than waiting it out -
-    `@svgin/element` is a brand-new registry entry, unaffected by the unscoped name's block.
-  - Both `@svgin/react` and `@svgin/element` were verified before publishing with the full
-    `pnpm turbo run lint typecheck test test:coverage build size` suite, plus packing each into a real
-    tarball, installing it into a clean scratch project, and smoke-testing actual sanitize/render
-    behavior (SSR via `renderToStaticMarkup` and client via `createRoot` for `@svgin/react`; a real
-    fetch/sanitize/render cycle through the custom element for `@svgin/element`) - not just unit tests
-    in-repo, since a packaging bug like the one above doesn't show up in workspace-local testing at all
-    (everything resolves via workspace links there, never through what a real `npm install` would do).
-- **The automated pipeline itself needed two more fixes before its first real end-to-end run
-  (`1.1.0`/`0.1.0` -> republished as `1.1.1`/`0.1.1`) actually succeeded:**
-  - `release.yml`'s quality-gate step ran `pnpm turbo run ... <tasks>` with no `--filter`, so publishing
-    either package re-ran the **entire repo's** tasks, including `apps/tryit` - which isn't even in
-    either package's workspace dependency graph (it consumes both as real npm dependencies, not
-    `workspace:*`). A flaky `apps/tryit` unit test (a CI-load timeout, confirmed non-reproducing
-    locally) blocked two real npm publishes for a reason with zero connection to either published
-    package. Fixed by scoping the gate to `--filter="<released package>"`.
-  - `npm publish --provenance` cross-checks the published `package.json`'s `repository.url` against the
-    actual GitHub repo the OIDC attestation came from. Neither `packages/react/package.json` nor
-    `packages/element/package.json` ever had a `repository` field at all (the original bootstrap
-    publishes predate any real `--provenance` verification, so this was never exercised before), so the
-    very first release-triggered publish attempt failed with `E422 Error verifying sigstore provenance
-    bundle`. Fixed by adding a standard `repository` field (`type`, `url`, `directory`) to both.
-  - A related pitfall worth remembering: retrying a **failed** release via GitHub's "Re-run failed jobs"
-    replays the workflow file pinned to that run's tag/commit, not whatever's on `main` now - a fix
-    landed on `main` after the failure never applies to a re-run of the original run.
-    `release.yml` now also accepts `workflow_dispatch` (a `tag` input) specifically so a stuck release
-    can be retried with the current workflow logic while still building/publishing that tag's actual
-    package code - though in practice, once both fixes above landed, the clean path that was actually
-    used was letting release-please cut a fresh patch release off the fixed `main` rather than replaying
-    the broken tags at all.
-- **`apps/tryit` should always demo current behavior, not a stale prior version.** The dependency-bump
-  half of that is automated: `release.yml`'s publish job opens a PR bumping `apps/tryit`'s dependency to
-  the version just published (set to the literal version, not left to `pnpm update`'s semver-range
-  resolution - that's what got `@svgin/element` stuck at `^0.0.1`, since a `0.x` caret only ever matches
-  its own minor). That PR is never auto-merged, and it only covers the version bump - **whether the
-  release also needs new/updated demo content is still a human judgment call**, flagged as a checklist
-  line in the PR body (with that version's `CHANGELOG.md` entry alongside it for context) rather than
-  decided automatically. Treat an unopened bump PR after a release as a signal something's wrong with
-  the workflow, and a bump PR with no demo changes as a signal to check whether it should have some.
+## Gotchas
 
-## Reference skills installed in this repo
+- `null` means "no result yet"; `''` is a valid sanitized result. Compare with `=== null`, never
+  truthiness. Lint enforces this with `strict-boolean-expressions`.
+- Code in an environment-agnostic entry (`@svgin/react/core`) picks the client or server sanitizer
+  at call time, never by a hard-coded import.
+- `consistent-type-imports` is an error: a value import of a type pulls the module in at runtime.
+- In flat config, a later object wins. A package's `projectService: true` overlay must be scoped to
+  `src/**`, or it re-enables type-checking for config files.
+- `next N` in a v8/eslint directive counts physical lines. With several directive lines stacked, use
+  `/* v8 ignore start */` and `stop`.
+- `await act(async () => {})` is needed even without an inner await, so `require-await` is off in
+  tests.
+- Under RTL + jsdom, a settled `use()` promise isn't re-rendered on its own. Call `rerender()` with
+  the same element (see `apps/tryit/test/suspense-client.test.tsx`).
+- `rootDir` goes in each consumer's `tsconfig.json`, never in `svgin-typescript-config/base.json`:
+  relative options resolve against the base file.
 
-- `turborepo`: task pipeline conventions (package tasks, not root tasks).
-- `building-components`, `vercel-composition-patterns`: accessibility, composable API design,
-  npm-publish conventions for component work.
-- `vercel-react-best-practices`: `@svgin/react` targets RSC/Next.js compatibility; its
-  data-fetching/bundle-size rules apply once real code lands in `packages/react`.
-- `web-component-design`: for implementing `<svg-in>` in `packages/element`.
-- `xss-prevention`: svgin's core value proposition is safe SVG sanitization; applies directly to
-  `packages/core`'s fetch/sanitize logic.
-- `shared-monorepo-pnpm-workspaces`: matches this repo's exact shape (pnpm workspaces plus shared
-  internal package).
-- `package-publishing`: npm publishing conventions for when `@svgin/react`/`@svgin/element` go public.
-- `deploy-to-vercel`, `next-dev-loop`, `next-cache-components-adoption`,
-  `next-cache-components-optimizer`, `next-partial-prefetching-adoption`, `vercel-optimize`,
-  `vercel-react-view-transitions`: for `apps/tryit`'s real Next.js app (deployment, dev-loop
-  verification, caching/prefetching adoption, cost/perf optimization, and view-transition demos).
+## Release and publishing
+
+- release-please in manifest mode. Only `packages/react` and `packages/element` are in
+  `release-please-config.json`; versions and changelogs come from Conventional Commits.
+- Known limitation: a commit touching only `packages/core/**` releases nothing. If the change should
+  ship, also touch `packages/react/**` or `packages/element/**`.
+- `release.yml` publishes on a GitHub Release with `npm publish --provenance` over OIDC trusted
+  publishing (no token). The quality gate is filtered to the released package. Each published
+  `package.json` needs a `repository` field, or provenance verification fails.
+- "Re-run failed jobs" replays the old workflow file. Use the `workflow_dispatch` `tag` input, or cut
+  a fresh release, to retry with the current workflow.
+- After publishing, `release.yml` opens a PR bumping `apps/tryit` to the exact new version. Never
+  auto-merged: a human decides whether the release needs new demo content. A `0.x` caret range only
+  matches its own minor, so tryit ranges need explicit bumps.
+- Verify a package change that affects packaging by packing it and installing the tarball into a
+  scratch project. Workspace links hide packaging bugs.
+
+## Reference skills
+
+Third-party skills are listed in `skills-lock.json` and restored locally with `npx skills`. Useful
+here: `turborepo`, `shared-monorepo-pnpm-workspaces`, `package-publishing`, `web-component-design`,
+`xss-prevention`, `vercel-react-best-practices`, `building-components`.
