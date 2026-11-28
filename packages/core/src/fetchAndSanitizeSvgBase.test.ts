@@ -105,15 +105,7 @@ describe('createFetchAndSanitizeSvg', () => {
     });
 
     it('does not collide a custom sanitizeFn call with an explicit default-mode {} call on the outer memoization layer', async () => {
-        // Regression test for a real bug found in review: the setUniversalCache
-        // fallback used to key its own memoization with JSON.stringify(args).
-        // JSON.stringify drops object properties whose value is a function, so
-        // { sanitizeFn: someFn } and {} both stringified to the same "{}" - a
-        // custom-sanitizeFn call could collide with, and short-circuit to, an
-        // unrelated default-mode call's cached *promise*, before
-        // fetchAndSanitizeSvgImpl's own mode-aware svgCache logic ever ran.
-        // Passing an explicit {} (rather than omitting the options argument)
-        // reproduces the exact shape that used to collide.
+        // JSON.stringify drops functions, so { sanitizeFn } and {} used to share a key.
         const fetchMock = vi
             .fn()
             .mockResolvedValue({ ok: true, text: () => Promise.resolve('<svg>raw</svg>') });
@@ -155,11 +147,6 @@ describe('createFetchAndSanitizeSvg', () => {
     });
 
     it('treats a cached empty string as a real cache hit, not a miss', async () => {
-        // Regression test: getCachedSvg returns string | undefined, so the cache
-        // check must use `!== undefined` rather than truthiness. A svg that
-        // sanitizes down to an empty string (e.g. every child element was
-        // stripped) is a legitimate, cacheable result and should not force a
-        // refetch on every subsequent call.
         mockFetchOnce('<svg><script>evil()</script></svg>');
         const defaultSanitize = vi.fn().mockResolvedValue('');
         const { fetchAndSanitizeSvg } = createFetchAndSanitizeSvg(defaultSanitize);
@@ -286,13 +273,7 @@ describe('createFetchAndSanitizeSvg', () => {
     });
 
     it('serves a default-mode call from the shared svgCache even across two separate createFetchAndSanitizeSvg instances', async () => {
-        // A single instance's own outer memoization (setUniversalCache) would
-        // already short-circuit a second identical call before it ever
-        // re-checked the shared svgCache - this proves the shared-cache read
-        // itself, independent of that outer layer, using two separate
-        // instances (as client and server each get - see the module-scope
-        // comment on pendingByKey) that share the same underlying svgCache
-        // but have their own outer memoization.
+        // Two instances, so the outer memoization can't short-circuit the shared-cache read.
         mockFetchOnce('<svg>raw</svg>');
         const instanceA = createFetchAndSanitizeSvg(vi.fn().mockResolvedValue('<svg>clean</svg>'));
         const first = await instanceA.fetchAndSanitizeSvg('https://example.com/shared-cache.svg');
@@ -308,11 +289,6 @@ describe('createFetchAndSanitizeSvg', () => {
     });
 
     it('treats a caller-supplied fetchOptions.signal firing as that caller releasing its own share', () => {
-        // Design: a caller's own fetchOptions.signal is never combined
-        // directly into the shared fetch - it's treated as an early
-        // release instead, so the underlying fetch still only aborts once
-        // every sharer of this key is gone (single-caller case here: n
-        // reaches 0 immediately).
         let capturedSignal: AbortSignal | undefined;
         const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
             capturedSignal = init?.signal ?? undefined;
@@ -352,17 +328,7 @@ describe('createFetchAndSanitizeSvg', () => {
     });
 
     it('does not let one concurrent caller\'s own signal abort a fetch another concurrent caller still needs', () => {
-        // Regression test for a real bug found in review: two concurrent
-        // callers sharing the same in-flight request (same url and
-        // otherwise-identical fetchOptions - a signal has no enumerable own
-        // properties, see stableKey's documented caveat, so it doesn't
-        // affect the dedup key) can each supply their own distinct
-        // fetchOptions.signal. Combining only the *first* caller's signal
-        // directly into the shared fetch would make a later caller's own
-        // signal silently do nothing (order-dependent) - or, if combined
-        // too, would let any one caller unilaterally kill a fetch the other
-        // still needs. Both must instead only release that caller's own
-        // share: the underlying fetch keeps running until BOTH release.
+        // Signals don't affect the dedup key, so both callers share one fetch.
         let capturedSignal: AbortSignal | undefined;
         const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
             capturedSignal = init?.signal ?? undefined;
@@ -386,13 +352,6 @@ describe('createFetchAndSanitizeSvg', () => {
     });
 
     it('removes the caller-signal listener once the request settles normally', async () => {
-        // Regression test for a real bug found in review: the earlier
-        // signal-combining approach could leave an 'abort' listener
-        // attached to a caller-supplied fetchOptions.signal indefinitely if
-        // the request settled without it ever firing - a real leak risk
-        // since such a signal can be long-lived/reused across many
-        // requests. The current design (release-on-abort, not combine)
-        // must clean up the same way.
         mockFetchOnce('<svg>ok</svg>');
         const { fetchAndSanitizeSvg } = createFetchAndSanitizeSvg(vi.fn().mockResolvedValue('<svg>ok</svg>'));
         const callerController = new AbortController();
@@ -503,14 +462,6 @@ describe('createFetchAndSanitizeSvg', () => {
         });
 
         it('keeps bookkeeping fully separate between two createFetchAndSanitizeSvg instances', () => {
-            // Regression test for a real bug found in review: pendingByKey used
-            // to live at module scope, shared across every createFetchAndSanitizeSvg
-            // call (e.g. the client and server entry points, which could both be
-            // loaded in the same JS process by a framework that SSRs client
-            // components alongside RSC server components). Two instances using
-            // the exact same url/sanitizeFn/disableSanitization key must not
-            // share a PendingEntry - releasing one instance's share must never
-            // abort the other instance's independent underlying fetch.
             let signalA: AbortSignal | undefined;
             let signalB: AbortSignal | undefined;
             const fetchMockA = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {

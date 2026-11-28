@@ -11,24 +11,7 @@ export interface DemoGroup {
     demos: Demo[];
 }
 
-// Single source of truth for the demo route list, so the react/element
-// landing pages' card grids, the docs sidebar's "Try it" section, and the
-// mobile nav drawer can never drift out of sync with each other (the
-// sidebar previously hand-duplicated this list and silently fell behind
-// when native-props/shadow were added).
-//
-// Grouped by framework rather than one flat list: React and Element each
-// get their own landing page and their own sidebar/drawer subsection, since
-// they are two separate published packages with two separate demo sets, not
-// one flat pile of routes. DEMOS (flat, derived below) stays available for
-// consumers that only need "every demo route" regardless of grouping
-// (sitemap, the "is every route unique" test).
-//
-// Explicit Demo/DemoGroup interfaces rather than `as const`: a plain
-// `as const` here infers each group's `demos` array as its own distinct
-// tuple-of-literals type, which don't unify across groups - DEMO_GROUPS.
-// flatMap(...) then fails to typecheck against any consumer expecting one
-// common Demo shape (e.g. DemoGrid's props).
+// Single source for the demo routes (landing grids, sidebar, drawer, sitemap). Explicit types, not `as const`: per-group literal tuples don't unify for flatMap.
 export const DEMO_GROUPS: DemoGroup[] = [
     {
         id: 'react',

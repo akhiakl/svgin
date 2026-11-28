@@ -11,11 +11,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { SiteSidebar } from '@/components/site-sidebar';
 import { DEMO_GROUPS } from '@/lib/demos';
 
-// Two top-level destinations for the desktop-only horizontal nav (hidden
-// below sm - see the drawer below for mobile). "Try it" and "Docs" are the
-// only entries here on purpose: everything under them is reachable via the
-// react/element landing pages' card grids and the docs sidebar itself,
-// both driven by the same DEMO_GROUPS/DOCS_GROUPS data SiteSidebar renders.
+// Desktop only; the sidebar and landing pages reach everything else.
 const LINKS = [
     {
         href: '/',

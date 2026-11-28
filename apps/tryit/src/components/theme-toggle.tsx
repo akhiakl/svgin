@@ -9,11 +9,7 @@ const noopSubscribe = () => () => {};
 
 export function ThemeToggle() {
     const { resolvedTheme, setTheme } = useTheme();
-    // resolvedTheme is undefined until next-themes reads the stored/system
-    // preference on mount - rendering a fixed icon until then avoids a
-    // hydration mismatch between server and client markup. useSyncExternalStore
-    // with a snapshot that differs between server and client gives us that
-    // "has this mounted on the client yet" flag without setState-in-an-effect.
+    // resolvedTheme is undefined until mount; render a fixed icon until then to avoid a hydration mismatch.
     const mounted = useSyncExternalStore(
         noopSubscribe,
         () => true,

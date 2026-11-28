@@ -1,8 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
-// Side-effect import: registers the <svg-in> custom element (see
-// @svgin/element/src/index.ts's customElements.define call).
+// Registers <svg-in>.
 import '@svgin/element';
 import type { SvgInLoadEvent } from '@svgin/element';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +10,7 @@ export function ElementBasicClient() {
     const ref = useRef<HTMLElement>(null);
     const [status, setStatus] = useState('Loading...');
 
-    // useLayoutEffect, not useEffect: <svg-in> only yields a single
-    // microtask (see SvgIn.ts's #beginLoad) before it may resolve
-    // synchronously-relative-to-React - plain useEffect is scheduled after
-    // paint, which can run *after* that microtask has already settled and
-    // dispatched, missing the event entirely and leaving status stuck on
-    // "Loading...". useLayoutEffect runs synchronously right after the DOM
-    // commit, reliably attaching the listener in time.
+    // useLayoutEffect: <svg-in> can dispatch one microtask after commit, before a useEffect would attach.
     useLayoutEffect(() => {
         const el = ref.current;
         /* v8 ignore next */

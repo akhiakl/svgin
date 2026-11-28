@@ -4,9 +4,6 @@ import { SITE_NAME } from '@/lib/site';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-// Sitewide default - every route inherits this unless it defines its own
-// opengraph-image. One branded image is enough for a demo site this small;
-// per-route images would be real duplication for no reader-facing gain.
 export default function Image() {
     return new ImageResponse(
         (

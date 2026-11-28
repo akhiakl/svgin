@@ -2,10 +2,7 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 
-// This app uses eslint-config-next (framework-specific rules: react-hooks,
-// core-web-vitals, next/link, etc.) instead of the shared svgin-eslint-config
-// preset used by the library packages, since svgin-eslint-config has no
-// Next.js-specific rules and this app needs them.
+// eslint-config-next instead of the shared preset, which has no Next.js rules.
 const eslintConfig = defineConfig([
     ...nextVitals,
     ...nextTs,

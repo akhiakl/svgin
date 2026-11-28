@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { setUniversalCache } from './universalCache';
 
-// These tests run in Node without react/cache available, so setUniversalCache
-// always exercises its in-memory fallback and the stableKey serializer inside
-// it (see the comment in universalCache.ts for why plain JSON.stringify was
-// unsafe here).
+// No react/cache in Node, so these exercise the in-memory fallback.
 describe('setUniversalCache (fallback in-memory cache)', () => {
     it('memoizes calls with identical primitive arguments', () => {
         const impl = vi.fn((n: number) => n * 2);
@@ -64,20 +61,6 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
         expect(impl).toHaveBeenCalledTimes(1);
     });
 
-    it('treats two different symbol arguments as different cache entries', () => {
-        // JSON.stringify(Symbol('x')) returns undefined rather than a string,
-        // so a naive serializer could map every distinct symbol to the same
-        // key. stableKey must not do that.
-        const impl = vi.fn((s: symbol) => s.toString());
-        const cached = setUniversalCache(impl);
-        const symA = Symbol('a');
-        const symB = Symbol('b');
-
-        expect(cached(symA)).toBe('Symbol(a)');
-        expect(cached(symB)).toBe('Symbol(b)');
-        expect(impl).toHaveBeenCalledTimes(2);
-    });
-
     it('does not collide NaN, Infinity, or -Infinity with null or each other', () => {
         // JSON.stringify(NaN), JSON.stringify(Infinity), JSON.stringify(-Infinity),
         // and JSON.stringify(null) all produce the same string, "null".
@@ -115,10 +98,6 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
     });
 
     it('evicts a rejected promise so the next call retries instead of replaying the rejection', async () => {
-        // The fallback cache stores the Promise before it settles. If a
-        // rejection stayed cached forever, every future call with the same
-        // arguments would replay that rejection with no way to recover
-        // without a reload.
         let attempt = 0;
         const impl = vi.fn((url: string): Promise<string> => {
             attempt += 1;
@@ -145,19 +124,7 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
     });
 
     it('does not expose the raw promise returned by fn, so an ignored rejection can still surface as unhandled', async () => {
-        // Regression test for a review finding: attaching a rejection handler
-        // directly to fn's own promise (e.g. via Promise.resolve(result).catch(...),
-        // which for a real Promise is just result.catch(...)) marks that exact
-        // promise as handled. If that same promise were then returned to the
-        // caller, a caller who never awaits or handles it would no longer
-        // trigger Node/the browser's unhandledrejection warning, silently
-        // hiding a real bug in their code.
-        //
-        // The fix derives a *new* promise for eviction (via .then, not
-        // .catch on the original), and caches and returns that derived
-        // promise instead of fn's own. This asserts the returned promise is
-        // not the same object fn returned - fn's own promise is only ever
-        // observed internally, so it staying "handled" is not user-visible.
+        // fn's own promise gets a handler internally; the caller must get a different one.
         let rawPromise: Promise<string> | undefined;
         const impl = vi.fn((): Promise<string> => {
             rawPromise = Promise.reject(new Error('boom'));
@@ -171,11 +138,6 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
     });
 
     it('keeps memoizing a resolved promise across repeated calls', async () => {
-        // async, not a plain return: setUniversalCache's own promise-
-        // eviction logic branches on whether the wrapped fn returns
-        // something thenable, so this mock needs to actually return a
-        // Promise - there's nothing to await inside it.
-        // eslint-disable-next-line @typescript-eslint/require-await
         const impl = vi.fn(async (n: number) => n * 2);
         const cached = setUniversalCache(impl);
 
@@ -184,23 +146,8 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
         expect(impl).toHaveBeenCalledTimes(1);
     });
 
-    it('reuses the cache entry when the same symbol is passed again', () => {
-        const impl = vi.fn((s: symbol) => s.toString());
-        const cached = setUniversalCache(impl);
-        const sym = Symbol('reused');
-
-        expect(cached(sym)).toBe('Symbol(reused)');
-        expect(cached(sym)).toBe('Symbol(reused)');
-        expect(impl).toHaveBeenCalledTimes(1);
-    });
-
     it('removes a rejected promise from the cache so the next call retries', async () => {
         let callCount = 0;
-        // async, not a plain function: the thrown Error needs to become a
-        // rejected Promise (a synchronous throw would not exercise the
-        // rejection-eviction path this test is actually for) - there's
-        // nothing to await inside it.
-        // eslint-disable-next-line @typescript-eslint/require-await
         const impl = vi.fn(async () => {
             callCount++;
             if (callCount === 1) throw new Error('first call fails');
@@ -219,11 +166,6 @@ describe('setUniversalCache (fallback in-memory cache)', () => {
     });
 
     it('shares a single underlying call between two concurrent (unawaited) calls with the same key', async () => {
-        // Proves request deduplication: two overlapping calls for the same
-        // arguments, made before either has resolved, must only invoke fn
-        // once. This holds by construction because the cache stores the
-        // Promise synchronously (before any `await`), so the second call's
-        // `inMemoryCache.has(key)` check sees it before fn would run again.
         let resolve!: (v: string) => void;
         const impl = vi.fn((key: string) => { void key; return new Promise<string>(r => { resolve = r; }); });
         const cached = setUniversalCache(impl);

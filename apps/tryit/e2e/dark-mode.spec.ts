@@ -1,16 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// Regression coverage for a real bug: dark mode tokens in globals.css used
-// to be defined only under a `.dark` class selector that nothing in the app
-// ever applied, so a visitor with a dark system theme still got the light
-// page. next-themes now applies that class - by default it follows the
-// system preference, and the toggle in SiteNav lets a visitor override it
-// (persisted in localStorage).
-//
-// getComputedStyle normalizes the --background custom property to a
-// lab(L% a b) string regardless of how it was declared (oklch() here) -
-// this reads the lightness percentage out of that rather than trying to
-// match the source oklch() text, which the browser doesn't preserve.
+// getComputedStyle reports --background as lab(), so compare lightness instead of the oklch() source.
 async function backgroundLightness(page: import('@playwright/test').Page): Promise<number> {
     const raw = await page.evaluate(() =>
         getComputedStyle(document.documentElement).getPropertyValue('--background').trim()

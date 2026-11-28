@@ -1,14 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('code block copy button copies the shown code to the clipboard', async ({ page, context, browserName }) => {
-    // clipboard-read/clipboard-write are a Chromium-specific permission
-    // model - Firefox and WebKit reject grantPermissions for them outright.
-    // Their automated contexts still allow the copy button's own
-    // navigator.clipboard.writeText() call to succeed without an explicit
-    // grant, so the "Copied" state below (which CodeBlock only shows once
-    // that write has resolved without throwing) is real cross-browser
-    // proof the copy happened - reading the clipboard back to check its
-    // exact contents is the extra assertion only Chromium can make.
+    // Only Chromium supports clipboard permissions; elsewhere the "Copied" state is the proof.
     if (browserName === 'chromium') {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     }
@@ -26,10 +19,7 @@ test('code block copy button copies the shown code to the clipboard', async ({ p
 test('the installation page switches package manager commands via tabs', async ({ page }) => {
     await page.goto('/docs/react/installation');
 
-    // CodeBlock (Bright) renders one <pre> per color scheme and toggles
-    // which is shown with CSS, so each command's text exists twice in the
-    // DOM - `.and(page.locator(':visible'))` narrows back down to the one
-    // actually on screen instead of tripping Playwright's strict mode.
+    // Bright renders one <pre> per theme, so pick the visible one.
     const visibleCommand = (text: string) => page.getByText(text).and(page.locator(':visible'));
 
     const tabs = page.getByRole('tablist', { name: 'Package manager' }).first();

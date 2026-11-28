@@ -36,11 +36,7 @@ class ErrorBoundary extends React.Component<
 describe('SvgInSuspense (client component)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // resolvePromise pins one promise per (src, svg, sanitizeFn,
-        // disableSanitization) key at module scope (see its own comment) -
-        // without this, tests that reuse the same src ("/missing.svg" etc.)
-        // would get an earlier test's stale (already-settled) promise
-        // instead of the fresh one this test's mock sets up.
+        // Promises are pinned per key at module scope.
         clearSuspensePromiseCache();
     });
 
@@ -91,17 +87,7 @@ describe('SvgInSuspense (client component)', () => {
     });
 
     it('does not re-fetch on every render of a persistently failing src (regression: infinite retry loop)', async () => {
-        // Regression test for a real bug: fetchAndSanitizeSvg's own cache
-        // (setUniversalCache) evicts a rejected entry as soon as it settles,
-        // so that calling it fresh on every render - as this component does
-        // - used to hand React a brand-new pending promise on each of its
-        // own retry-on-settle re-renders, which rejected again, evicted
-        // again, and so on forever (confirmed against a real fetch mock:
-        // 85+ calls/second, never reaching the error boundary). resolvePromise
-        // now pins one promise per key independently of that eviction - so
-        // even though this mock returns a *new* rejected promise on every
-        // call (simulating the evicted-cache scenario exactly), it should
-        // still only be called once.
+        // A new rejected promise per call simulates the shared cache evicting rejections.
         let callCount = 0;
         mockFetch.mockImplementation(() => Promise.reject(new Error(`boom ${callCount++}`)));
 
@@ -142,10 +128,6 @@ describe('SvgInSuspense (client component)', () => {
     });
 
     it('calls onError only once, even if the component re-renders while the same promise is still pending', async () => {
-        // Regression test: promise.catch(onError) used to be attached on
-        // every render, so a re-render before settlement (e.g. a parent
-        // re-rendering for an unrelated reason) attached a second handler,
-        // and the eventual rejection called onError twice.
         let reject!: (e: Error) => void;
         mockFetch.mockReturnValue(new Promise((_r, rj) => { reject = rj; }));
         const onError = vi.fn();
@@ -195,11 +177,6 @@ describe('SvgInSuspense (client component)', () => {
     });
 
     it('does not call onMount when the resolved value renders no element (e.g. an empty-string result)', async () => {
-        // An empty-string sanitized result is a legitimate value (see the
-        // "treats a cached empty string as a real cache hit" test elsewhere)
-        // - SvgInComponent's `if (!svg) return fallback` treats it the same
-        // as null, rendering nothing, so svgRef never attaches to a DOM node
-        // and onMount must not be called with it.
         mockFetch.mockResolvedValue('');
         const onMount = vi.fn();
 
@@ -212,10 +189,6 @@ describe('SvgInSuspense (client component)', () => {
             ));
         });
 
-        // Wait for the Suspense fallback to actually be replaced (the
-        // promise resolved and the boundary committed its real render -
-        // nothing, in this case) rather than a fixed delay, so this doesn't
-        // depend on how fast that happens to settle.
         await waitFor(() => expect(container.textContent).not.toBe('loading...'));
         expect(onMount).not.toHaveBeenCalled();
     });
@@ -238,10 +211,6 @@ describe('SvgInSuspense (client component)', () => {
     });
 
     it('reuses one cache entry for the same svg regardless of an accompanying (ignored) src', async () => {
-        // Regression test: the cache key used to include `src` unconditionally,
-        // even though svgProp takes precedence and src is never read when it's
-        // set - so two renders with the same svg but a different (irrelevant)
-        // src used to sanitize twice instead of sharing one cache entry.
         mockSanitizeString.mockResolvedValue('<svg><circle/></svg>');
 
         await act(async () => {

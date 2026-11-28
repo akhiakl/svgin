@@ -10,11 +10,7 @@ import { SiteSidebar } from '@/components/site-sidebar';
 import { DOCS_LINKS } from '@/lib/docs-nav';
 import { DEMOS } from '@/lib/demos';
 
-// DOCS_LINKS/DEMOS link labels aren't unique across groups (React and
-// Element both have an "Installation"/"API reference"/"Lazy loading"/
-// "Inspector"), so lookups here go by href (always unique) via a plain CSS
-// attribute selector rather than getByRole's name matching, which would
-// throw on an ambiguous label.
+// Labels repeat across groups, so match by href.
 function linkByHref(href: string) {
     return document.querySelector(`a[href="${href}"]`) as HTMLAnchorElement;
 }

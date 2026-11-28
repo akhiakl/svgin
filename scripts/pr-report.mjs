@@ -1,24 +1,6 @@
 #!/usr/bin/env node
-// Builds the markdown body for the "PR size & coverage report" sticky
-// comment (see .github/workflows/ci.yml, job pr-report). Ported from
-// akhiakl/svgin-react's own scripts/pr-report.mjs (same diff-arrow
-// formatting, same head-vs-base comparison idea), generalized from that
-// single-package repo's report to a proper superset for this monorepo: one
-// section per package/app instead of one, a unit-test pass/fail summary the
-// original didn't have, and a per-browser E2E/axe-core accessibility
-// summary for apps/tryit (parsed from Playwright's own --reporter=json
-// output, best-effort - see e2eSection()/countPlaywrightSpecs() below for
-// why that parsing is defensive rather than assumed correct).
-//
-// Usage: node scripts/pr-report.mjs <reports-dir>
-// Reads <reports-dir>/{head,base}-{coverage,size,test}-<packageId>.json for
-// each package below, plus <reports-dir>/head-e2e-<browser>.json (one of
-// E2E_BROWSERS below, apps/tryit's own Playwright --reporter=json output -
-// head only, no base-branch comparison for E2E/a11y). Any file that's
-// missing or unreadable is treated as "no data" for that side/package, not
-// a failure - a package that predates this tooling, or whose build failed
-// on the base branch, still gets a report, just with that cell/section
-// rendered as n/a.
+// Builds the sticky PR report. Usage: node scripts/pr-report.mjs <reports-dir>
+// Reads {head,base}-{coverage,size,test}-<id>.json and head-e2e-<browser>.json; missing files show as n/a.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -28,11 +10,7 @@ if (!reportsDir) {
     process.exit(1);
 }
 
-// The fixed set of packages/apps this report covers. Not auto-discovered
-// from the workspace: this monorepo's package list changes rarely enough
-// that a hardcoded, readable list here is worth more than the complexity of
-// discovering it dynamically (and a new package not yet added here just
-// silently isn't reported, rather than crashing the job).
+// Hardcoded on purpose; a package missing here is just not reported.
 const PACKAGES = [
     { id: 'core', label: 'svgin-core', hasSize: false },
     { id: 'react', label: '@svgin/react', hasSize: true },
@@ -119,15 +97,7 @@ function sizeSection(pkg, headSize, baseSize) {
 
 const E2E_BROWSERS = ['chromium', 'firefox', 'webkit'];
 
-// Best-effort, defensive traversal of Playwright's own JSON reporter output
-// (--reporter=json, see playwright.config.ts) - deliberately wrapped so any
-// mismatch between this parsing and Playwright's actual (undocumented in
-// detail beyond what a real local run confirmed) JSON shape degrades to
-// "n/a" rather than crashing the whole report. Recursively walks `suites`
-// for specs matching `fileMatch`, counting each spec's own `ok` boolean
-// (Playwright's own "did this spec succeed, accounting for retries"
-// verdict - verified directly against a real --reporter=json run rather
-// than assumed) as either passed or not.
+// Defensive: any mismatch with Playwright's JSON shape degrades to n/a. Counts each spec's `ok`.
 function countPlaywrightSpecs(report, fileMatch) {
     let passed = 0;
     let failed = 0;
@@ -183,11 +153,7 @@ function e2eSection(reportsByBrowser) {
     if (!anyData) {
         return '**E2E & accessibility (apps/tryit)**: _skipped - apps/tryit unchanged, or no results found._';
     }
-    // A dedicated a11y footnote, not folded into the general e2e
-    // pass/fail one: a browser with zero a11y results found (a parsing
-    // mismatch, or the spec not running for some reason) must not be
-    // reported as "scanned, zero violations" - that would be a false
-    // positive an actual accessibility regression could hide behind.
+    // Separate footnote so zero a11y results never reads as zero violations.
     const a11yFootnote = !anyA11yData
         ? '_No accessibility (axe-core) results found for any browser - see the raw JSON reporter output rather than trusting this summary._'
         : anyA11yFailure
@@ -262,7 +228,7 @@ const lines = [
     '',
     e2eText,
     '',
-    '<sub>Base branch numbers come from rebuilding its current head in this same workflow run. 🟢/🔴 mark whether this PR made a number better or worse; missing data (base predates a script, a build failed) is shown as n/a rather than counted either way. E2E/accessibility results have no base-branch comparison (Playwright is not re-run against base) - head-only pass/fail, per browser.</sub>',
+    '<sub>🟢/🔴 compare against the base branch rebuilt in this run; n/a means no data. E2E results are head-only.</sub>',
 ].join('\n');
 
 console.log(lines);

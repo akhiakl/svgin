@@ -1,7 +1,5 @@
 import { sanitizeSvg } from './sanitizeServer';
 import { createFetchAndSanitizeSvg } from './fetchAndSanitizeSvgBase';
 
-// releaseFetchAndSanitizeSvg is deliberately not re-exported here: the
-// server component has no unmount/cleanup lifecycle to call it from (see
-// SvgIn.server.tsx), only the client component needs it.
+// No release export: server components have no unmount.
 export const { fetchAndSanitizeSvg } = createFetchAndSanitizeSvg(sanitizeSvg);

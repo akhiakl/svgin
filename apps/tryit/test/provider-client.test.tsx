@@ -12,10 +12,7 @@ describe('ProviderClient', () => {
         stubSvgFetch();
         render(<ProviderClient />);
 
-        // Both cards fetch the same nonexistent URL and fail - the default
-        // (no className/fallback) placeholder is an aria-hidden empty <svg>,
-        // not visible text, so its presence is asserted by absence of any
-        // fallback text in that card plus the explicit caption below it.
+        // The default placeholder is an empty aria-hidden <svg>, so assert via the caption.
         expect(screen.getByText('Default placeholder on error, no styling.')).toBeInTheDocument();
         expect(await screen.findByText('Custom provider fallback ✕')).toBeInTheDocument();
     });

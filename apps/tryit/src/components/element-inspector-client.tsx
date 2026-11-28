@@ -3,9 +3,7 @@
 import '@svgin/element';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-// Same payload as the React Inspector demo's "Malicious" example
-// (src/lib/examples.ts), so both packages' Inspector demos show the exact
-// same attack surface being handled.
+// Same payload as the React Inspector's "Malicious" example.
 const MALICIOUS_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" onload="alert('xss')">
   <script>alert('xss via script tag')</script>
   <rect width="100" height="100" fill="red" onclick="alert('xss via onclick')" />

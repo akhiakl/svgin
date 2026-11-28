@@ -1,7 +1,4 @@
-// Rough, purely visual diff between the raw SVG markup a user pasted and the
-// markup DOMPurify produced from it - counts removed tags/attributes by
-// regex rather than parsing, since this only needs to drive a "here's roughly
-// what changed" summary, not a byte-accurate diff.
+// Rough regex counts of removed tags/attributes, for the summary only.
 const TAG_RE = /<([a-zA-Z][a-zA-Z0-9:-]*)/g;
 const ATTR_RE = /\s([a-zA-Z_:][a-zA-Z0-9_:.-]*)\s*=/g;
 

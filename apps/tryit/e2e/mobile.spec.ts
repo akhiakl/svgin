@@ -1,14 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// Regression coverage for a real bug: the Inspector page's example buttons
-// used to sit in a single non-wrapping flex row alongside the card title,
-// pushing the page wider than the viewport on narrow screens (the
-// "Malicious" button got clipped off the right edge). Checked generically
-// across every route so a similar overflow elsewhere doesn't go unnoticed.
-// A plain narrow viewport rather than a full device descriptor (isMobile,
-// touch emulation) - the latter needs browser sandbox flags this repo's own
-// dev environment doesn't always have, and viewport width is all this check
-// needs.
+// Checks every route for horizontal overflow. A plain viewport, since device emulation needs sandbox flags.
 test.use({ viewport: { width: 390, height: 844 } });
 
 const ROUTES = [
@@ -49,15 +41,7 @@ for (const route of ROUTES) {
 }
 
 test('inspector sanitized markup does not overflow the viewport once expanded', async ({ page }) => {
-    // Regression coverage for a real bug: the grid wrapping the two
-    // Inspector cards had no explicit grid-cols-1 at the base breakpoint, so
-    // the browser fell back to implicit "auto" track sizing, which respects
-    // a child's min-content width. The sanitized-markup <pre> is
-    // white-space: pre (unbreakable), so once its <details> was expanded it
-    // blew the track - and the whole page - wider than the viewport, which
-    // is what makes a mobile browser render the page zoomed out to fit.
-    // The ROUTES check above can't catch this: it measures overflow before
-    // that <details> is opened, when the <pre> contributes no width at all.
+    // An open <details> with a white-space: pre <pre> must not widen the grid; the route check runs before it opens.
     await page.goto('/inspector', { waitUntil: 'load' });
     await page.getByRole('button', { name: 'Sanitize' }).click();
     await page.getByText('Sanitized markup').click();
@@ -80,9 +64,7 @@ test('mobile nav sheet reuses the same SiteSidebar (groups open by default) and 
     await expect(sheet.getByRole('link', { name: 'svgin / try it' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Introduction' })).toBeVisible();
 
-    // Same SiteSidebar as the (now lg-only) inline usage - groups start
-    // open, not collapsed, so every demo link is reachable without an
-    // extra tap.
+    // Groups start open, so every link is reachable without a tap.
     for (const path of ['/inspector', '/rsc', '/suspense', '/provider', '/lazy', '/native-props', '/shadow']) {
         await expect(sheet.locator(`a[href="${path}"]`)).toBeVisible();
     }

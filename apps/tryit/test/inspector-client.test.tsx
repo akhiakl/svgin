@@ -3,9 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { InspectorClient } from '@/components/inspector-client';
 
-// These exercise the real @svgin/react/client component and real DOMPurify
-// under jsdom - no mocking - so a regression in either shows up here, not
-// just in the diff() logic's own unit tests.
+// Real @svgin/react/client and DOMPurify, no mocks.
 describe('InspectorClient', () => {
     it('renders the clean example and reports nothing removed', async () => {
         render(<InspectorClient />);

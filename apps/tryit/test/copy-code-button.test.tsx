@@ -3,10 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CopyCodeButton } from '@/components/copy-code-button';
 
-// userEvent.setup() installs its own navigator.clipboard stub (jsdom itself
-// has none) - spy on *that* object's writeText rather than replacing
-// navigator/navigator.clipboard wholesale, which userEvent.setup() would
-// silently clobber if called afterwards anyway.
+// Spy on userEvent's own clipboard stub; replacing navigator.clipboard would be clobbered by setup().
 function setupWithClipboardSpy() {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const writeText = vi.spyOn(navigator.clipboard, 'writeText');

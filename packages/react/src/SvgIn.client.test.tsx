@@ -63,12 +63,7 @@ describe('SvgIn (client component)', () => {
     });
 
     it('leaves the loading placeholder once resolved, even when sanitization strips everything to an empty string', async () => {
-        // Regression test: `svg` state uses `null`, not `""`, as the loading
-        // sentinel. An empty string is a valid, already-resolved sanitized
-        // result (see fetchAndSanitizeSvgBase.test.ts), not "still loading" -
-        // mistaking the two would keep re-rendering the aria-hidden
-        // placeholder forever instead of ever reaching SvgInComponent (which
-        // renders nothing for an empty svg, same as its `fallback` default).
+        // "" is a resolved result; null is the loading sentinel.
         mockFetch.mockResolvedValue('');
         const { container } = render(<SvgIn src="/empty.svg" />);
         await waitFor(() => expect(container.querySelector('svg')).toBeNull());
@@ -253,12 +248,7 @@ describe('SvgIn (client component)', () => {
     });
 
     it('does not call release when both svg and src are given (svg takes precedence, fetchAndSanitizeSvg is never called)', () => {
-        // Regression test for a real bug found in review: `svg` takes
-        // precedence over `src` (see resolveSvgPromise), so this instance
-        // never acquires a share of any in-flight fetch for `src`.
-        // Releasing anyway on unmount would decrement (and potentially
-        // abort) an unrelated fetch some other mounted <SvgIn src={...} />
-        // instance is still relying on.
+        // Releasing here would abort another instance's fetch of the same src.
         mockSanitizeString.mockReturnValue(new Promise(() => {}));
         const { unmount } = render(<SvgIn svg="<svg><path/></svg>" src="/a.svg" />);
         expect(mockFetch).not.toHaveBeenCalled();
@@ -501,10 +491,6 @@ describe('SvgIn (client component)', () => {
         });
 
         it('loads eagerly (ignores lazy) when loadingFallback is set, instead of deadlocking', async () => {
-            // Regression test: a custom loadingFallback is an arbitrary
-            // ReactNode with no guaranteed DOM node to observe, so deferring
-            // in that case used to mean the IntersectionObserver never
-            // attached to anything and the fetch never started.
             mockFetch.mockResolvedValue('<svg><circle/></svg>');
             const { container } = render(
                 <SvgIn src="/a.svg" loading="lazy" loadingFallback={<span>spinner</span>} />

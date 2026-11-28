@@ -1,65 +1,9 @@
 name: CI
 
-# Adapted from akhiakl/svgin-react's ci.yml for this Turborepo monorepo: every
-# `pnpm run <task>` becomes `pnpm turbo run <task>` so Turborepo's caching and
-# package graph apply. `scripts/check-bundle-size.mjs` (see the verify job's
-# `build` check step, which runs both `pnpm turbo run build` and `size`) is a
-# generalized port of svgin-react's own script, reading each package's own
-# size-budget.json instead of a hard-coded object - see #20. The pr-report
-# job (scripts/pr-report.mjs, a sticky PR
-# comment comparing head vs base) is likewise a generalized port of
-# svgin-react's own job - one section per package instead of one, a unit
-# test pass/fail summary the original didn't have, and (see #22) a
-# per-browser E2E/axe-core accessibility summary for apps/tryit, parsed
-# best-effort from the tryit-e2e job's own JSON reporter artifacts (needs:
-# tryit-e2e, but runs even when that job is skipped - apps/tryit unchanged -
-# via the explicit always()/result check on this job's own `if:`). The
-# tryit-e2e job is ported from akhiakl/svgin-react-tryit's own ci.yml,
-# scoped to apps/tryit via `pnpm --filter svgin-tryit` since it's the only
-# workspace member with Playwright e2e tests.
-#
-# quality-gate posts a second, separate sticky PR comment from pr-report:
-# pr-report re-runs vitest itself to compute pass/fail counts and
-# coverage/size deltas, but never shows *why* lint, typecheck, or a real CI
-# gate check failed - that still meant opening the Actions run. The verify
-# job below runs lint/typecheck/test/coverage/build as sequential,
-# continue-on-error steps via akhiakl/ci-workflows@v1 (see that repo's
-# README), each teeing its own command output to a log and recording its
-# outcome - quality-gate (akhiakl/ci-workflows/gate@v1) downloads those
-# artifacts and posts a markdown summary: small failures shown inline, a
-# failure touching many files or many lines collapsed behind <details> so
-# one noisy check doesn't bury the rest of the comment. This replaced an
-# earlier, per-job version of this same idea (5 separate lint/typecheck/
-# test/coverage/build jobs, each uploading its own quality-log-* artifact)
-# once that logic + shopify-store-bridge's equivalent were converged into
-# the shared ci-workflows repo - see its README for why a composite action
-# over a reusable workflow.
-#
-# --affected on pull_request: only runs a task for packages that actually
-# changed since the PR's base branch (plus anything that depends on them, via
-# Turborepo's own package graph - correctly picks up e.g. a packages/core
-# change also affecting packages/react/packages/element, unlike a plain
-# path-based workflow trigger). Falls back to running everything if it can't
-# compute the merge base (see the turborepo skill's ci/RULE.md), so this is
-# safe, not just faster. Push to main always runs the full, unfiltered set as
-# a safety net. fetch-depth: 0 on every checkout here is required for
-# --affected to find the merge base at all.
-#
-# Turbo cache: the verify job restores/saves its workspace's local `.turbo`
-# directories via actions/cache, keyed per Node version and per commit SHA,
-# falling back to the closest previous cache for that Node version when the
-# exact SHA isn't cached (a PR's first run, or a new commit on top of one
-# already built). Turbo's own content hashing (per task) still decides real
-# cache hits/misses inside that restored directory - this only avoids
-# starting from a cold, empty `.turbo` on every single CI run. Deliberately
-# the GitHub Actions cache API, not Vercel Remote Caching (no TURBO_TOKEN/
-# TURBO_TEAM secret to provision) - see #24 if cross-fork or cross-repo
-# sharing is ever needed, which this repo-scoped cache doesn't provide. Keys
-# use the PR head SHA on pull_request events (`github.sha` there is the
-# synthetic, ephemeral merge commit, which changes whenever the base branch
-# moves - keying on it would throw away a cache on every base-branch update
-# for no reason) and fall back to `github.sha` itself on push, where it
-# already is the real commit.
+# --affected on PRs runs only changed packages and their dependents (needs fetch-depth: 0).
+# Push to main runs everything. The Turbo cache is keyed on the PR head SHA, because
+# github.sha on a PR is an ephemeral merge commit. verify runs each check through
+# akhiakl/ci-workflows; quality-gate and pr-report post sticky PR comments.
 
 on:
   pull_request:
@@ -124,11 +68,7 @@ jobs:
           name: test
           run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
-      # Only Node 22 additionally collects coverage - package
-      # coverage.thresholds (see svgin-vitest-config) are only evaluated when
-      # coverage is actually collected; coverage correctness doesn't vary by
-      # Node version, so running it on both legs would just double the cost
-      # for no signal.
+      # Coverage only on Node 22; it doesn't vary by Node version.
       - uses: akhiakl/ci-workflows@v1
         if: matrix.node-version == 22
         id: coverage
@@ -180,19 +120,13 @@ jobs:
 
   quality-gate:
     name: Quality Gate
-    # Doesn't gate on verify succeeding (if: always()) - the whole point is
-    # to report on a *failure*, which would otherwise make this job skip by
-    # default (needs' implicit condition is success()). It never re-runs
-    # anything itself, just reads verify's already-computed result and its
-    # uploaded logs.
+    # always(): it exists to report failures.
     needs: [verify]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Both needed simultaneously to post/update the sticky comment - see
-      # the pr-report job's own permissions block below for how that was
-      # confirmed (GitHub's 403 response header named both as required).
+      # Both are required to post the sticky comment.
       issues: write
       pull-requests: write
     steps:
@@ -241,14 +175,7 @@ jobs:
   tryit-e2e:
     name: apps/tryit E2E (${{ matrix.browser }})
     needs: [tryit-changed]
-    # Always runs on push to main (safety net, same as the other jobs above);
-    # on a PR, only when apps/tryit itself changed - it depends on the real
-    # published svgin-react, not the workspace one, so a packages/react/core
-    # change can never affect what this job actually exercises. @svgin/element
-    # is the one exception (still workspace:*, see #21/#19), which is why the
-    # build step below exists at all - unlike svgin-react, there's no
-    # published dist to install; packages/element's own dist has to be built
-    # here first, or Next's build fails with "Can't resolve '@svgin/element'".
+    # On a PR, only when apps/tryit changed: it uses the published packages, not the workspace ones.
     if: github.event_name != 'pull_request' || needs.tryit-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
     strategy:
@@ -263,7 +190,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @svgin/element build
       - run: pnpm --filter svgin-tryit exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm --filter svgin-tryit exec playwright test --project=${{ matrix.browser }}
         env:
@@ -278,13 +204,7 @@ jobs:
   pr-report:
     name: PR report (tests, coverage, size)
     needs: [tryit-changed, tryit-e2e]
-    # needs: [..., tryit-e2e] so the E2E/a11y artifact download below can't
-    # race its upload - but tryit-e2e's own `if:` skips it whenever
-    # apps/tryit didn't change, and a skipped dependency makes a dependent
-    # job skip too by default (its implicit condition is success(), which
-    # does not count "skipped" as success) - always() plus an explicit
-    # result check is the standard workaround for "run unless it actually
-    # failed".
+    # always() plus a result check: a skipped tryit-e2e must not skip this job.
     if: >
       always() &&
       github.event_name == 'pull_request' &&
@@ -292,14 +212,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Both needed simultaneously, confirmed by GitHub's own 403 response
-      # header (`x-accepted-github-permissions: issues=write;
-      # pull_requests=write`) on a real run of this job after a previous fix
-      # here mistakenly kept only issues: write, dropping pull-requests:
-      # write entirely instead of adding issues: write alongside it - the
-      # actual root cause of every prior "PR report can't post its comment"
-      # investigation in this repo's history, not the repo-wide default
-      # workflow permissions setting that got blamed at the time.
+      # Both are required to post the sticky comment.
       issues: write
       pull-requests: write
     steps:
@@ -314,10 +227,7 @@ jobs:
           path: base
       - uses: pnpm/action-setup@v6
         with:
-          # PR head/base are checked out into head/ and base/ subdirectories
-          # (not the workspace root), so pnpm/action-setup has no root
-          # package.json to read the "packageManager" field from unless told
-          # where to look.
+          # Head and base are checked out in subdirectories.
           package_json_file: head/package.json
       - uses: actions/setup-node@v7
         with:
@@ -344,11 +254,7 @@ jobs:
             fi
           done
 
-      # The base branch may be missing these scripts (predates this
-      # tooling), have an older lockfile, or fail its own build entirely -
-      # none of that should fail this PR's CI. Every step here is
-      # best-effort; pr-report.mjs treats missing data as "n/a", not a
-      # failure.
+      # Best-effort: the base may predate this tooling or fail to build; missing data shows as n/a.
       - name: Collect data from PR base (best effort)
         working-directory: base
         continue-on-error: true
@@ -367,10 +273,7 @@ jobs:
           done
 
       - name: Download E2E/a11y results (best effort)
-        # Entirely best-effort: no artifacts exist at all when tryit-e2e was
-        # skipped (apps/tryit unchanged), and continue-on-error covers any
-        # other download hiccup - pr-report.mjs already treats a missing
-        # head-e2e-<browser>.json (see the next step) as "n/a", not a failure.
+        # Best-effort: no artifacts exist when tryit-e2e was skipped.
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -391,11 +294,7 @@ jobs:
         # On a PR from a fork, GITHUB_TOKEN is read-only and this step would
         # just fail; skip posting rather than failing the whole workflow.
         if: github.event.pull_request.head.repo.full_name == github.repository
-        # continue-on-error kept as a defensive safety net now that the real
-        # cause (missing pull-requests: write, see the permissions block
-        # above) is fixed - if posting ever fails for some other reason
-        # (rate limiting, a future permissions change, etc.), the report is
-        # still generated and visible in this job's own logs either way.
+        # So a posting failure never fails the workflow; the report is still in the logs.
         continue-on-error: true
         uses: actions/github-script@v9
         with:

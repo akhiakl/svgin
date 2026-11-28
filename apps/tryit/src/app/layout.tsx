@@ -14,10 +14,7 @@ export const metadata: Metadata = {
         template: '%s | svgin',
     },
     description: DESCRIPTION,
-    // Per-page metadata (see lib/metadata.ts) overrides title/description
-    // and url below; siteName/type/images stay the sitewide defaults every
-    // route inherits, and the opengraph-image.tsx file convention supplies
-    // the shared branded image without needing to list it explicitly here.
+    // Pages override title/description/url via lib/metadata.ts; the image comes from opengraph-image.tsx.
     openGraph: {
         siteName: SITE_NAME,
         type: 'website',

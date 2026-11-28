@@ -1,13 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-// bright's Code component transitively imports the `server-only` package,
-// which throws unconditionally outside a real Next.js server/client build
-// boundary (there's no such boundary at vitest's own module-resolution
-// time) - mocked here so this test can exercise CodeBlock's own wrapper
-// markup/prop-forwarding, not bright's actual syntax-highlighting output
-// (that's a third-party concern, and is exercised for real via the
-// Playwright e2e suite rendering real pages through Next.js).
+// bright imports `server-only`, which throws under vitest. Highlighting is covered by e2e.
 vi.mock('bright', () => ({
     Code: ({ code, lang, className }: { code: string; lang: string; className: string }) => (
         <pre data-testid="code" data-lang={lang} className={className}>

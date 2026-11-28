@@ -63,11 +63,7 @@ test('Shadow demo keeps SvgInShadow immune to a page rule that recolors the plai
     const lightPath = page.locator('article svg path').first();
     await expect(lightPath).toHaveCSS('stroke', 'rgb(236, 72, 153)'); // #ec4899, the leaking page rule
 
-    // The shadow-rendered <svg>/<path> live inside a shadow root, unreachable
-    // via ordinary CSS selectors from the page - reading their computed
-    // style has to reach through the host element's shadowRoot. Wait for it
-    // to actually appear first, so a broken/missing shadow root fails this
-    // test loudly instead of silently comparing against null.
+    // Reach through shadowRoot, and wait for it so a missing root fails loudly.
     await page.waitForFunction(() => {
         const host = document.querySelector('[data-testid="shadow-demo-host"]');
         return Boolean(host?.shadowRoot?.querySelector('path'));

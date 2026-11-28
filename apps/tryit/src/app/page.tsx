@@ -3,10 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { pageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
 
-// Structured data for search engines: identifies svgin as the actual project
-// this site demos (two published packages, not one), separate from the
-// site's own OG/Twitter metadata above (which describes this demo site, not
-// the packages themselves).
+// Describes the svgin project (both packages), not this demo site.
 const JSON_LD = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareSourceCode',

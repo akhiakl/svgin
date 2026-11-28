@@ -1,15 +1,7 @@
 name: Release
 
-# Publishes to npm when a GitHub Release is published. release-please.yml
-# opens a per-package "release please" PR that bumps package.json/CHANGELOG.md
-# from Conventional Commits merged to main (manifest mode: only
-# packages/react and packages/element are tracked - packages/core and
-# apps/tryit stay private and are never released); merging that PR is what
-# creates the GitHub Release (and tag) that triggers this workflow. Re-runs
-# the quality gate (lint/typecheck/test/build) for the released package before
-# publishing, so a release can never skip it - scoped with --filter to just
-# that package's own workspace graph, not the whole repo (see the comment on
-# the turbo step below).
+# Publishes to npm when release-please's merged release PR creates a GitHub Release.
+# Re-runs the quality gate for the released package first, so a release can't skip it.
 
 on:
   release:
@@ -86,24 +78,10 @@ jobs:
             .turbo
             packages/*/.turbo
             apps/*/.turbo
-          # Same key namespace as ci.yml's build job: a release is triggered
-          # off a commit that already went through the push-to-main CI run
-          # (see the header comment above), so this is usually a real cache
-          # hit reusing that run's build/lint/test outputs, not a cold start.
+          # Same cache keys as ci.yml, so this usually reuses the push-to-main run.
           key: turbo-build-${{ github.sha }}
           restore-keys: turbo-build-
-      # --filter, not a repo-wide run: this only needs to verify the package
-      # actually being published (svgin-core is its only workspace dependency,
-      # via each package's own devDependencies + tsup noExternal - see the
-      # svgin-monorepo skill). apps/tryit is deliberately excluded: it consumes
-      # @svgin/react and @svgin/element as real npm dependencies, not workspace:*,
-      # so it's not in this graph at all, and it is never released from this
-      # workflow - gating a package release on an unrelated app's tests (or a
-      # flake in them) blocks a real publish for no correctness benefit. See
-      # https://github.com/akhiakl/svgin/actions/runs/35581884193 and
-      # https://github.com/akhiakl/svgin/actions/runs/35581886165, where exactly
-      # this happened: both releases failed pre-publish on an apps/tryit test
-      # timeout unrelated to either published package.
+      # Only the released package's graph: an unrelated apps/tryit flake must not block a publish.
       - run: pnpm turbo run lint typecheck typecheck:test test test:coverage build size --filter="${{ steps.pkg.outputs.name }}"
 
       - name: Verify package.json version matches the release tag
@@ -119,38 +97,15 @@ jobs:
           echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Publish to npm
-        # Trusted publishing (OIDC) needs npm CLI >= 11.5.1, newer than what
-        # ships with Node 22, and pnpm's own `publish` command does not speak
-        # OIDC yet (https://github.com/pnpm/pnpm/issues/9812), so the actual
-        # publish step uses `npm publish` directly instead of `pnpm publish`.
-        # No NPM_TOKEN is needed: npm CLI auto-detects the GitHub Actions
-        # OIDC token and exchanges it for a short-lived publish credential,
-        # verified against the trusted publisher configured on npmjs.com for
-        # this exact repo + workflow file.
+        # npm publish, not pnpm: trusted publishing (OIDC) needs npm >= 11.5.1 and pnpm lacks OIDC (pnpm/pnpm#9812).
         working-directory: ${{ steps.pkg.outputs.dir }}
         run: |
           npm install -g npm@^11.5.1
           npm publish --access public --provenance
 
-      # From here on: open a PR bumping apps/tryit's dependency on the
-      # package that was just published. This only runs after a real,
-      # successful npm publish (not just a GitHub Release existing - see the
-      # two runs linked in the turbo-filter comment above, where the release
-      # existed but publish itself failed both times). Never auto-merged: CI
-      # on the PR catches a breaking change (build/typecheck/test/e2e simply
-      # fail), but nothing here can tell whether a new feature in the release
-      # deserves a new demo route - that's still a human call, flagged in the
-      # PR body's checklist line rather than silently skipped.
+      # Opens a PR bumping apps/tryit to the new version. Never auto-merged: a new feature may need a demo.
       - name: Wait for the published version to actually be installable
-        # A successful `npm publish --provenance` doesn't mean the version is
-        # queryable yet - npm processes the provenance attestation
-        # asynchronously ("Your package is being processed and may take a
-        # few minutes to become available" in the step above), and a
-        # `pnpm install` run seconds later can 404/ERR_PNPM_NO_MATCHING_VERSION
-        # on a version that just published successfully. Confirmed by
-        # watching @svgin/react@1.1.2 take ~45s to become visible to `npm
-        # view` after a run where this polling step didn't exist yet, which
-        # failed the bump step below for exactly this reason.
+        # The new version can take a minute to appear on the registry after publish, so wait for it.
         env:
           PKG_NAME: ${{ steps.pkg.outputs.name }}
           VERSION: ${{ steps.verify.outputs.version }}

@@ -7,17 +7,7 @@ export interface ResolveSvgPromiseOptions {
     fetchOptions: RequestInit | undefined;
 }
 
-/**
- * Resolves to the sanitized SVG markup for either the `svg` (raw markup, no
- * fetch) or `src` (fetch) path - the same precedence rule (`svg` wins over
- * `src`) shared by every client component. Rejects when neither is given.
- * `componentName` is only used in that rejection's message (e.g.
- * `'<SvgIn />'`), so each caller's error still names itself.
- *
- * `sanitizeFn`/`disableSanitization`/`fetchOptions` are a single options
- * object rather than three positional params, so a call site's argument
- * order can't silently drift out of sync with this signature.
- */
+/** `svg` wins over `src`. `componentName` only appears in the error message. */
 export function resolveSvgPromiseClient(
     componentName: string,
     src: string | undefined,

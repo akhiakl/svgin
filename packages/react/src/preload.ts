@@ -7,49 +7,28 @@ async function preloadSvgImpl(
     url: string,
     options?: Pick<SvgInProps, 'disableSanitization' | 'sanitizeFn' | 'fetchOptions'>
 ): Promise<void> {
-    // See fetchAndSanitizeSvgBase.ts: only the default-sanitizer result, fetched
-    // with no special request options, is safe to share via the module-level
-    // cache. Preloading with `disableSanitization`, a custom `sanitizeFn`, or
-    // `fetchOptions` must not poison the cache entry that a later default
-    // `<SvgIn src={url} />` call would read.
+    // Only a default-sanitized, option-free result is safe to share across callers.
     const usesSharedCache = !options?.disableSanitization && !options?.sanitizeFn && !options?.fetchOptions;
 
-    // getCachedSvg returns string | undefined - an explicit undefined check
-    // (rather than truthiness) so a cached, sanitized-down-to-empty-string
-    // result ("") still counts as already preloaded.
+    // Not a truthiness check: "" (everything sanitized away) is a valid cached result.
     if (usesSharedCache && getCachedSvg(url) !== undefined) return;
 
     const svgText = await fetchSvgText(url, options?.fetchOptions);
 
     if (options?.disableSanitization) {
-        // Non-default modes are intentionally not cached (see comment above), so
-        // there's nothing safe to store here beyond warming the browser/HTTP cache
-        // for the `fetch` call itself.
         return;
     }
     if (options?.sanitizeFn) {
-        // Custom sanitizer result is caller-specific, not stored in shared cache.
         await options.sanitizeFn(svgText);
         return;
     }
 
-    // Default sanitizer: `preloadSvg` is exported from the environment-
-    // agnostic 'svgin-react/core' entry point and documented as working in
-    // either environment, so it can't hard-code the server (jsdom-based)
-    // sanitizer - that would drag jsdom into a browser bundle (or just fail,
-    // since jsdom depends on Node builtins) whenever preloadSvg runs
-    // client-side. Picked at call time, not module scope, so a jsdom-based
-    // test environment (which does define `window`) is still detected
-    // correctly as "browser-like" and gets the lighter client sanitizer.
+    // Picked at call time so a browser bundle never pulls in the jsdom-based server sanitizer.
     const isBrowserLike = typeof window !== 'undefined' && typeof window.document !== 'undefined';
     const { sanitizeSvg } = isBrowserLike
         ? await import('svgin-core/sanitizeClient')
         : await import('svgin-core/sanitizeServer');
     const sanitized = await sanitizeSvg(svgText);
-    // Guarded by usesSharedCache itself, not by which branch above returned
-    // early: disableSanitization/sanitizeFn both return before reaching
-    // here, but fetchOptions has no early-return branch of its own, so
-    // reaching this line no longer implies usesSharedCache on its own.
     if (usesSharedCache) setCachedSvg(url, sanitized);
 }
 

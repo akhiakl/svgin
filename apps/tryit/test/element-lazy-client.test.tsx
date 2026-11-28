@@ -3,11 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ElementLazyClient } from '@/components/element-lazy-client';
 import { stubSvgFetch } from './helpers/mockSvgFetch';
 
-// jsdom has no IntersectionObserver, so @svgin/element's own `loading="lazy"`
-// deferral is a documented no-op here (falls back to eager) - this
-// component's real lazy behavior is exercised by Playwright instead (a real
-// browser, see e2e/); this test covers the component's own markup and that
-// the icon does resolve.
+// jsdom has no IntersectionObserver, so lazy falls back to eager; real lazy loading is covered by e2e.
 describe('ElementLazyClient', () => {
     afterEach(() => {
         vi.unstubAllGlobals();

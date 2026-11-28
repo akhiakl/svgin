@@ -2,11 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearSvgCache } from './svgCache';
 import { fetchAndSanitizeSvg } from './fetchAndSanitizeSvgClient';
 
-// createFetchAndSanitizeSvg's own behavior is exercised directly (and
-// thoroughly, including every branch) in fetchAndSanitizeSvgBase.test.ts
-// against a fake sanitizer. This test exists only to prove this module's own
-// one-line wiring - applying createFetchAndSanitizeSvg to the real client
-// DOMPurify sanitizer (./sanitizeClient) - actually works end to end.
+// Wiring check with the real DOMPurify; behavior is covered in fetchAndSanitizeSvgBase.test.ts.
 describe('fetchAndSanitizeSvgClient (real client sanitizer, not mocked)', () => {
     afterEach(() => {
         vi.unstubAllGlobals();

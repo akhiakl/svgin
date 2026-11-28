@@ -1,9 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { getSvginReactVersion } from '@/lib/svgin-react-version';
 
-// Async server component so the npm registry fetch (see
-// lib/svgin-react-version.ts) can be deferred behind a Suspense boundary
-// instead of blocking the rest of the page.
+// Async so the registry fetch can sit behind a Suspense boundary.
 export async function VersionBadge() {
     const version = await getSvginReactVersion();
     return (

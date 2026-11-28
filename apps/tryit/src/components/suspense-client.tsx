@@ -17,17 +17,8 @@ function Spinner() {
 }
 
 const VALID = { src: '/demo-icon.svg' } satisfies Partial<SvgInSuspenseProps>;
-// A real 404: fixed in svgin-react 0.9.1. Before that fix, a persistently
-// failing fetch caused SvgInSuspense to retry forever without ever reaching
-// the error boundary; the fix pins one promise per (src, svg, sanitizeFn,
-// disableSanitization) key so a failed request stays failed instead of
-// looping. See https://github.com/akhiakl/svgin-react/pull/47.
 const BROKEN_URL = { src: '/this-does-not-exist.svg' } satisfies Partial<SvgInSuspenseProps>;
-// <SvgInSuspense /> requires either `src` or `svg` and throws synchronously
-// (not via a rejected fetch) when neither is given - use() requires a stable
-// promise, so a fresh Promise.reject(...) on every render isn't an option;
-// the synchronous throw is caught by the nearest error boundary the same
-// way as any other render-time exception.
+// Neither `src` nor `svg`: a synchronous throw, caught by the error boundary.
 const NEITHER = {} as unknown as Partial<SvgInSuspenseProps>;
 
 export function SuspenseClient() {

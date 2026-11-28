@@ -24,12 +24,7 @@ test('malicious example is sanitized and the removed tags/attrs are listed', asy
 test('editing the textarea and clicking Sanitize re-runs sanitization', async ({ page }) => {
     await page.goto('/inspector');
     const textarea = page.getByLabel('Raw SVG input');
-    // xmlns matters here beyond realism: DOMPurify's SVG-profile sanitizer
-    // parses this as XML, and a root <svg> with no namespace declaration is
-    // exactly the kind of malformed input that gets namespace-resolution
-    // (and therefore attribute-stripping) treated inconsistently across
-    // browser XML parsers - WebKit's in particular. Every other fixture in
-    // this file already declares it; this one should too.
+    // Keep xmlns: WebKit's XML parser handles a namespace-less <svg> inconsistently.
     await textarea.fill(
         '<svg xmlns="http://www.w3.org/2000/svg"><rect onclick="evil()" width="1" height="1" /></svg>'
     );

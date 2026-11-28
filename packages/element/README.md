@@ -59,12 +59,9 @@ be skipped entirely.
 ## Rendering model: light DOM, not shadow DOM
 
 `<svg-in>` inlines the sanitized `<svg>` as a **direct child of the element itself** (light DOM), not
-inside a shadow root. This is a deliberate choice, not an oversight - it mirrors `<SvgIn />`'s own
-default in `@svgin/react` (`<SvgInShadow />` is the separate, shadow-DOM opt-in component over there).
-Rendering into light DOM means ordinary page CSS can style the icon directly (`svg-in svg { fill: ... }`,
-or via the `class`/`fill`/`width`/`height` attributes forwarded straight onto the rendered `<svg>` - see
-below). A shadow-DOM rendering mode (e.g. a `shadow` attribute) is left for a follow-up once there's a
-real consumer need for it - this first implementation only ships the light-DOM behavior.
+inside a shadow root, matching `<SvgIn />` in `@svgin/react`. Ordinary page CSS can style the icon
+directly (`svg-in svg { fill: ... }`, or via the `class`/`fill`/`width`/`height` attributes forwarded
+onto the rendered `<svg>`).
 
 ## Attributes
 
