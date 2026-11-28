@@ -51,11 +51,9 @@ README for its exact API.
 
 ## Versioning & releases
 
-This repo uses [release-please](https://github.com/googleapis/release-please), matching
-`svgin-react`'s own previous setup. Versions and changelogs are derived automatically from
+This repo uses [release-please](https://github.com/googleapis/release-please). Versions and changelogs are derived automatically from
 [Conventional Commits](https://www.conventionalcommits.org/), enforced by commitlint, so there's no
-separate manual release step. See the `svgin-monorepo` skill under [`.agents/skills`](.agents/skills)
-for the full rationale, current release-readiness status, and its one known limitation.
+separate manual release step. See the [`svgin-monorepo` skill](.agents/skills/svgin-monorepo/SKILL.md) for details.
 
 ### npm publish status
 
