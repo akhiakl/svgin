@@ -36,10 +36,7 @@ describe('SiteNav', () => {
         const drawer = await screen.findByRole('dialog');
         expect(within(drawer).getByText('svgin / try it')).toBeInTheDocument();
 
-        // Same SiteSidebar reused here (not a separate, differently-behaved
-        // copy) - groups start open, same as the inline desktop usage.
-        // DEMOS[0].title ("Inspector") isn't unique across the React/Element
-        // groups, so this goes by href (always unique) instead of name.
+        // Titles repeat across React/Element groups, so match by href.
         const link = drawer.querySelector<HTMLAnchorElement>(`a[href="${DEMOS[0].href}"]`);
         expect(link).not.toBeNull();
 

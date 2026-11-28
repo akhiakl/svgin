@@ -28,10 +28,7 @@ test('the Element landing page links to every Element demo', async ({ page }) =>
 });
 
 test('top nav Try it and Docs links work from any page', async ({ page }) => {
-    // The top nav collapses every demo into a single "Try it" link back to
-    // the home page's package picker, rather than one link per demo -
-    // reachable from a page that is neither, to prove it is not just a
-    // same-page no-op.
+    // "Try it" links back to the package picker; start elsewhere to prove it navigates.
     await page.goto('/inspector');
     await page.getByRole('link', { name: 'Docs', exact: true }).click();
     await expect(page).toHaveURL('/docs');
@@ -77,9 +74,6 @@ test('docs sidebar also reaches Element installation and API reference', async (
 });
 
 test('the same sidebar (Docs and Try it) appears on demo pages too, not just docs pages', async ({ page }) => {
-    // Regression coverage for a real inconsistency: this sidebar used to be
-    // docs-only, so a visitor on a demo page had no equivalent way to jump
-    // to another demo or into the docs without going through the header.
     await page.goto('/suspense');
 
     const sidebar = page.getByLabel('Site navigation');

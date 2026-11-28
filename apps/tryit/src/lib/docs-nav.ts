@@ -9,11 +9,7 @@ export interface DocGroup {
     links: DocLink[];
 }
 
-// Single source of truth for the docs page list, mirroring src/lib/demos.ts's
-// DEMO_GROUPS shape - consumed by the docs sidebar and the mobile nav drawer
-// so they can't drift out of sync with each other. "Introduction" stays
-// ungrouped (package-agnostic, covers both), React and Element each get
-// their own Installation/API reference pair.
+// Single source for the docs pages (sidebar and drawer).
 export const DOCS_INTRO: DocLink = { href: '/docs', label: 'Introduction' };
 
 export const DOCS_GROUPS: DocGroup[] = [
@@ -35,6 +31,4 @@ export const DOCS_GROUPS: DocGroup[] = [
     },
 ];
 
-// Flat form for consumers that just need "every docs URL", regardless of
-// grouping (sitemap, the "every entry is well-formed" test).
 export const DOCS_LINKS: DocLink[] = [DOCS_INTRO, ...DOCS_GROUPS.flatMap((group) => group.links)];

@@ -9,11 +9,6 @@ export interface DemoGridItem {
     description: string;
 }
 
-// Shared by the /react and /element landing pages - both render the same
-// "Try it live" card grid shape for their own DEMO_GROUPS entry, so this is
-// the one place that layout/markup lives rather than being duplicated per
-// package (see the SOLID/YAGNI note in AGENTS.md: extracted once a second
-// real usage showed up, not speculatively ahead of one).
 export function DemoGrid({ demos }: { demos: readonly DemoGridItem[] }) {
     return (
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

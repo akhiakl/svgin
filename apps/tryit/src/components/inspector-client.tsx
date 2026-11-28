@@ -31,9 +31,7 @@ export function InspectorClient() {
         [raw, sanitizedHtml]
     );
 
-    // A fresh svg prop value already re-triggers <SvgIn />'s sanitize effect,
-    // but bumping the key forces a clean remount so onMount fires again even
-    // when raw is unchanged (e.g. clicking the same example twice).
+    // A new key remounts so onMount fires again even when raw is unchanged.
     const rerun = useCallback(() => setRenderKey((k) => k + 1), []);
 
     return (

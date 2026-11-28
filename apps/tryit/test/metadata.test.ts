@@ -22,10 +22,7 @@ describe('pageMetadata', () => {
         expect(meta.description).toBe('A real description.');
         expect(meta.alternates?.canonical).toBe('/docs/api');
         expect(meta.openGraph?.url).toBe('/docs/api');
-        // `type`/`card` aren't on every variant of Next's OpenGraph/Twitter
-        // union types, so a direct property access doesn't typecheck even
-        // though pageMetadata always returns these two literal shapes -
-        // toMatchObject checks the real value without narrowing the type.
+        // toMatchObject: `type`/`card` aren't on every variant of Next's union types.
         expect(meta.openGraph).toMatchObject({ type: 'website' });
         expect(meta.twitter).toMatchObject({ card: 'summary_large_image' });
     });

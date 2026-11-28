@@ -6,9 +6,7 @@ import { PackageManagerInstallTabs } from '@/components/package-manager-install-
 import { PACKAGE_MANAGERS, type PackageManagerId } from '@/lib/package-managers';
 
 describe('PackageManagerInstallTabs', () => {
-    // Same cast the real production code (package-manager-install.tsx) uses
-    // for the same Object.fromEntries call - fromEntries only ever infers a
-    // generic string-keyed record, not the exact PackageManagerId union.
+    // Same cast as production: fromEntries infers a plain string record.
     const panels = Object.fromEntries(
         PACKAGE_MANAGERS.map((pm) => [pm.id, <span key={pm.id}>{pm.id} panel</span>])
     ) as Record<PackageManagerId, ReactNode>;

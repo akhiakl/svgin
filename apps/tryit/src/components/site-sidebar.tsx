@@ -7,22 +7,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionPanel } from '@/co
 import { DOCS_INTRO, DOCS_GROUPS } from '@/lib/docs-nav';
 import { DEMO_GROUPS } from '@/lib/demos';
 
-// The one nav-with-hierarchy implementation, reused in two places: inline
-// on every docs/demo page (via docs/layout.tsx and (demos)/layout.tsx) and
-// inside the mobile drawer (SiteNav's Sheet) - rather than a second,
-// separately-behaved copy living in SiteNav itself. Same data, same
-// default-open groups, same everything, in both places; `onNavigate` is
-// the one behavioral difference the drawer needs (closing itself on link
-// click), left a no-op everywhere else.
-//
-// Two sections, each with an ungrouped top-level link (Docs: Introduction)
-// plus a React/Element sub-group - two published packages with two
-// separate page sets, not one flat pile of links (a flat list here used to
-// make it genuinely unclear which package a given link belonged to,
-// especially once React and Element demos share titles like "Lazy
-// loading" or "Inspector"). Both sub-groups open by default (see
-// GROUP_IDS below) so nothing is hidden that was visible before - the
-// accordion adds the *option* to collapse, not a requirement to.
+// Used inline on docs/demo pages and inside the mobile drawer; `onNavigate` lets the drawer close itself.
 const SECTIONS = [
     { label: 'Docs', intro: DOCS_INTRO, groups: DOCS_GROUPS.map((group) => ({ id: group.id, label: group.label, links: group.links })) },
     { label: 'Try it', intro: null, groups: DEMO_GROUPS.map((group) => ({ id: group.id, label: group.label, links: group.demos.map((demo) => ({ href: demo.href, label: demo.title })) })) },

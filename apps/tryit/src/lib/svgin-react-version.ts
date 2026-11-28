@@ -1,10 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Fallback only: if the npm registry is unreachable at build/render time,
-// fall back to whatever is actually installed rather than showing nothing.
-// @svgin/react's package.json "exports" map does not expose "./package.json",
-// so this reads the installed copy straight off disk instead of importing it.
+// Fallback when the registry is unreachable. The package's exports map hides package.json, so read it from disk.
 function readInstalledVersion(): string {
     try {
         const pkgPath = path.join(process.cwd(), 'node_modules', '@svgin', 'react', 'package.json');
@@ -15,10 +12,7 @@ function readInstalledVersion(): string {
     }
 }
 
-// The version badge on the home page should reflect what is actually
-// published on npm right now, not just whatever this deployment happened to
-// be built against, so fetch it from the registry instead of the local
-// node_modules install. Revalidated hourly since it rarely changes.
+// Shows the published version, not the installed one. Revalidated hourly.
 const REGISTRY_FETCH_TIMEOUT_MS = 3000;
 
 export async function getSvginReactVersion(): Promise<string> {

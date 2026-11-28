@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react';
 import { SiteSidebar } from '@/components/site-sidebar';
 
-// A route group ("(demos)") rather than a real URL segment: every demo page
-// keeps its top-level path (/inspector, /shadow, ...) while sharing this
-// layout, the same two-column sidebar + content shape docs/layout.tsx uses.
+// Route group: demo pages keep top-level paths while sharing this layout.
 export default function DemosLayout({ children }: { children: ReactNode }) {
     return (
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">

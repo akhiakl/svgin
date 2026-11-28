@@ -4,10 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs';
 import { PACKAGE_MANAGERS, type PackageManagerId } from '@/lib/package-managers';
 
-// Pure tab-switching UI. The actual <CodeBlock> per tab is rendered by the
-// server component in package-manager-install.tsx and handed down as
-// already-rendered nodes: CodeBlock depends on Bright, which is
-// server-only, so it cannot be imported into this 'use client' module.
+// Tabs only: the server renders each <CodeBlock> (Bright is server-only) and passes it in.
 export function PackageManagerInstallTabs({
     panels,
     className,

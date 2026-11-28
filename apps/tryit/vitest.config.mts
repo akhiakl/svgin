@@ -7,17 +7,9 @@ export default defineNextVitestConfig({
             exclude: [
                 'src/app/**/layout.tsx',
                 'src/app/**/page.tsx',
-                // Thin `next/dynamic(..., { ssr: false })` wrappers with no
-                // logic of their own beyond wiring (see each file's own
-                // comment) - the real component they load is what's tested;
-                // exercising the dynamic-import boundary itself is what
-                // Playwright's e2e suite (a real browser, real Next.js
-                // build) is for. See #16.
+                // Thin next/dynamic wrappers; e2e covers the boundary.
                 'src/components/*-client-loader.tsx',
-                // Pure ambient type declarations (JSX.IntrinsicElements
-                // augmentation for <svg-in>, etc.) - no runtime code, so
-                // "0% covered" is a meaningless artifact of coverage.include
-                // matching *.ts, not a real gap.
+                // Type declarations only.
                 'src/types/**/*.d.ts',
             ],
         },

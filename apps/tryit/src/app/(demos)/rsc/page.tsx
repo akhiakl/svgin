@@ -9,13 +9,7 @@ export const metadata = pageMetadata({
     path: '/rsc',
 });
 
-// Deliberately an external URL rather than this deployment's own origin:
-// this project has Vercel Authentication (SSO protection) enabled, which
-// gates every response from the deployment's own domain, including a
-// server-to-server self-fetch that carries no Vercel session. Fetching a
-// public raw GitHub URL instead demonstrates the same "fetch an SVG from
-// anywhere" behavior without depending on this deployment's own protection
-// settings, and without needing any infrastructure of our own.
+// External URL: Vercel Authentication blocks a server-side fetch of this deployment's own origin.
 const ICON_URL = 'https://raw.githubusercontent.com/feathericons/feather/master/icons/alert-triangle.svg';
 
 export default async function RscPage() {

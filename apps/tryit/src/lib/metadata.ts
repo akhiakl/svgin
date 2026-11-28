@@ -22,9 +22,7 @@ export function pageMetadata({
     const ogTitle = isHome ? title : `${title} | ${SITE_NAME}`;
 
     return {
-        // The layout's title template ("%s | svgin") would otherwise
-        // apply to the home page too, producing a redundant
-        // "Try svgin | svgin" - `absolute` opts out of it.
+        // `absolute` skips the "%s | svgin" template on the home page.
         title: isHome ? { absolute: title } : title,
         description,
         alternates: { canonical: path },
